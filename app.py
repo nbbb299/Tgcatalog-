@@ -1,282 +1,297 @@
 import os
 import re
 import time
+import json
 import requests
+from typing import Optional, Dict, Any, List
+
 from flask import Flask, request, jsonify, render_template, Response, abort
+
+from supabase import create_client
+
+
+# -----------------------------
+# CONFIG
+# -----------------------------
+BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
+
+# необязательно, но если задан — будем проверять секрет
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "").strip()
+
+# куда “купить”
+BUY_TELEGRAM = (os.getenv("BUY_TELEGRAM") or os.getenv("BUY_TEL") or "").strip().lstrip("@")
+BUY_WHATSAPP = (os.getenv("BUY_WHATSAPP") or os.getenv("BUY_WHA") or "393463203783").strip().replace("+", "")
+
+TABLE = os.getenv("SUPABASE_TABLE", "products").strip()
 
 app = Flask(__name__)
 
-# =======================
-# ENV (Render -> Environment)
-# =======================
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "").strip()
-BUY_TELEGRAM = os.environ.get("BUY_TELEGRAM", "mikab16").strip().lstrip("@")
-BUY_WHATSAPP = os.environ.get("BUY_WHATSAPP", "393463203783").strip().replace("+", "")
-WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "").strip()  # optional
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("SUPABASE_URL / SUPABASE_KEY are required")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# =======================
-# STORAGE (простая память, можно потом заменить на базу)
-# =======================
-PRODUCTS = []
-MAX_PRODUCTS = 500  # чтобы не разрасталось бесконечно
+TG_API = "https://api.telegram.org/bot{token}/{method}"
+TG_FILE = "https://api.telegram.org/file/bot{token}/{path}"
 
 
-# =======================
-# REGEX
-# =======================
-
-# Цена со скидкой: должно быть "€" + "%" + "=€"
-# Примеры: 245€-25%=€183,75  |  3900€-20%=€3.120,00
-PRICE_DISCOUNT_RE = re.compile(r"€.*%.*=€", re.IGNORECASE)
-
-# Хэштег бренда: #entirestudios #Dior #jilsander
-HASHTAG_BRAND_RE = re.compile(r"#([A-Za-z][A-Za-z0-9_]{1,40})")
-
-# Размеры буквенные: XXS XS S M L XL XXL (в любой строке)
+# -----------------------------
+# PARSING RULES (под твои требования)
+# 1) price_raw показываем КАК ЕСТЬ: "245€-25%=€183,75"
+# 2) бренд берём из ЛЮБОЙ строки (чаще из #hashtag или из слова типа DIOR/Chloé)
+# 3) размеры: "L, M, XS(на мне)" / "50,52" / "38FR" / "50-52" / "50 52"
+# -----------------------------
 SIZE_WORDS_RE = re.compile(r"(?i)\b(XXS|XS|S|M|L|XL|XXL)\b")
+SIZE_NUM_RE = re.compile(r"^\s*\d{1,3}(\s*[-,/ ]\s*\d{1,3})+(\s*(FR|IT|EU|US))?\s*$", re.IGNORECASE)
+SIZE_SINGLE_NUM_WITH_SYS_RE = re.compile(r"^\s*\d{1,3}\s*(FR|IT|EU|US)\s*$", re.IGNORECASE)
 
-# Размеры числовые диапазоны/наборы: 50,52 / 50 52 / 50-52 / 50/52
-SIZE_MULTI_NUM_RE = re.compile(r"^\s*\d{1,3}\s*([,/\-\s]\s*\d{1,3})+\s*$")
-
-# Одиночный размер + система: 38FR / 40 IT / 42EU
-SIZE_SYS_RE = re.compile(r"^\s*\d{1,3}\s*(FR|IT|EU|US)\s*$", re.IGNORECASE)
-
-# Линии сервиса
-SERVICE_RE = re.compile(r"(?i)^\s*(по вопросам|вопрос|инфо|info)\b")
-AT_RE = re.compile(r"^\s*@")
-
-# "брендовая" строка: латиница/кириллица с буквами, без € и без очевидного мусора
-# (чтобы находить Chloé / DIOR / entirestudios / Jil Sander)
-LIKELY_BRAND_RE = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿА-Яа-яЁё0-9&'.\- ]{2,40}$")
-
-
-# =======================
-# HELPERS
-# =======================
-
-def normalize_spaces(s: str) -> str:
-    return re.sub(r"\s+", " ", (s or "").strip())
+HASHTAG_BRAND_RE = re.compile(r"#([A-Za-z][A-Za-z0-9_]{1,30})")
 
 def is_service_line(line: str) -> bool:
-    t = (line or "").strip()
+    t = line.strip()
     if not t:
         return True
-    if SERVICE_RE.search(t):
+    low = t.lower()
+    if low.startswith("по вопросам"):
         return True
-    if AT_RE.search(t):
+    if t.startswith("@"):
         return True
     return False
 
-def looks_like_price(line: str) -> bool:
-    t = (line or "").strip()
+def looks_like_price_line(line: str) -> bool:
+    t = line.strip()
+    # главное: есть евро и скидка/итог
     if "€" not in t:
         return False
-    return bool(PRICE_DISCOUNT_RE.search(t))
+    # обычно в твоём формате есть "-" и "%" и "="
+    if "%" in t and "=" in t:
+        return True
+    # запасной вариант
+    if "=%" in t or "=€" in t:
+        return True
+    return False
 
-def extract_brand(lines):
-    """
-    1) сначала ищем #brand
-    2) затем ищем строку похожую на бренд (без €, не service)
-    """
-    # 1) hashtag
-    for l in lines:
-        m = HASHTAG_BRAND_RE.search(l)
+def clean_brand(s: str) -> str:
+    s = s.strip()
+    s = s.replace("#", "")
+    # убираем лишние символы по краям, но сохраняем dior/chloé и т.п.
+    s = re.sub(r"^[^\wÀ-ÿ]+|[^\wÀ-ÿ]+$", "", s, flags=re.UNICODE)
+    return s
+
+def extract_brand(lines: List[str]) -> Optional[str]:
+    # 1) hashtag бренд (#entirestudios)
+    for line in lines:
+        m = HASHTAG_BRAND_RE.search(line)
         if m:
-            return m.group(1)
+            b = clean_brand(m.group(1))
+            if b:
+                return b
 
-    # 2) "похоже на бренд" — первая подходящая строка
-    for l in lines:
-        t = normalize_spaces(l)
+    # 2) строка, которая выглядит как бренд (не цена, не сервис)
+    # берём первую “сильную” строку
+    for line in lines:
+        t = line.strip()
+        if not t:
+            continue
         if is_service_line(t):
             continue
-        if "€" in t:
+        if looks_like_price_line(t):
             continue
-        if t.startswith("#"):
+        # если строка очень длинная — не бренд
+        if len(t) > 35:
             continue
-        # иногда бывают просто эмодзи строкой — пропускаем
-        if len(re.sub(r"\W", "", t)) == 0:
+        # если содержит цифры — скорее не бренд (но "3.1 Phillip Lim" нам не надо)
+        if re.search(r"\d", t):
             continue
-        if LIKELY_BRAND_RE.match(t):
-            return t
+        # если почти всё — эмодзи/символы
+        letters = re.findall(r"[A-Za-zÀ-ÿ]", t)
+        if len(letters) < 2:
+            continue
+        return clean_brand(t)
 
+    return None
+
+def extract_price_raw(lines: List[str]) -> str:
+    for line in lines:
+        if looks_like_price_line(line):
+            return line.strip()
     return ""
 
-def extract_price(lines):
-    for l in lines:
-        t = normalize_spaces(l)
-        if looks_like_price(t):
-            return t
-    return ""
-
-def extract_sizes(lines):
-    """
-    Берем первую строку, которая выглядит как размеры.
-    Важное: размеры могут быть как буквенные "L, M, XS(на мне)" так и числовые "50,52" и "38FR".
-    """
-    for l in lines:
-        t = (l or "").strip()
-        if is_service_line(t):
+def extract_sizes(lines: List[str]) -> str:
+    # размеры могут быть отдельной строкой (50,52) или строкой с L/M/XS
+    for line in lines:
+        t = line.strip()
+        if not t or is_service_line(t):
             continue
-        # буквенные размеры
+        if looks_like_price_line(t):
+            continue
+
         if SIZE_WORDS_RE.search(t):
             return t
-        # числовые пачкой
-        if SIZE_MULTI_NUM_RE.match(t):
+        if SIZE_NUM_RE.match(t):
             return t
-        # одиночный размер с системой
-        if SIZE_SYS_RE.match(t):
+        if SIZE_SINGLE_NUM_WITH_SYS_RE.match(t):
             return t
 
     return ""
 
-def build_clean_payload(text: str):
-    """
-    Твое требование:
-    1 строка: бренд
-    2 строка: цена (со скидкой, без отдельного итого)
-    3 строка: размеры (если есть)
-    Эмодзи можно как угодно — оставляем в "raw_lines" для отображения в карточке (если надо).
-    """
-    raw_lines = [l.rstrip() for l in (text or "").split("\n")]
-    lines = [l.strip() for l in raw_lines if l.strip()]
-
-    brand = extract_brand(lines)
-    price_raw = extract_price(lines)
+def parse_text_to_product(text: str) -> Dict[str, Any]:
+    raw_text = (text or "").strip()
+    lines = [ln.rstrip() for ln in raw_text.splitlines()]
+    brand = extract_brand(lines) or "ITEM"
+    price_raw = extract_price_raw(lines)
     sizes = extract_sizes(lines)
-
-    # Если бренд пустой — не пишем ITEM, ставим —
-    if not brand:
-        brand = "—"
 
     return {
         "brand": brand,
         "price_raw": price_raw,
-        "sizes": sizes,
-        "raw_text": "\n".join(lines)[:2500],
-        "ts": int(time.time())
+        "caption": sizes,        # в каталоге это 3 строка (размеры)
+        "raw_text": raw_text,    # для поиска
     }
 
-def telegram_api(method: str, params=None):
+
+# -----------------------------
+# TELEGRAM HELPERS
+# -----------------------------
+def tg_get_file_path(file_id: str) -> Optional[str]:
     if not BOT_TOKEN:
-        raise RuntimeError("BOT_TOKEN is missing")
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
-    r = requests.post(url, json=params or {}, timeout=25)
-    r.raise_for_status()
-    return r.json()
+        return None
+    url = TG_API.format(token=BOT_TOKEN, method="getFile")
+    r = requests.get(url, params={"file_id": file_id}, timeout=20)
+    if not r.ok:
+        return None
+    j = r.json()
+    if not j.get("ok"):
+        return None
+    return j["result"].get("file_path")
 
-def telegram_get_file_path(file_id: str) -> str:
-    j = telegram_api("getFile", {"file_id": file_id})
-    return j["result"]["file_path"]
+def tg_download_file(file_path: str) -> Response:
+    file_url = TG_FILE.format(token=BOT_TOKEN, path=file_path)
+    r = requests.get(file_url, stream=True, timeout=30)
+    if not r.ok:
+        abort(404)
+    content_type = r.headers.get("Content-Type", "image/jpeg")
+
+    def gen():
+        for chunk in r.iter_content(chunk_size=1024 * 64):
+            if chunk:
+                yield chunk
+
+    return Response(gen(), content_type=content_type)
 
 
-# =======================
+# -----------------------------
 # ROUTES
-# =======================
-
-@app.route("/")
-def index():
-    # твой index.html лежит в templates/index.html
+# -----------------------------
+@app.get("/")
+def home():
     return render_template("index.html")
 
-@app.route("/api/buy_target")
-def buy_target():
+@app.get("/api/buy_target")
+def api_buy_target():
     return jsonify({"telegram": BUY_TELEGRAM, "whatsapp": BUY_WHATSAPP})
 
-@app.route("/api/products")
+@app.get("/api/products")
 def api_products():
-    limit = int(request.args.get("limit", 30))
-    offset = int(request.args.get("offset", 0))
-    q = (request.args.get("q") or "").strip().lower()
-    brand_q = (request.args.get("brand") or "").strip().lower()
-    brand_q = brand_q.lstrip("#")
+    q = (request.args.get("q") or "").strip()
+    brand = (request.args.get("brand") or "").strip().lstrip("#")
+    limit = int(request.args.get("limit") or 30)
+    offset = int(request.args.get("offset") or 0)
 
-    items = PRODUCTS
+    query = supabase.table(TABLE).select("*").order("ts", desc=True)
 
-    if brand_q:
-        items = [p for p in items if (p.get("brand") or "").lower().lstrip("#") == brand_q]
+    if brand:
+        # точнее: по brand
+        query = query.ilike("brand", f"%{brand}%")
 
     if q:
-        def hit(p):
-            hay = " ".join([
-                (p.get("brand") or ""),
-                (p.get("price_raw") or ""),
-                (p.get("sizes") or ""),
-                (p.get("raw_text") or ""),
-            ]).lower()
-            return q in hay
-        items = [p for p in items if hit(p)]
+        # поиск по raw_text (описание/эмодзи/всё)
+        query = query.ilike("raw_text", f"%{q}%")
 
-    return jsonify(items[offset:offset + limit])
+    res = query.range(offset, offset + limit - 1).execute()
+    data = res.data or []
+    return jsonify(data)
 
-@app.route("/img/<file_id>")
-def img(file_id):
-    if not BOT_TOKEN:
-        abort(500, "BOT_TOKEN missing")
-
-    # получаем file_path
-    try:
-        file_path = telegram_get_file_path(file_id)
-    except Exception:
+@app.get("/img/<file_id>")
+def img(file_id: str):
+    # прокси фото по file_id, чтобы токен не светился
+    file_path = tg_get_file_path(file_id)
+    if not file_path:
         abort(404)
+    return tg_download_file(file_path)
 
-    file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
-    rr = requests.get(file_url, stream=True, timeout=25)
-    if rr.status_code != 200:
-        abort(404)
-
-    content_type = rr.headers.get("Content-Type", "image/jpeg")
-    return Response(rr.content, status=200, content_type=content_type)
-
-@app.route("/health")
-def health():
-    return "ok"
-
-@app.route("/telegram", methods=["POST"])
+@app.post("/telegram")
 def telegram_webhook():
-    # Optional: проверка секрета (если включишь в setWebhook secret_token)
+    # чтобы не было вечных 403:
+    # если WEBHOOK_SECRET задан — проверяем,
+    # если не задан — принимаем всегда
     if WEBHOOK_SECRET:
-        got = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-        if got != WEBHOOK_SECRET:
-            return ("forbidden", 403)
+        hdr = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        qs = request.args.get("secret", "")
+        if hdr != WEBHOOK_SECRET and qs != WEBHOOK_SECRET:
+            return ("Forbidden", 403)
 
     update = request.get_json(silent=True) or {}
+    try:
+        handle_update(update)
+    except Exception as e:
+        # важное: телеграму всё равно возвращаем 200, чтобы не блокировал webhook
+        print("handle_update error:", str(e))
 
-    # Telegram может прислать message / channel_post / edited_*
-    msg = (
-        update.get("channel_post")
-        or update.get("message")
-        or update.get("edited_channel_post")
-        or update.get("edited_message")
-        or {}
-    )
+    return ("OK", 200)
 
+
+# -----------------------------
+# UPDATE HANDLER
+# -----------------------------
+def handle_update(update: Dict[str, Any]) -> None:
+    msg = update.get("message") or update.get("channel_post") or {}
     if not msg:
-        return "ok"
+        return
 
-    # текст может быть в caption (если фото) или text (если просто текст)
-    text = msg.get("caption") or msg.get("text") or ""
-    if not text.strip():
-        return "ok"
+    text = msg.get("text") or msg.get("caption") or ""
+    if not text:
+        # если фото без подписи — пропускаем
+        return
 
-    # фото берем самое большое
+    prod = parse_text_to_product(text)
+
+    # photo может быть в message/photo или message/caption с фото
     file_id = None
-    if isinstance(msg.get("photo"), list) and msg["photo"]:
-        file_id = msg["photo"][-1].get("file_id")
+    photos = msg.get("photo") or []
+    if photos and isinstance(photos, list):
+        # берём самое большое фото
+        file_id = photos[-1].get("file_id")
 
-    parsed = build_clean_payload(text)
+    # ID записи — по message_id + chat_id (чтобы не было коллизий)
+    chat = msg.get("chat") or {}
+    chat_id = chat.get("id")
+    message_id = msg.get("message_id")
+    ts = int(msg.get("date") or int(time.time()))
+    row_id = f"{ts}_{chat_id}_{message_id}"
 
-    item = {
-        "id": f"{parsed['ts']}_{len(PRODUCTS)+1}",
-        "brand": parsed["brand"],
-        "price_raw": parsed["price_raw"],
-        "caption": parsed["sizes"],   # 👈 ВАЖНО: в каталоге "caption" = 3-я строка (размеры)
-        "raw_text": parsed["raw_text"],
-        "file_id": file_id,
-        "ts": parsed["ts"],
+    record = {
+        "id": row_id,
+        "ts": ts,
+        "brand": prod["brand"],
+        "price_raw": prod["price_raw"],
+        "caption": prod["caption"],
+        "raw_text": prod["raw_text"],
+        "file_id": file_id or "",
     }
 
-    PRODUCTS.insert(0, item)
-    if len(PRODUCTS) > MAX_PRODUCTS:
-        del PRODUCTS[MAX_PRODUCTS:]
+    # фильтр: если это просто "#orders" и нет цены/контента — можно оставить, но ты видела “ORDERS” карточку
+    # я убираю такие пустые
+    if record["brand"].lower() == "orders" and not record["price_raw"] and not record["caption"]:
+        return
 
-    return "ok"
+    supabase.table(TABLE).upsert(record).execute()
+
+
+# -----------------------------
+# LOCAL RUN (не влияет на Render)
+# -----------------------------
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "10000")), debug=True)
