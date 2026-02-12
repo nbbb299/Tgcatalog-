@@ -92,7 +92,7 @@
     .media img{
       width:100%;
       height:100%;
-      object-fit: cover; /* заполнение без уродства */
+      object-fit: cover;
       display:block;
       transform: translateZ(0);
     }
@@ -123,7 +123,7 @@
       line-height:1.1;
     }
 
-    /* Описание (caption) */
+    /* caption */
     .caption{
       color:#111;
       font-size:14px;
@@ -133,7 +133,7 @@
       display:-webkit-box;
       -webkit-line-clamp: 5;
       -webkit-box-orient: vertical;
-      min-height: 96px; /* фикс блока, чтобы кнопки не прыгали */
+      min-height: 96px;
     }
     .caption.expanded{
       -webkit-line-clamp: unset;
@@ -179,7 +179,7 @@
     }
     @keyframes sk{0%{background-position:0% 0}100%{background-position:-200% 0}}
 
-    /* Viewer (Farfetch-like) */
+    /* Viewer */
     .viewer{
       position:fixed;
       inset:0;
@@ -344,70 +344,53 @@
   </div>
 
   <script>
-    // =========================
-    // Helpers
-    // =========================
     const $ = (id)=>document.getElementById(id);
 
     function normBrand(s){
       return (s || "").toString().trim().replace(/^#/, "").toLowerCase();
     }
-
     function isUselessBrand(b){
       const x = normBrand(b);
       return !x || x === "item" || x === "-" || x === "—";
     }
 
-    // Убираем верхнюю "формулу цены" типа "3900€-20%=€3.12"
-    // и просто НЕ показываем price_raw как отдельную строку.
-    // Описание из Телеграма оставляем (caption).
+    // Убираем строку "3900€-20%=€3.120,00" из caption
     function cleanCaption(text){
       if(!text) return "";
-      let t = text.toString();
-
-      // Вырезаем строки с паттерном "€-...%=€" (формула скидки)
-      const lines = t.split("\n");
+      const lines = text.toString().split("\n");
       const filtered = lines.filter(line=>{
         const s = line.trim();
         if(!s) return true;
-        // удаляем строки формулы
         if(/€\s*-\s*\d{1,3}\s*%\s*=\s*€?/i.test(s)) return false;
         if(/=\s*€\s*\d/i.test(s) && s.includes("%")) return false;
         return true;
       });
-
       return filtered.join("\n").trim();
     }
 
-    // =========================
-    // Image URL resolver
-    // (пробуем несколько вариантов, чтобы вытянуть лучшее качество)
-    // =========================
-    function imgCandidates(fileId){
-      if(!fileId) return [];
-      const id = encodeURIComponent(fileId);
-
-      // 1) если у тебя есть endpoint в бэке (самый правильный)
-      const local1 = `/api/photo/${id}`;                  // GET -> image
-      const local2 = `/api/image/${id}`;                  // альтернативы
-      const local3 = `/api/tgfile/${id}`;
-      const local4 = `/api/file/${id}`;
-
-      // 2) если ты когда-то отдавал прямую ссылку
-      // (некоторые бэки возвращают file_id как URL)
-      const direct = fileId.startsWith("http") ? [fileId] : [];
-
-      return [...direct, local1, local2, local3, local4];
+    // Candidates for image URLs
+    function imgCandidates(fileIdOrUrl){
+      if(!fileIdOrUrl) return [];
+      const v = String(fileIdOrUrl);
+      if(v.startsWith("http")) return [v];
+      const id = encodeURIComponent(v);
+      // Prefer your backend proxy endpoint:
+      // if your backend provides /api/tgfile/<file_id> (recommended) it will work.
+      return [
+        `/api/tgfile/${id}`,
+        `/api/photo/${id}`,
+        `/api/image/${id}`,
+        `/api/file/${id}`,
+      ];
     }
 
-    async function loadFirstWorkingImage(imgEl, fileId){
-      const tries = imgCandidates(fileId);
+    async function loadFirstWorkingImage(imgEl, fileIdOrUrl){
+      const tries = imgCandidates(fileIdOrUrl);
       if(tries.length === 0){
         imgEl.classList.add("skeleton");
         imgEl.alt = "no image";
         return;
       }
-
       imgEl.classList.add("skeleton");
       for(const url of tries){
         const ok = await new Promise((resolve)=>{
@@ -423,15 +406,12 @@
           return;
         }
       }
-      // если ничего не сработало — показываем пустой блок
       imgEl.removeAttribute("src");
       imgEl.classList.remove("skeleton");
       imgEl.alt = "image not available";
     }
 
-    // =========================
-    // Viewer
-    // =========================
+    // Viewer state
     let viewerState = { photos: [], idx: 0, scale: 1, tx: 0, ty: 0 };
 
     function openViewer(photos, startIdx=0){
@@ -440,12 +420,10 @@
       viewerState.scale = 1;
       viewerState.tx = 0;
       viewerState.ty = 0;
-
       $("viewer").classList.add("open");
       $("viewer").setAttribute("aria-hidden","false");
       renderViewer();
     }
-
     function closeViewer(){
       $("viewer").classList.remove("open");
       $("viewer").setAttribute("aria-hidden","true");
@@ -454,15 +432,11 @@
     async function renderViewer(){
       const total = viewerState.photos.length || 1;
       const i = viewerState.idx;
-
       $("vCount").textContent = `${i+1}/${total}`;
-
-      // main image
-      const fileId = viewerState.photos[i];
+      const fileIdOrUrl = viewerState.photos[i];
       $("vImg").style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
-      await loadFirstWorkingImage($("vImg"), fileId);
+      await loadFirstWorkingImage($("vImg"), fileIdOrUrl);
 
-      // thumbs
       const thumbs = $("vThumbs");
       thumbs.innerHTML = "";
       viewerState.photos.forEach((pid, idx)=>{
@@ -471,7 +445,6 @@
         const im = document.createElement("img");
         d.appendChild(im);
         loadFirstWorkingImage(im, pid);
-
         d.onclick = ()=>{
           viewerState.idx = idx;
           viewerState.scale = 1; viewerState.tx = 0; viewerState.ty = 0;
@@ -506,12 +479,11 @@
       }
     });
 
-    // zoom on double tap/click
+    // double click zoom
     let lastTap = 0;
     $("vImgWrap").addEventListener("click", ()=>{
       const now = Date.now();
       if(now - lastTap < 280){
-        // double
         viewerState.scale = (viewerState.scale === 1) ? 2 : 1;
         viewerState.tx = 0; viewerState.ty = 0;
         $("vImg").style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
@@ -519,7 +491,6 @@
       lastTap = now;
     });
 
-    // keys
     window.addEventListener("keydown", (e)=>{
       if(!$("viewer").classList.contains("open")) return;
       if(e.key === "Escape") closeViewer();
@@ -534,13 +505,8 @@
       if(e.target === $("viewer")) closeViewer();
     });
 
-    // =========================
-    // Render cards
-    // =========================
+    // Buy links (use your values)
     function buyLinks(){
-      // BUY_TELEGRAM = mikab16 (username)
-      // BUY_WHATSAPP = 3934... (phone)
-      // Если у тебя в бэке отдаётся уже готовая ссылка — просто подставь.
       const tgUser = "mikab16";
       const wa = "393463203783";
       return {
@@ -550,16 +516,14 @@
     }
 
     function cardTemplate(p){
-      // Собираем фото: file_ids (альбом) или одиночное file_id
-      const photos = Array.isArray(p.file_ids) && p.file_ids.length ? p.file_ids : (p.file_id ? [p.file_id] : []);
+      // photos can come as file_ids OR images (already URLs)
+      const photos = (Array.isArray(p.file_ids) && p.file_ids.length)
+        ? p.file_ids
+        : (Array.isArray(p.images) && p.images.length ? p.images : (p.file_id ? [p.file_id] : []));
+
       const count = photos.length || 0;
-
-      // brand: скрываем ITEM/пусто
       const brand = isUselessBrand(p.brand) ? "" : (p.brand || "").toString().trim();
-
-      // caption: чистим от формулы
       const caption = cleanCaption(p.caption || "");
-
       const {tg, wa} = buyLinks();
 
       const card = document.createElement("div");
@@ -579,14 +543,12 @@
         media.appendChild(badge);
       }
 
-      // клик по фото -> viewer
       media.style.cursor = "pointer";
       media.onclick = ()=>{
         if(!photos.length) return;
         openViewer(photos, 0);
       };
 
-      // грузим обложку = первое фото
       loadFirstWorkingImage(img, photos[0]);
 
       const body = document.createElement("div");
@@ -599,13 +561,11 @@
         body.appendChild(b);
       }
 
-      // Описание (из Телеграм) — оставляем
       const cap = document.createElement("div");
       cap.className = "caption";
       cap.textContent = caption || "";
       body.appendChild(cap);
 
-      // если много текста — кнопка "ещё"
       if((caption || "").length > 160){
         const more = document.createElement("div");
         more.className = "more";
@@ -616,7 +576,6 @@
         };
         body.appendChild(more);
       } else {
-        // чтобы сетка не прыгала — добавим пустой фикс
         const spacer = document.createElement("div");
         spacer.style.height = "18px";
         body.appendChild(spacer);
@@ -650,16 +609,12 @@
       return card;
     }
 
-    // =========================
-    // Fetch products
-    // =========================
     let allProducts = [];
 
     async function fetchProducts(){
       $("status").style.display="none";
       $("empty").style.display="none";
 
-      // skeleton cards
       const grid = $("grid");
       grid.innerHTML = "";
       for(let i=0;i<6;i++){
@@ -678,14 +633,10 @@
 
       try{
         const r = await fetch("/api/products", {cache:"no-store"});
-        if(!r.ok){
-          throw new Error("API /api/products вернул " + r.status);
-        }
+        if(!r.ok) throw new Error("API /api/products вернул " + r.status);
         const data = await r.json();
         if(!Array.isArray(data)) throw new Error("API вернул не массив");
-
         allProducts = data;
-
         renderFiltered();
       }catch(e){
         grid.innerHTML = "";
@@ -700,7 +651,7 @@
 
       let list = allProducts.slice();
 
-      // сортировка по ts/created_at/id
+      // sort newest first
       list.sort((a,c)=>{
         const ta = Number(a.ts || 0);
         const tc = Number(c.ts || 0);
@@ -726,10 +677,8 @@
         $("empty").style.display="block";
         return;
       }
-
       $("empty").style.display="none";
 
-      // рендер
       list.forEach(p=>{
         grid.appendChild(cardTemplate(p));
       });
@@ -739,7 +688,6 @@
     $("q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
     $("brand").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
 
-    // старт
     fetchProducts();
   </script>
 </body>
