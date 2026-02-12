@@ -3,97 +3,115 @@ import re
 import time
 import json
 import requests
-from io import BytesIO
-from flask import Flask, request, jsonify, send_file, render_template, abort
-
+from flask import Flask, request, jsonify, render_template, Response, abort
 from supabase import create_client
 
-app = Flask(__name__, template_folder="templates", static_folder=None)
+app = Flask(__name__, template_folder="templates")
 
-# -------------------------
+# =========================
 # ENV
-# -------------------------
+# =========================
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
-SUPABASE_TABLE = os.getenv("SUPABASE_TABLE", "products").strip() or "products"
+TABLE = os.getenv("SUPABASE_TABLE", "products").strip() or "products"
 
-BUY_TELEGRAM = os.getenv("BUY_TELEGRAM", "").strip().lstrip("@")
-BUY_WHATSAPP = os.getenv("BUY_WHATSAPP", "").strip()
+BUY_TELEGRAM = os.getenv("BUY_TELEGRAM", "mikab16").strip().lstrip("@")
+BUY_WHATSAPP = os.getenv("BUY_WHATSAPP", "393463203783").strip().replace("+", "")
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "").strip()  # optional
 
-WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "").strip()  # опционально
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("SUPABASE_URL / SUPABASE_KEY missing")
 
-# -------------------------
-# Supabase client (lazy)
-# -------------------------
-_supabase = None
+sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def supabase():
-    global _supabase
-    if _supabase is None:
-        if not SUPABASE_URL or not SUPABASE_KEY:
-            raise RuntimeError("SUPABASE_URL or SUPABASE_KEY is missing")
-        _supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    return _supabase
-
-# -------------------------
-# Parsing helpers
-# -------------------------
-
-PRICE_LINE_RE = re.compile(r"€.*%.*=€", re.IGNORECASE)  # "3900€-20%=€3.120,00"
+# =========================
+# PARSING (brand / price_raw / sizes)
+# =========================
 
 HASHTAG_BRAND_RE = re.compile(r"#([A-Za-z][A-Za-z0-9_]{1,40})")
+SERVICE_LINE_RE = re.compile(r"(?i)^\s*(по вопросам|вопрос)\b")
+AT_LINE_RE = re.compile(r"^\s*@")
+
+# price like: 245€-25%=€183,75  | 3900€-20%=€3.120,00
+def looks_like_price_line(s: str) -> bool:
+    t = (s or "").strip()
+    if "€" not in t:
+        return False
+    # главное: скидка видна
+    return ("%" in t) and ("=" in t)
 
 SIZE_WORDS_RE = re.compile(r"(?i)\b(XXS|XS|S|M|L|XL|XXL)\b")
-SIZE_NUM_RE = re.compile(r"^\s*\d{1,3}(\s*[-,/]\s*\d{1,3})+(\s*(FR|IT|EU|US))?\s*$", re.IGNORECASE)
-SIZE_SINGLE_NUM_WITH_SYS_RE = re.compile(r"^\s*\d{1,3}\s*(FR|IT|EU|US)\s*$", re.IGNORECASE)
+SIZE_MULTI_NUM_RE = re.compile(r"^\s*\d{1,3}\s*([,/\-\s]\s*\d{1,3})+\s*$")
+SIZE_SYS_RE = re.compile(r"^\s*\d{1,3}\s*(FR|IT|EU|US)\s*$", re.IGNORECASE)
 
-def is_service_line(line: str) -> bool:
-    t = (line or "").strip()
+def is_service_line(s: str) -> bool:
+    t = (s or "").strip()
     if not t:
         return True
-    low = t.lower()
-    if low.startswith("по вопросам"):
+    if SERVICE_LINE_RE.search(t):
         return True
-    if low.startswith("вопрос"):
-        return True
-    if t.startswith("@"):
+    if AT_LINE_RE.search(t):
         return True
     return False
 
-def looks_like_price_line(line: str) -> bool:
-    t = (line or "").strip()
-    if not t:
-        return False
-    # обяз: показываем скидку как ты просила
-    return ("€" in t) and ("%" in t) and ("=€" in t or "€=" in t or "= €" in t)
-
-def looks_like_size_line(line: str) -> bool:
-    t = (line or "").strip()
+def looks_like_size_line(s: str) -> bool:
+    t = (s or "").strip()
     if not t:
         return False
     if SIZE_WORDS_RE.search(t):
         return True
-    if SIZE_NUM_RE.match(t):
+    if SIZE_SYS_RE.match(t):
         return True
-    if SIZE_SINGLE_NUM_WITH_SYS_RE.match(t):
+    if SIZE_MULTI_NUM_RE.match(t):
         return True
-    # "50,52" (без пробелов)
+    # "50,52" / "50 52"
     if re.match(r"^\s*\d{1,3}\s*,\s*\d{1,3}\s*$", t):
         return True
-    # "50 52"
     if re.match(r"^\s*\d{1,3}\s+\d{1,3}\s*$", t):
         return True
     return False
 
-def guess_brand(lines):
-    # 1) ищем #brand
+def extract_brand(lines):
+    # 1) first hashtag brand
     for ln in lines:
         m = HASHTAG_BRAND_RE.search(ln)
         if m:
             return m.group(1)
-    # 2) иначе: первая "нормальная" строка (не сервисная и не цена и не размеры)
+
+    # 2) otherwise: first “brand-looking” line (not service, not price, not sizes)
+    for ln in lines:
+        t = (ln or "").strip()
+        if not t:
+            continue
+        if is_service_line(t):
+            continue
+        if t.startswith("#"):
+            continue
+        if looks_like_price_line(t):
+            continue
+        if looks_like_size_line(t):
+            continue
+
+        # must contain letters (latin/cyrillic), not only emoji
+        if re.search(r"[A-Za-zА-Яа-яÀ-ÿ]", t):
+            return t
+
+    # brand always exists in your channel, but fallback just in case
+    return "—"
+
+def extract_price_raw(lines):
+    for ln in lines:
+        if looks_like_price_line(ln):
+            return ln.strip()
+    # fallback: first line with €
+    for ln in lines:
+        if "€" in (ln or ""):
+            return ln.strip()
+    return ""
+
+def extract_sizes(lines):
     for ln in lines:
         t = (ln or "").strip()
         if not t:
@@ -103,77 +121,116 @@ def guess_brand(lines):
         if looks_like_price_line(t):
             continue
         if looks_like_size_line(t):
-            continue
-        # уберём лишние эмодзи вокруг — но оставим если они вместе с брендом
-        return t
-    return "item"
+            return t
+    return ""
 
-def parse_post(text: str):
-    raw_lines = [l.rstrip() for l in (text or "").split("\n")]
-    lines = [l.strip() for l in raw_lines if l.strip()]
+def parse_post_text(text: str):
+    raw = (text or "").strip()
+    lines = [l.strip() for l in raw.splitlines() if l.strip()]
 
-    brand = guess_brand(lines)
-
-    price_raw = ""
-    for ln in lines:
-        if looks_like_price_line(ln):
-            price_raw = ln.strip()
-            break
-
-    size_line = ""
-    for ln in lines:
-        if looks_like_size_line(ln):
-            size_line = ln.strip()
-            break
-
-    # caption = только размеры (как ты хочешь)
-    caption = size_line
+    brand = extract_brand(lines)
+    price_raw = extract_price_raw(lines)
+    sizes = extract_sizes(lines)
 
     return {
         "brand": brand,
         "price_raw": price_raw,
-        "caption": caption,
-        "raw_text": text or ""
+        # важное: в каталоге 3-я строка = sizes
+        "caption": sizes,
+        "raw_text": raw,
     }
 
-# -------------------------
-# Telegram helpers
-# -------------------------
-def tg_api(method: str, params=None):
+# =========================
+# TELEGRAM FILE PROXY (/img/<file_id>)
+# =========================
+
+_TG_FILEPATH_CACHE = {}  # file_id -> (file_path, expires_at)
+_TG_CACHE_TTL = 60 * 60  # 1 hour
+
+def tg_get_file_path(file_id: str) -> str:
     if not BOT_TOKEN:
-        raise RuntimeError("BOT_TOKEN is missing")
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
-    r = requests.get(url, params=params, timeout=20)
+        raise RuntimeError("BOT_TOKEN missing")
+
+    now = time.time()
+    cached = _TG_FILEPATH_CACHE.get(file_id)
+    if cached and cached[1] > now:
+        return cached[0]
+
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/getFile"
+    r = requests.get(url, params={"file_id": file_id}, timeout=20)
     r.raise_for_status()
-    return r.json()
+    j = r.json()
 
-def tg_file_url(file_path: str) -> str:
-    return f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+    if not j.get("ok"):
+        raise RuntimeError(f"Telegram getFile not ok: {j}")
 
-# simple in-memory cache for images (file_id -> (bytes, mime, ts))
-_IMG_CACHE = {}
-_CACHE_TTL = 60 * 20  # 20 min
+    file_path = j["result"]["file_path"]
+    _TG_FILEPATH_CACHE[file_id] = (file_path, now + _TG_CACHE_TTL)
+    return file_path
 
-def cache_get(file_id):
-    it = _IMG_CACHE.get(file_id)
-    if not it:
-        return None
-    data, mime, ts = it
-    if time.time() - ts > _CACHE_TTL:
-        _IMG_CACHE.pop(file_id, None)
-        return None
-    return data, mime
+@app.get("/img/<path:file_id>")
+def img_proxy(file_id):
+    if not BOT_TOKEN:
+        abort(404)
 
-def cache_set(file_id, data, mime):
-    _IMG_CACHE[file_id] = (data, mime, time.time())
+    try:
+        file_path = tg_get_file_path(file_id)
+    except Exception:
+        abort(404)
 
-# -------------------------
-# Routes
-# -------------------------
+    file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+    rr = requests.get(file_url, stream=True, timeout=30)
+
+    if rr.status_code != 200:
+        abort(404)
+
+    content_type = rr.headers.get("Content-Type", "image/jpeg")
+
+    def gen():
+        for chunk in rr.iter_content(chunk_size=64 * 1024):
+            if chunk:
+                yield chunk
+
+    return Response(gen(), content_type=content_type, headers={"Cache-Control": "public, max-age=3600"})
+
+# =========================
+# MEDIA GROUP (ALBUM) COLLECTOR
+# =========================
+
+MEDIA_GROUP_CACHE = {}  # media_group_id -> {"ts": last_time, "ids": [], "base": record}
+MEDIA_GROUP_FLUSH_AFTER = 2.0  # seconds of silence => flush to DB
+
+def flush_media_groups_if_ready():
+    now = time.time()
+    ready = []
+    for gid, item in list(MEDIA_GROUP_CACHE.items()):
+        if now - item["ts"] >= MEDIA_GROUP_FLUSH_AFTER:
+            ready.append(gid)
+
+    for gid in ready:
+        item = MEDIA_GROUP_CACHE.pop(gid, None)
+        if not item:
+            continue
+        record = item["base"]
+        ids = item["ids"]
+
+        record["file_ids"] = ids
+        record["file_id"] = ids[0] if ids else ""
+
+        # upsert
+        sb.table(TABLE).upsert(record).execute()
+
+# =========================
+# ROUTES
+# =========================
 
 @app.get("/")
 def home():
     return render_template("index.html")
+
+@app.get("/health")
+def health():
+    return "ok", 200
 
 @app.get("/api/buy_target")
 def buy_target():
@@ -181,122 +238,126 @@ def buy_target():
 
 @app.get("/api/products")
 def api_products():
-    """
-    Returns list of products with:
-    id, brand, price_raw, caption, file_id, ts, raw_text
-    """
-    try:
-        limit = int(request.args.get("limit", "30"))
-        offset = int(request.args.get("offset", "0"))
-        q = (request.args.get("q") or "").strip()
-        brand = (request.args.get("brand") or "").strip()
+    limit = int(request.args.get("limit", 30))
+    offset = int(request.args.get("offset", 0))
+    q = (request.args.get("q") or "").strip()
+    brand = (request.args.get("brand") or "").strip().lstrip("#")
 
-        sb = supabase()
-        query = sb.table(SUPABASE_TABLE).select("*").order("ts", desc=True).range(offset, offset + limit - 1)
+    try:
+        query = sb.table(TABLE).select("*").order("ts", desc=True)
 
         if brand:
-            # бренд может быть в базе в разном регистре
-            query = query.ilike("brand", brand)
+            query = query.ilike("brand", f"%{brand}%")
 
         if q:
-            # ищем по raw_text (самое надежное)
             query = query.ilike("raw_text", f"%{q}%")
 
-        res = query.execute()
+        res = query.range(offset, offset + limit - 1).execute()
         data = res.data or []
 
-        # нормализуем поля чтобы index не ломался
+        # нормализуем: чтобы index.html не ломался
         out = []
         for p in data:
             out.append({
-                "id": p.get("id"),
-                "brand": p.get("brand") or "item",
-                "price_raw": p.get("price_raw") or "",
-                "caption": p.get("caption") or "",
-                "file_id": p.get("file_id") or "",
-                "ts": p.get("ts") or 0,
-                "raw_text": p.get("raw_text") or ""
+                "id": p.get("id", ""),
+                "brand": p.get("brand", "") or "—",
+                "price_raw": p.get("price_raw", "") or "",
+                "caption": p.get("caption", "") or "",
+                "file_id": p.get("file_id", "") or "",
+                "file_ids": p.get("file_ids", []) or [],
+                "raw_text": p.get("raw_text", "") or "",
+                "ts": p.get("ts", 0) or 0,
             })
         return jsonify(out)
 
     except Exception as e:
-        # НЕ роняем сервер — возвращаем понятный ответ
         return jsonify({
             "error": "api_products_failed",
             "details": str(e),
-            "hint": "Проверь SUPABASE_URL / SUPABASE_KEY / SUPABASE_TABLE и доступ к таблице (RLS)."
+            "hint": "Проверь SUPABASE_TABLE и колонки (ts, file_ids) + RLS policy SELECT."
         }), 500
 
-@app.get("/img/<file_id>")
-def img(file_id):
-    """
-    Proxy image from Telegram file_id:
-    1) getFile(file_id) -> file_path
-    2) download file
-    """
-    if not BOT_TOKEN:
-        abort(404)
-
-    cached = cache_get(file_id)
-    if cached:
-        data, mime = cached
-        return send_file(BytesIO(data), mimetype=mime)
-
-    try:
-        info = tg_api("getFile", {"file_id": file_id})
-        if not info.get("ok"):
-            abort(404)
-
-        file_path = info["result"]["file_path"]
-        url = tg_file_url(file_path)
-
-        r = requests.get(url, timeout=30)
-        r.raise_for_status()
-
-        mime = r.headers.get("Content-Type", "image/jpeg")
-        data = r.content
-
-        cache_set(file_id, data, mime)
-        return send_file(BytesIO(data), mimetype=mime)
-
-    except Exception:
-        abort(404)
+# =========================
+# TELEGRAM WEBHOOK
+# =========================
 
 @app.post("/telegram")
 def telegram_webhook():
-    # опциональная защита
-    if WEBHOOK_SECRET:
-        sec = request.args.get("secret", "")
-        if sec != WEBHOOK_SECRET:
-            return "forbidden", 403
-
-    upd = request.get_json(silent=True) or {}
-
+    # 1) периодически “досохраняем” альбомы
     try:
-        message = upd.get("message") or upd.get("channel_post") or {}
-        text = message.get("text") or message.get("caption") or ""
-        photos = message.get("photo") or []
+        flush_media_groups_if_ready()
+    except Exception:
+        pass
 
-        if not text:
-            return "ok"
+    # 2) optional secret check
+    if WEBHOOK_SECRET:
+        hdr = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        qs = request.args.get("secret", "")
+        if hdr != WEBHOOK_SECRET and qs != WEBHOOK_SECRET:
+            # лучше вернуть 403, если ты включила secret
+            return ("forbidden", 403)
 
-        parsed = parse_post(text)
+    update = request.get_json(silent=True) or {}
 
-        # фото берём самое большое
-        file_id = ""
-        if photos:
-            file_id = photos[-1].get("file_id") or ""
-
-        parsed["file_id"] = file_id
-        parsed["ts"] = int(time.time())
-        parsed["id"] = str(message.get("message_id") or parsed["ts"])
-
-        # записываем в supabase
-        sb = supabase()
-        sb.table(SUPABASE_TABLE).upsert(parsed).execute()
-
+    msg = (
+        update.get("channel_post")
+        or update.get("message")
+        or update.get("edited_channel_post")
+        or update.get("edited_message")
+        or {}
+    )
+    if not msg:
         return "ok"
-    except Exception as e:
-        # чтобы телега не зацикливалась — отвечаем 200
-        print("telegram_webhook_error:", e)
+
+    text = (msg.get("caption") or msg.get("text") or "").strip()
+    if not text:
         return "ok"
+
+    parsed = parse_post_text(text)
+
+    # file_ids: берём самое большое качество фото
+    best_file_id = ""
+    photos = msg.get("photo") or []
+    if isinstance(photos, list) and photos:
+        best_file_id = photos[-1].get("file_id", "")
+
+    media_group_id = msg.get("media_group_id")
+
+    chat_id = (msg.get("chat") or {}).get("id", "")
+    message_id = msg.get("message_id", "")
+    ts = int(msg.get("date") or int(time.time()))
+
+    # базовая запись
+    record = {
+        "id": f"{ts}_{chat_id}_{message_id}",
+        "ts": ts,
+        "brand": parsed["brand"],
+        "price_raw": parsed["price_raw"],
+        "caption": parsed["caption"],     # 3-я строка
+        "raw_text": parsed["raw_text"],
+        "file_id": best_file_id or "",
+        "file_ids": [best_file_id] if best_file_id else [],
+    }
+
+    # Альбом: копим несколько фото в 1 запись
+    if media_group_id and best_file_id:
+        if media_group_id not in MEDIA_GROUP_CACHE:
+            MEDIA_GROUP_CACHE[media_group_id] = {"ts": time.time(), "ids": [], "base": record}
+        MEDIA_GROUP_CACHE[media_group_id]["ts"] = time.time()
+
+        ids = MEDIA_GROUP_CACHE[media_group_id]["ids"]
+        if best_file_id not in ids:
+            ids.append(best_file_id)
+
+        # не пишем сразу — ждём пока альбом закончится
+        return "ok"
+
+    # Обычный пост (или альбом без фото)
+    sb.table(TABLE).upsert(record).execute()
+    return "ok"
+
+# =========================
+# LOCAL
+# =========================
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "10000")), debug=True)
