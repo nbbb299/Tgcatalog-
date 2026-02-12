@@ -2,77 +2,98 @@ import os
 import re
 import json
 import time
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
-from flask import Flask, request, jsonify, send_from_directory, Response, abort
-from supabase import create_client, Client
+from flask import Flask, request, jsonify, render_template, Response, abort
 
+from supabase import create_client
 
-# ----------------- ENV -----------------
+app = Flask(__name__, template_folder="templates")
+logging.basicConfig(level=logging.INFO)
+
+# ----------------------------
+# ENV
+# ----------------------------
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "secret12345").strip()
+
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
 SUPABASE_TABLE = os.getenv("SUPABASE_TABLE", "products").strip()
 
-BUY_TELEGRAM = os.getenv("BUY_TELEGRAM", "").strip()  # username without @
-BUY_WHATSAPP = os.getenv("BUY_WHATSAPP", "").strip()  # digits only, no +
-WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "").strip()
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "").strip()  # e.g. https://<service>.onrender.com/telegram
+BUY_TELEGRAM = os.getenv("BUY_TELEGRAM", "mikab16").strip()
+BUY_WHATSAPP = os.getenv("BUY_WHATSAPP", "393463203783").strip()
 
-if not BOT_TOKEN:
-    print("⚠️ BOT_TOKEN is empty")
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("⚠️ SUPABASE_URL/SUPABASE_KEY is empty")
+# ----------------------------
+# Helpers: Supabase (lazy init)
+# ----------------------------
+_sb = None
 
-sb: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+def sb():
+    global _sb
+    if _sb is None:
+        if not SUPABASE_URL or not SUPABASE_KEY:
+            raise RuntimeError("Missing SUPABASE_URL or SUPABASE_KEY")
+        _sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+    return _sb
 
-TG_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
-TG_FILE = f"https://api.telegram.org/file/bot{BOT_TOKEN}"
+def table():
+    return sb().table(SUPABASE_TABLE)
 
+# ----------------------------
+# Telegram API helpers
+# ----------------------------
+TG_API = "https://api.telegram.org"
 
-# ----------------- PARSING RULES -----------------
+def tg_get_file(file_id: str) -> Optional[str]:
+    if not BOT_TOKEN:
+        return None
+    url = f"{TG_API}/bot{BOT_TOKEN}/getFile"
+    r = requests.get(url, params={"file_id": file_id}, timeout=20)
+    if not r.ok:
+        return None
+    j = r.json()
+    if not j.get("ok"):
+        return None
+    return j["result"]["file_path"]
+
+def tg_file_url(file_path: str) -> str:
+    return f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+
+# ----------------------------
+# Parsing (brand / price / sizes)
+# ----------------------------
 HASHTAG_BRAND_RE = re.compile(r"#([A-Za-z][A-Za-z0-9_]{1,40})")
-PRICE_RE = re.compile(r"€\s*\d")  # very loose trigger
-DISCOUNT_RE = re.compile(r"%")
-EUR_OR_EQ_RE = re.compile(r"(€|=€)")
+PRICE_RE = re.compile(r"€.*%.*=€", re.IGNORECASE)  # "3900€-20%=€3.120,00" (примерно)
 
 SIZE_WORDS_RE = re.compile(r"(?i)\b(XXS|XS|S|M|L|XL|XXL)\b")
-SIZE_NUM_RE = re.compile(r"^\s*\d{1,3}(\s*[-,/]\s*\d{1,3})+(\s*(FR|IT|EU|US))?\s*$", re.IGNORECASE)
+SIZE_NUM_RE = re.compile(r"^\s*\d{1,3}(\s*[,/ -]\s*\d{1,3})+(\s*(FR|IT|EU|US))?\s*$", re.IGNORECASE)
 SIZE_SINGLE_NUM_WITH_SYS_RE = re.compile(r"^\s*\d{1,3}\s*(FR|IT|EU|US)\s*$", re.IGNORECASE)
 
-SERVICE_LINE_RE = re.compile(r"(?i)^\s*(по вопросам|вопрос|inquiries|dm)\b")
-
-KNOWN_BRANDS = {
-    # Add more if you want. Bot still works without this list.
-    "dior", "chloé", "chloe", "jilsander", "entirestudios", "balmain",
-}
-
-
 def is_service_line(line: str) -> bool:
-    t = (line or "").strip()
+    t = line.strip()
     if not t:
         return True
-    if SERVICE_LINE_RE.search(t):
+    low = t.lower()
+    if low.startswith("по вопросам"):
         return True
-    if t.strip().startswith("@"):
+    if low.startswith("вопрос"):
+        return True
+    if t.startswith("@"):
         return True
     return False
-
 
 def looks_like_price_line(line: str) -> bool:
-    t = (line or "").strip()
-    # Need discount visible: contains € AND (%) usually
-    if "€" in t and ("%" in t or "=€" in t or "=%" in t):
-        return True
-    # fallback: € and %
-    if PRICE_RE.search(t) and DISCOUNT_RE.search(t):
-        return True
-    return False
-
+    t = line.strip()
+    if "€" not in t:
+        return False
+    # хотим видеть скидку
+    return ("%" in t) or ("=€" in t) or ("= €" in t)
 
 def looks_like_size_line(line: str) -> bool:
-    t = (line or "").strip()
+    t = line.strip()
     if not t:
         return False
     if SIZE_WORDS_RE.search(t):
@@ -81,44 +102,22 @@ def looks_like_size_line(line: str) -> bool:
         return True
     if SIZE_SINGLE_NUM_WITH_SYS_RE.match(t):
         return True
-    # Common "40,41,42,43" format
-    if re.match(r"^\s*\d{1,3}(\s*,\s*\d{1,3}){1,10}\s*(FR|IT|EU|US)?\s*$", t, re.IGNORECASE):
-        return True
     return False
 
+def clean_line(line: str) -> str:
+    return line.replace("\u200b", "").strip()
 
-def normalize_brand(b: str) -> str:
-    b = (b or "").strip()
-    if not b:
-        return ""
-    # remove leading # and punctuation around
-    b = b.lstrip("#").strip()
-    return b
-
-
-def find_brand(lines: List[str]) -> str:
-    """
-    Brand can be anywhere. Priority:
-    1) hashtag #brand
-    2) exact known brand word in line
-    3) first non-service line that looks like a brand (short-ish, letters)
-    """
-    # 1) hashtag
+def extract_brand(lines: List[str]) -> str:
+    # 1) #brand
     for ln in lines:
-        m = HASHTAG_BRAND_RE.search(ln or "")
+        m = HASHTAG_BRAND_RE.search(ln)
         if m:
-            return normalize_brand(m.group(1))
-
-    # 2) known brands (case-insensitive)
-    low_lines = [ (ln or "").lower() for ln in lines ]
-    for b in KNOWN_BRANDS:
-        for ln in low_lines:
-            if b in ln:
-                return normalize_brand(b)
-
-    # 3) heuristic: first line with letters, not price/size/service
+            b = m.group(1)
+            if b.lower() not in ("orders", "order", "item"):
+                return b
+    # 2) любая строка с буквами, не цена, не сервис, не размер
     for ln in lines:
-        t = (ln or "").strip()
+        t = clean_line(ln)
         if not t:
             continue
         if is_service_line(t):
@@ -127,305 +126,271 @@ def find_brand(lines: List[str]) -> str:
             continue
         if looks_like_size_line(t):
             continue
-        # allow emojis around
-        pure = re.sub(r"[^\wÀ-ÿ\s'-]", "", t, flags=re.UNICODE).strip()
-        if pure and len(pure) <= 30 and re.search(r"[A-Za-zÀ-ÿ]", pure):
-            return normalize_brand(pure)
+        if re.search(r"[A-Za-zА-Яа-я]", t):
+            # убираем лишние символы, но оставляем эмодзи рядом — ок
+            if t.lower() in ("item", "orders"):
+                continue
+            return t
+    return "ITEM"
+
+def extract_price_raw(lines: List[str]) -> str:
+    for ln in lines:
+        t = clean_line(ln)
+        if looks_like_price_line(t):
+            return t
+    # fallback: первая строка с €
+    for ln in lines:
+        t = clean_line(ln)
+        if "€" in t:
+            return t
     return ""
 
-
-def parse_text(raw_text: str) -> Dict[str, str]:
-    """
-    Output:
-    brand (first line in catalog)
-    price_raw (second line: keep exactly like "185€-25%=€138,75")
-    caption (third line: sizes if present, else empty)
-    """
-    raw_text = (raw_text or "").strip()
-    lines = [ln.strip() for ln in raw_text.splitlines()]
-    lines = [ln for ln in lines if ln.strip()]
-
-    brand = find_brand(lines)
-
-    price_raw = ""
+def extract_sizes_caption(lines: List[str]) -> str:
     for ln in lines:
-        if looks_like_price_line(ln):
-            price_raw = ln.strip()
-            break
+        t = clean_line(ln)
+        if looks_like_size_line(t):
+            return t
+    return ""
 
-    size_line = ""
-    for ln in lines:
-        if looks_like_size_line(ln):
-            size_line = ln.strip()
-            break
+# ----------------------------
+# DB write: one product per media_group (album)
+# ----------------------------
+def upsert_product(
+    message_id: int,
+    media_group_id: Optional[str],
+    date_iso: Optional[str],
+    brand: str,
+    price_raw: str,
+    caption: str,
+    file_ids: List[str],
+):
+    # Берём главный файл = первый
+    file_id = file_ids[0] if file_ids else None
+    ts = int(time.time())
 
-    # Caption should be sizes only (as you wanted), emojis can stay in raw_text but sizes ok with emojis too.
-    caption = size_line
-
-    return {
+    payload = {
+        "message_id": message_id,
+        "date": date_iso,
         "brand": brand,
         "price_raw": price_raw,
         "caption": caption,
+        "file_id": file_id,
+        "file_ids": file_ids,
+        "media_group_id": media_group_id,
+        "ts": ts,
     }
 
+    # Если есть media_group_id — делаем “альбом = 1 товар” через upsert по media_group_id.
+    # Но в таблице unique на message_id, поэтому:
+    # - сначала ищем запись по media_group_id
+    # - если есть → update (append file_ids)
+    # - если нет → insert
+    if media_group_id:
+        try:
+            existing = (
+                table()
+                .select("id,file_ids,brand,price_raw,caption,file_id,message_id")
+                .eq("media_group_id", media_group_id)
+                .limit(1)
+                .execute()
+            )
+            rows = existing.data or []
+            if rows:
+                row = rows[0]
+                merged = []
+                old = row.get("file_ids") or []
+                if isinstance(old, list):
+                    merged.extend(old)
+                for fid in file_ids:
+                    if fid not in merged:
+                        merged.append(fid)
 
-# ----------------- SUPABASE HELPERS -----------------
-def upsert_product(row: Dict[str, Any]) -> None:
-    # Ensure file_ids is jsonb array
-    if "file_ids" in row and isinstance(row["file_ids"], list):
-        row["file_ids"] = row["file_ids"]  # supabase-py will serialize
-    sb.table(SUPABASE_TABLE).upsert(row, on_conflict="message_id").execute()
+                upd = {
+                    "ts": ts,
+                    "file_ids": merged,
+                    "file_id": merged[0] if merged else row.get("file_id"),
+                    # не затираем, если уже норм
+                    "brand": brand or row.get("brand"),
+                    "price_raw": price_raw or row.get("price_raw"),
+                    "caption": caption or row.get("caption"),
+                }
+                table().update(upd).eq("id", row["id"]).execute()
+                return
 
+        except Exception as e:
+            app.logger.exception("media_group lookup failed: %s", e)
 
-def get_product_by_message_id(message_id: int) -> Optional[Dict[str, Any]]:
-    res = sb.table(SUPABASE_TABLE).select("*").eq("message_id", message_id).limit(1).execute()
-    data = getattr(res, "data", None) or []
-    return data[0] if data else None
+    # иначе обычный insert
+    try:
+        table().upsert(payload, on_conflict="message_id").execute()
+    except Exception as e:
+        app.logger.exception("upsert failed: %s", e)
+        raise
 
-
-def get_product_by_media_group(media_group_id: str) -> Optional[Dict[str, Any]]:
-    res = sb.table(SUPABASE_TABLE).select("*").eq("media_group_id", media_group_id).order("id", desc=True).limit(1).execute()
-    data = getattr(res, "data", None) or []
-    return data[0] if data else None
-
-
-# ----------------- TELEGRAM HELPERS -----------------
-def tg_get_file_path(file_id: str) -> str:
-    r = requests.get(f"{TG_API}/getFile", params={"file_id": file_id}, timeout=20)
-    r.raise_for_status()
-    j = r.json()
-    if not j.get("ok"):
-        raise RuntimeError(f"getFile failed: {j}")
-    return j["result"]["file_path"]
-
-
-def pick_best_photo_file_id(message: Dict[str, Any]) -> Optional[str]:
-    photos = message.get("photo") or []
-    if not photos:
-        return None
-    # Telegram gives multiple sizes; take the biggest (last usually)
-    best = photos[-1]
-    return best.get("file_id")
-
-
-# ----------------- FLASK APP -----------------
-app = Flask(__name__, static_folder="templates", static_url_path="")
-
+# ----------------------------
+# Routes
+# ----------------------------
 @app.get("/")
 def index():
-    return send_from_directory("templates", "index.html")
-
+    return render_template("index.html")
 
 @app.get("/api/buy_target")
 def buy_target():
-    return jsonify({
-        "telegram": BUY_TELEGRAM,
-        "whatsapp": BUY_WHATSAPP,
-    })
+    return jsonify({"telegram": BUY_TELEGRAM, "whatsapp": BUY_WHATSAPP})
 
+@app.get("/api/health")
+def health():
+    ok = True
+    err = None
+    try:
+        _ = sb()  # init
+    except Exception as e:
+        ok = False
+        err = str(e)
+    return jsonify({"ok": ok, "error": err})
 
 @app.get("/api/products")
 def api_products():
     """
     Returns list of products:
-    brand, price_raw, caption, file_ids[], file_id, id
-    Supports ?q= and ?brand= and pagination: limit/offset
+    - supports limit/offset/q/brand
+    - sorted newest first (ts if exists, else created_at/date)
     """
+    limit = int(request.args.get("limit", "30"))
+    offset = int(request.args.get("offset", "0"))
     q = (request.args.get("q") or "").strip()
     brand = (request.args.get("brand") or "").strip()
-    limit = int(request.args.get("limit") or 30)
-    offset = int(request.args.get("offset") or 0)
-
-    # IMPORTANT: we sort by ts (if exists), else by date/created_at
-    query = sb.table(SUPABASE_TABLE).select("id,brand,price_raw,caption,file_id,file_ids,raw_text,ts,date,created_at")
-
-    if brand:
-        b = brand.lstrip("#").strip()
-        # case-insensitive contains
-        query = query.ilike("brand", f"%{b}%")
-
-    if q:
-        # search in raw_text OR brand OR price_raw
-        # Supabase filters: use "or" syntax
-        q_esc = q.replace(",", " ")
-        query = query.or_(f"raw_text.ilike.%{q_esc}%,brand.ilike.%{q_esc}%,price_raw.ilike.%{q_esc}%")
-
-    # order: ts desc if present, else date desc, else created_at desc
-    # Supabase needs a column. We'll do ts desc first; if null it will go last, acceptable.
-    query = query.order("ts", desc=True).order("date", desc=True).order("created_at", desc=True)
-
-    res = query.range(offset, offset + limit - 1).execute()
-    data = getattr(res, "data", None) or []
-
-    # Normalize output: ensure file_ids is list
-    out = []
-    for p in data:
-        fids = p.get("file_ids")
-        if isinstance(fids, str):
-            try:
-                fids = json.loads(fids)
-            except:
-                fids = None
-        if not isinstance(fids, list):
-            fids = []
-            if p.get("file_id"):
-                fids = [p["file_id"]]
-
-        out.append({
-            "id": p.get("id"),
-            "brand": p.get("brand") or "",
-            "price_raw": p.get("price_raw") or "",
-            "caption": p.get("caption") or "",
-            "file_id": p.get("file_id") or (fids[0] if fids else ""),
-            "file_ids": fids,
-            "ts": p.get("ts"),
-        })
-
-    return jsonify(out)
-
-
-@app.get("/img/<path:file_id>")
-def img_proxy(file_id: str):
-    """
-    Proxy Telegram file by file_id.
-    Browser loads /img/<file_id> and we stream the file from Telegram.
-    """
-    if not BOT_TOKEN:
-        abort(500, "BOT_TOKEN not set")
+    if brand.startswith("#"):
+        brand = brand[1:]
 
     try:
-        file_path = tg_get_file_path(file_id)
-        url = f"{TG_FILE}/{file_path}"
-        rr = requests.get(url, stream=True, timeout=60)
-        rr.raise_for_status()
+        sel = "id,brand,price_raw,caption,file_id,file_ids,media_group_id,ts,created_at,date"
+        qb = table().select(sel)
 
-        # Telegram usually returns image/jpeg
-        ctype = rr.headers.get("Content-Type", "image/jpeg")
-        return Response(rr.iter_content(chunk_size=1024 * 64), content_type=ctype)
+        if brand:
+            qb = qb.ilike("brand", f"%{brand}%")
+
+        if q:
+            # ищем по brand/price_raw/caption
+            qb = qb.or_(f"brand.ilike.%{q}%,price_raw.ilike.%{q}%,caption.ilike.%{q}%")
+
+        # order: try ts, else created_at, else date
+        try:
+            qb2 = qb.order("ts", desc=True).range(offset, offset + limit - 1)
+            data = qb2.execute().data or []
+        except Exception:
+            try:
+                qb2 = qb.order("created_at", desc=True).range(offset, offset + limit - 1)
+                data = qb2.execute().data or []
+            except Exception:
+                qb2 = qb.order("date", desc=True).range(offset, offset + limit - 1)
+                data = qb2.execute().data or []
+
+        # normalize output
+        out = []
+        for r in data:
+            out.append({
+                "id": str(r.get("id") or ""),
+                "brand": r.get("brand") or "ITEM",
+                "price_raw": r.get("price_raw") or "",
+                "caption": r.get("caption") or "",
+                "file_id": r.get("file_id"),
+                "file_ids": r.get("file_ids") or ([r.get("file_id")] if r.get("file_id") else []),
+                "media_group_id": r.get("media_group_id"),
+                "ts": r.get("ts"),
+            })
+        return jsonify(out)
+
     except Exception as e:
-        return Response("not found", status=404)
+        app.logger.exception("api_products_failed: %s", e)
+        return jsonify({
+            "error": "api_products_failed",
+            "hint": "Проверь SUPABASE_URL / SUPABASE_KEY / RLS policy / таблицу products",
+            "details": str(e)
+        }), 500
 
+@app.get("/img/<file_id>")
+def proxy_img(file_id: str):
+    """
+    Proxies telegram images by file_id
+    """
+    if not BOT_TOKEN:
+        abort(500, "BOT_TOKEN missing")
+    file_path = tg_get_file(file_id)
+    if not file_path:
+        abort(404)
+    url = tg_file_url(file_path)
+    r = requests.get(url, timeout=25)
+    if not r.ok:
+        abort(404)
+    # Telegram returns image/jpeg usually
+    ct = r.headers.get("content-type", "image/jpeg")
+    return Response(r.content, mimetype=ct, headers={"Cache-Control": "public, max-age=86400"})
 
-@app.post("/telegram")
-def telegram_webhook():
-    # Optional security: header check (Telegram supports secret token)
-    if WEBHOOK_SECRET:
-        got = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-        if got != WEBHOOK_SECRET:
-            return jsonify({"ok": True})  # silently ignore
-
-    upd = request.get_json(silent=True) or {}
-    msg = upd.get("message") or upd.get("channel_post") or upd.get("edited_channel_post") or upd.get("edited_message")
+@app.post(f"/webhook/{WEBHOOK_SECRET}")
+def webhook():
+    """
+    Telegram webhook receiver.
+    Takes photos + caption, parses brand/price/sizes, writes to Supabase.
+    """
+    update = request.get_json(silent=True) or {}
+    msg = update.get("message") or update.get("channel_post") or {}
     if not msg:
         return jsonify({"ok": True})
 
     message_id = msg.get("message_id")
-    if not message_id:
+    date = msg.get("date")  # unix
+    date_iso = None
+    if isinstance(date, int):
+        date_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(date))
+
+    media_group_id = msg.get("media_group_id")
+
+    text = msg.get("caption") or msg.get("text") or ""
+    lines = [clean_line(x) for x in str(text).splitlines()]
+    lines = [x for x in lines if x is not None]
+
+    brand = extract_brand(lines)
+    price_raw = extract_price_raw(lines)
+    sizes = extract_sizes_caption(lines)
+
+    # фото
+    file_ids: List[str] = []
+    photos = msg.get("photo") or []
+    if photos:
+        # самое большое фото - последний элемент
+        best = photos[-1]
+        fid = best.get("file_id")
+        if fid:
+            file_ids.append(fid)
+
+    # иногда альбом прилетает как document? (на всякий)
+    if not file_ids and msg.get("document"):
+        fid = msg["document"].get("file_id")
+        if fid:
+            file_ids.append(fid)
+
+    # caption в каталоге = только размеры (как ты просила)
+    caption = sizes
+
+    # анти-мусор
+    if brand.lower() in ("orders", "order", "item") and not price_raw and not caption and not file_ids:
         return jsonify({"ok": True})
 
-    media_group_id = msg.get("media_group_id")  # albums share this
-    caption = msg.get("caption") or msg.get("text") or ""
-    # combine text pieces if needed
-    raw_text = caption.strip()
+    try:
+        upsert_product(
+            message_id=int(message_id),
+            media_group_id=str(media_group_id) if media_group_id else None,
+            date_iso=date_iso,
+            brand=brand,
+            price_raw=price_raw,
+            caption=caption,
+            file_ids=file_ids,
+        )
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
-    # best photo
-    file_id = pick_best_photo_file_id(msg)
-
-    # Parse brand/price/sizes
-    parsed = parse_text(raw_text)
-
-    # timestamp
-    dt = msg.get("date")  # unix seconds
-    ts = int(dt) if isinstance(dt, int) else int(time.time())
-
-    # If it's an album: store as ONE product by media_group_id,
-    # but we still need a numeric message_id unique key in schema. We'll keep:
-    # - message_id = first message_id we saw for the album (stored row)
-    # - media_group_id = album id
-    if media_group_id:
-        existing = get_product_by_media_group(media_group_id)
-        if existing:
-            # merge file_ids
-            fids = existing.get("file_ids")
-            if isinstance(fids, str):
-                try:
-                    fids = json.loads(fids)
-                except:
-                    fids = []
-            if not isinstance(fids, list):
-                fids = []
-            if file_id and file_id not in fids:
-                fids.append(file_id)
-
-            # keep the richest text/brand/price
-            brand = existing.get("brand") or parsed["brand"]
-            price_raw = existing.get("price_raw") or parsed["price_raw"]
-            cap = existing.get("caption") or parsed["caption"]
-            raw = existing.get("raw_text") or raw_text
-
-            row = {
-                "id": existing.get("id"),
-                "message_id": existing.get("message_id"),
-                "media_group_id": media_group_id,
-                "brand": brand or "",
-                "price_raw": price_raw or "",
-                "caption": cap or "",
-                "raw_text": raw or "",
-                "file_id": existing.get("file_id") or file_id or "",
-                "file_ids": fids,
-                "ts": existing.get("ts") or ts,
-            }
-            sb.table(SUPABASE_TABLE).upsert(row, on_conflict="message_id").execute()
-            return jsonify({"ok": True})
-
-        # new album row (first photo in album)
-        row = {
-            "message_id": int(message_id),
-            "media_group_id": media_group_id,
-            "date": None,
-            "brand": parsed["brand"] or "",
-            "price_raw": parsed["price_raw"] or "",
-            "caption": parsed["caption"] or "",
-            "raw_text": raw_text or "",
-            "file_id": file_id or "",
-            "file_ids": [file_id] if file_id else [],
-            "ts": ts,
-        }
-        upsert_product(row)
-        return jsonify({"ok": True})
-
-    # Not album: one message = one product
-    row = {
-        "message_id": int(message_id),
-        "media_group_id": None,
-        "date": None,
-        "brand": parsed["brand"] or "",
-        "price_raw": parsed["price_raw"] or "",
-        "caption": parsed["caption"] or "",
-        "raw_text": raw_text or "",
-        "file_id": file_id or "",
-        "file_ids": [file_id] if file_id else [],
-        "ts": ts,
-    }
-    upsert_product(row)
     return jsonify({"ok": True})
 
-
-@app.get("/health")
-def health():
-    return "ok"
-
-
-@app.get("/setup_webhook")
-def setup_webhook():
-    """
-    One-time helper. Open:
-    https://<service>.onrender.com/setup_webhook
-    """
-    if not WEBHOOK_URL:
-        return "WEBHOOK_URL env is empty", 400
-    payload = {"url": WEBHOOK_URL}
-    if WEBHOOK_SECRET:
-        payload["secret_token"] = WEBHOOK_SECRET
-    r = requests.get(f"{TG_API}/setWebhook", params=payload, timeout=20)
-    return jsonify(r.json())
+# Export for gunicorn
+# gunicorn app:app
