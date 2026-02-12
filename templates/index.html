@@ -7,73 +7,70 @@
 
   <style>
     :root{
-      --bg:#fafafb;
+      --bg:#fbfbfd;
       --card:#ffffff;
-      --border:#e9e9ef;
-      --muted:#6b6f7a;
-      --radius:18px;
+      --border:#ececf2;
+      --text:#111;
+      --muted:#6b6f76;
+      --radius:22px;
       --gap:12px;
-      --shadow: 0 10px 28px rgba(15,15,25,.08);
+      --shadow: 0 10px 26px rgba(10,10,20,.06);
     }
     *{ box-sizing:border-box; }
     body{
       margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       background:var(--bg);
-      color:#111;
+      color:var(--text);
     }
+
     header{
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      background: rgba(250,250,251,.92);
+      position:sticky; top:0; z-index:50;
+      background: rgba(251,251,253,.92);
       backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border);
+      border-bottom:1px solid var(--border);
+      padding: 12px 12px 10px;
     }
-    .row{
-      display:flex;
-      gap:10px;
-      padding: 12px;
-      align-items:center;
-    }
-    .row input{
-      flex: 1;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      font-size: 16px;
-      outline: none;
+    .row{ display:flex; gap:10px; align-items:center; }
+    .row + .row{ margin-top:10px; }
+    input{
+      flex:1;
+      padding: 13px 14px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      font-size:16px;
+      outline:none;
       background:#fff;
     }
-    .row button{
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      font-size: 16px;
+    button{
+      padding: 13px 14px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      font-size:16px;
       background:#f2f3f7;
-      cursor: pointer;
-      white-space: nowrap;
+      cursor:pointer;
+      white-space:nowrap;
     }
     .hint{
-      padding: 0 12px 12px;
+      margin-top:10px;
       color:var(--muted);
-      font-size: 14px;
+      font-size:14px;
+      padding-left:2px;
     }
 
-    main{ padding: 12px; }
-
+    main{ padding:12px; }
     .grid{
       display:grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0,1fr));
       gap: var(--gap);
     }
     @media (min-width: 900px){
-      .grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .grid{ grid-template-columns: repeat(4, minmax(0,1fr)); }
     }
 
     .card{
       background:var(--card);
-      border: 1px solid var(--border);
+      border:1px solid var(--border);
       border-radius: var(--radius);
       overflow:hidden;
       box-shadow: var(--shadow);
@@ -81,14 +78,13 @@
 
     .imgwrap{
       width:100%;
-      aspect-ratio: 3 / 4;
+      aspect-ratio: 3/4;
       background:#f1f2f6;
       display:flex;
       align-items:center;
       justify-content:center;
-      overflow:hidden;
-      position: relative;
-      cursor: pointer;
+      position:relative;
+      cursor:pointer;
     }
     .imgwrap img{
       width:100%;
@@ -99,44 +95,48 @@
     }
     .imgbadge{
       position:absolute;
-      right:10px;
-      top:10px;
+      right:10px; top:10px;
       background: rgba(0,0,0,.55);
       color:#fff;
-      padding: 6px 10px;
+      padding:6px 10px;
       border-radius: 999px;
-      font-weight: 700;
-      font-size: 12px;
-      backdrop-filter: blur(8px);
+      font-weight:700;
+      font-size:13px;
+      backdrop-filter: blur(6px);
     }
+    .imgfallback{ color:#9aa0a6; font-size:14px; }
 
-    .meta{ padding: 12px; }
+    .meta{ padding: 12px 12px 14px; }
     .brand{
       font-weight: 900;
-      letter-spacing: .3px;
-      font-size: 18px;
+      letter-spacing:.3px;
       text-transform: uppercase;
-      margin-bottom: 6px;
+      font-size: 18px;
+      line-height:1.1;
     }
     .price{
+      margin-top:8px;
       font-weight: 900;
-      font-size: 26px;
-      line-height: 1.05;
-      word-break: break-word;
+      font-size: 24px;
+      line-height:1.05;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;          /* чтобы не ломало цену */
+      overflow: hidden;
+      text-overflow: ellipsis;      /* если супер-длинно */
     }
     .cap{
-      margin-top: 10px;
-      color:#111;
+      margin-top:8px;
+      color: var(--text);
       font-size: 15px;
-      line-height: 1.25;
+      line-height:1.25;
       white-space: pre-wrap;
       word-break: break-word;
     }
 
     .actions{
+      margin-top: 12px;
       display:flex;
       gap:10px;
-      margin-top: 12px;
     }
     .btn{
       flex:1;
@@ -144,17 +144,18 @@
       align-items:center;
       justify-content:center;
       padding: 12px 10px;
-      border-radius: 16px;
-      font-weight: 800;
-      font-size: 14px;
-      text-decoration: none;
+      border-radius: 18px;
+      font-weight: 900;
+      font-size: 15px;
+      text-decoration:none;
       user-select:none;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
+      line-height:1.1;
+      text-align:center;
+      min-height: 46px;             /* чтобы текст НЕ вылезал */
+      white-space: normal;          /* разрешаем перенос */
     }
-    .btn-tg{ background:#111; color:#fff; border: 1px solid #111; }
-    .btn-wa{ background:#fff; color:#111; border: 2px solid #111; }
+    .btn-tg{ background:#111; color:#fff; border:1px solid #111; }
+    .btn-wa{ background:#fff; color:#111; border:2px solid #111; }
 
     .more{
       margin: 14px 0 30px;
@@ -162,116 +163,106 @@
       justify-content:center;
     }
     .more button{
-      padding: 12px 16px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
       background:#fff;
-      font-weight: 700;
-      cursor:pointer;
+      font-weight:800;
     }
 
     /* ===== LUXURY VIEWER (modal) ===== */
     .viewer{
-      position: fixed;
-      inset: 0;
+      position:fixed; inset:0;
       background: rgba(0,0,0,.86);
       display:none;
-      z-index: 999;
-      padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom) 12px;
+      z-index:999;
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
     }
-    .viewer.show{ display:block; }
+    .viewer.on{ display:block; }
 
-    .viewerTop{
+    .viewer-top{
+      position:absolute; top: env(safe-area-inset-top);
+      left:0; right:0;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding: 10px 12px;
+      pointer-events:none;
+    }
+    .viewer-btn{
+      pointer-events:auto;
+      border:0;
+      background: rgba(255,255,255,.12);
+      color:#fff;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 900;
+    }
+    .viewer-count{
+      pointer-events:auto;
+      background: rgba(255,255,255,.12);
+      color:#fff;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 900;
+    }
+
+    .stage{
+      position:absolute; inset:0;
       display:flex;
       align-items:center;
-      justify-content: space-between;
-      padding: 10px 6px;
-      color:#fff;
+      justify-content:center;
+      padding: 60px 14px 110px;
     }
-    .viewerBtn{
-      width:42px;
-      height:42px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.18);
+
+    .stage img{
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 10px;
+      background:#111;
+    }
+
+    .nav{
+      position:absolute; top:50%;
+      transform: translateY(-50%);
+      width: 46px; height: 46px;
+      border-radius: 999px;
+      border:0;
+      background: rgba(255,255,255,.14);
       color:#fff;
-      font-size: 20px;
+      font-size: 26px;
+      font-weight:900;
       display:flex;
       align-items:center;
       justify-content:center;
       cursor:pointer;
-      user-select:none;
     }
-    .viewerCount{
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.18);
-      font-weight: 800;
-    }
-
-    .viewerStage{
-      height: calc(100vh - 140px);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      position: relative;
-      overflow:hidden;
-      touch-action: pan-y;
-    }
-
-    .viewerImg{
-      max-width: 92vw;
-      max-height: calc(100vh - 190px);
-      border-radius: 16px;
-      background:#fff;
-      box-shadow: 0 18px 60px rgba(0,0,0,.35);
-    }
-
-    .navSide{
-      position:absolute;
-      top: 0;
-      bottom: 0;
-      width: 24%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:#fff;
-      font-size: 28px;
-      opacity:.9;
-      user-select:none;
-    }
-    .navLeft{ left:0; }
-    .navRight{ right:0; }
-    .navSide span{
-      width:48px;height:48px;border-radius: 18px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.14);
-      display:flex;align-items:center;justify-content:center;
-    }
+    .nav.left{ left:10px; }
+    .nav.right{ right:10px; }
 
     .thumbs{
+      position:absolute; left:0; right:0; bottom: env(safe-area-inset-bottom);
+      padding: 10px 10px 14px;
       display:flex;
       gap:10px;
       overflow:auto;
-      padding: 12px 6px;
       -webkit-overflow-scrolling: touch;
     }
     .thumb{
-      width:54px;
-      height:54px;
+      width: 62px; height: 62px;
       border-radius: 14px;
       overflow:hidden;
-      border: 2px solid rgba(255,255,255,.20);
-      flex: 0 0 auto;
-      background: rgba(255,255,255,.06);
+      border:2px solid rgba(255,255,255,.16);
+      flex:0 0 auto;
+      background: rgba(255,255,255,.08);
       cursor:pointer;
     }
-    .thumb.active{
+    .thumb img{
+      width:100%; height:100%;
+      object-fit: cover;
+      display:block;
+    }
+    .thumb.on{
       border-color: rgba(255,255,255,.95);
     }
-    .thumb img{ width:100%; height:100%; object-fit: cover; display:block; }
-
   </style>
 </head>
 
@@ -280,245 +271,5 @@
     <div class="row">
       <input id="q" placeholder="Поиск (текст/описание)" />
     </div>
-    <div class="row" style="padding-top:0">
+    <div class="row">
       <input id="brand" placeholder="Бренд (например dior)" />
-      <button onclick="resetAndLoad()">Найти</button>
-    </div>
-    <div class="hint">Совет: бренд можно вводить как “dior” без #</div>
-  </header>
-
-  <main>
-    <div class="grid" id="grid"></div>
-    <div class="more">
-      <button id="moreBtn" onclick="loadMore()">Показать ещё</button>
-    </div>
-  </main>
-
-  <!-- Viewer -->
-  <div class="viewer" id="viewer">
-    <div class="viewerTop">
-      <div class="viewerBtn" onclick="closeViewer()">×</div>
-      <div class="viewerCount" id="viewerCount">1/1</div>
-      <div style="width:42px"></div>
-    </div>
-
-    <div class="viewerStage" id="viewerStage">
-      <div class="navSide navLeft" onclick="prevImg()"><span>‹</span></div>
-      <img id="viewerImg" class="viewerImg" src="" alt="">
-      <div class="navSide navRight" onclick="nextImg()"><span>›</span></div>
-    </div>
-
-    <div class="thumbs" id="thumbs"></div>
-  </div>
-
-  <script>
-    let offset = 0;
-    const limit = 30;
-    let buyTelegram = "";
-    let buyWhatsapp = "393463203783";
-    let loading = false;
-
-    // viewer state
-    let V = { files: [], idx: 0 };
-
-    async function getBuyTarget(){
-      try{
-        const r = await fetch("/api/buy_target");
-        const j = await r.json();
-        buyTelegram = (j.telegram || "").trim();
-        buyWhatsapp = (j.whatsapp || buyWhatsapp).trim();
-      }catch(e){}
-    }
-
-    function escapeHtml(str){
-      return (str || "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#39;");
-    }
-
-    function buildTelegramLink(p){
-      const text = `Здравствуйте! Хочу заказать:\n\n${p.brand || ""}\n${p.price_raw || ""}\n${p.caption || ""}`.slice(0, 900);
-      const encoded = encodeURIComponent(text);
-      if (buyTelegram){
-        return `https://t.me/${buyTelegram}?text=${encoded}`;
-      }
-      return `https://t.me/share/url?url=&text=${encoded}`;
-    }
-
-    function buildWhatsappLink(p){
-      const text = `Здравствуйте! Хочу заказать:\n\n${p.brand || ""}\n${p.price_raw || ""}\n${p.caption || ""}`.slice(0, 900);
-      const encoded = encodeURIComponent(text);
-      return `https://wa.me/${buyWhatsapp}?text=${encoded}`;
-    }
-
-    function imgSrc(file_id){
-      return `/img/${encodeURIComponent(file_id)}`;
-    }
-
-    function card(p){
-      const brand = (p.brand || "").trim();
-      const showBrand = brand ? brand.toUpperCase() : "";
-      const files = (p.file_ids && p.file_ids.length) ? p.file_ids : (p.file_id ? [p.file_id] : []);
-
-      const badge = files.length > 1 ? `<div class="imgbadge">${files.length}</div>` : "";
-      const img = files.length
-        ? `<img src="${imgSrc(files[0])}" alt="" loading="lazy">`
-        : `<div style="color:#999;font-weight:700">Фото</div>`;
-
-      const cap = p.caption ? `<div class="cap">${escapeHtml(p.caption)}</div>` : "";
-
-      const tg = buildTelegramLink(p);
-      const wa = buildWhatsappLink(p);
-
-      return `
-        <div class="card">
-          <div class="imgwrap" onclick='openViewer(${JSON.stringify(files).replaceAll("'","\\'")})'>
-            ${img}
-            ${badge}
-          </div>
-          <div class="meta">
-            <div class="brand">${escapeHtml(showBrand || " ")}</div>
-            <div class="price">${escapeHtml(p.price_raw || " ")}</div>
-            ${cap}
-            <div class="actions">
-              <a class="btn btn-tg" href="${tg}" target="_blank" rel="noopener">Купить в Telegram</a>
-              <a class="btn btn-wa" href="${wa}" target="_blank" rel="noopener">Купить в WhatsApp</a>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    async function fetchProducts(){
-      const q = document.getElementById("q").value.trim();
-      const brand = document.getElementById("brand").value.trim();
-
-      const url = new URL(location.origin + "/api/products");
-      url.searchParams.set("limit", String(limit));
-      url.searchParams.set("offset", String(offset));
-      if (q) url.searchParams.set("q", q);
-      if (brand) url.searchParams.set("brand", brand);
-
-      const r = await fetch(url.toString());
-      if (!r.ok) throw new Error("API error");
-      return await r.json();
-    }
-
-    async function loadMore(){
-      if (loading) return;
-      loading = true;
-
-      const btn = document.getElementById("moreBtn");
-      btn.disabled = true;
-      btn.textContent = "Загружаю…";
-
-      try{
-        const data = await fetchProducts();
-        const grid = document.getElementById("grid");
-
-        data.forEach(p => grid.insertAdjacentHTML("beforeend", card(p)));
-        offset += data.length;
-
-        btn.style.display = (data.length < limit) ? "none" : "inline-block";
-      }catch(e){
-        alert("Не удалось загрузить товары. Проверь /api/products");
-      }finally{
-        btn.disabled = false;
-        btn.textContent = "Показать ещё";
-        loading = false;
-      }
-    }
-
-    async function resetAndLoad(){
-      offset = 0;
-      document.getElementById("grid").innerHTML = "";
-      document.getElementById("moreBtn").style.display = "inline-block";
-      await loadMore();
-    }
-
-    // ===== Viewer (Farfetch-style) =====
-    function openViewer(files){
-      if (!files || !files.length) return;
-      V.files = files;
-      V.idx = 0;
-      document.getElementById("viewer").classList.add("show");
-      renderViewer();
-      buildThumbs();
-
-      // lock background scroll
-      document.body.style.overflow = "hidden";
-    }
-
-    function closeViewer(){
-      document.getElementById("viewer").classList.remove("show");
-      document.body.style.overflow = "";
-    }
-
-    function renderViewer(){
-      const src = imgSrc(V.files[V.idx]);
-      document.getElementById("viewerImg").src = src;
-      document.getElementById("viewerCount").textContent = `${V.idx+1}/${V.files.length}`;
-      // thumbs active
-      const thumbs = document.querySelectorAll(".thumb");
-      thumbs.forEach((t,i)=> t.classList.toggle("active", i===V.idx));
-    }
-
-    function buildThumbs(){
-      const wrap = document.getElementById("thumbs");
-      wrap.innerHTML = "";
-      V.files.forEach((fid,i)=>{
-        const el = document.createElement("div");
-        el.className = "thumb" + (i===0 ? " active" : "");
-        el.innerHTML = `<img src="${imgSrc(fid)}" alt="">`;
-        el.onclick = ()=>{ V.idx=i; renderViewer(); };
-        wrap.appendChild(el);
-      });
-    }
-
-    function prevImg(){
-      if (!V.files.length) return;
-      V.idx = (V.idx - 1 + V.files.length) % V.files.length;
-      renderViewer();
-    }
-    function nextImg(){
-      if (!V.files.length) return;
-      V.idx = (V.idx + 1) % V.files.length;
-      renderViewer();
-    }
-
-    // swipe support
-    (function(){
-      const stage = document.getElementById("viewerStage");
-      let x0 = null;
-      stage.addEventListener("touchstart", (e)=>{
-        if (!e.touches || !e.touches[0]) return;
-        x0 = e.touches[0].clientX;
-      }, {passive:true});
-      stage.addEventListener("touchend", (e)=>{
-        if (x0 === null) return;
-        const x1 = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : null;
-        if (x1 === null) { x0=null; return; }
-        const dx = x1 - x0;
-        if (Math.abs(dx) > 45){
-          if (dx > 0) prevImg();
-          else nextImg();
-        }
-        x0 = null;
-      }, {passive:true});
-    })();
-
-    // close viewer on background tap (not on image)
-    document.getElementById("viewer").addEventListener("click", (e)=>{
-      if (e.target.id === "viewer") closeViewer();
-    });
-
-    (async () => {
-      await getBuyTarget();
-      await resetAndLoad();
-    })();
-  </script>
-</body>
-</html>
