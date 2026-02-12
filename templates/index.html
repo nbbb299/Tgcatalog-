@@ -2,47 +2,47 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Каталог</title>
 
   <style>
     :root{
-      --gap: 12px;
-      --radius: 18px;
-      --border: #e9e9ef;
-      --bg: #fafafb;
-      --card: #fff;
-      --text: #111;
-      --muted: #666;
+      --bg:#fafafb;
+      --card:#fff;
+      --text:#111;
+      --muted:#6b6f7a;
+      --border:#e9e9ef;
+      --radius:18px;
+      --gap:12px;
+      --shadow: 0 8px 28px rgba(12,14,20,.08);
+      --btnRadius: 18px;
     }
-
-    *{ box-sizing: border-box; }
+    *{ box-sizing:border-box; }
     body{
       margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background: var(--bg);
-      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
-
     header{
       position: sticky;
       top: 0;
+      z-index: 50;
       background: rgba(250,250,251,.92);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--border);
-      z-index: 10;
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--border);
+      padding-bottom: 6px;
     }
-
     .row{
       display:flex;
       gap:10px;
       padding: 12px;
       align-items:center;
     }
-
     .row input{
       flex: 1;
-      min-width: 0;
       padding: 12px 14px;
       border: 1px solid var(--border);
       border-radius: 14px;
@@ -50,7 +50,6 @@
       outline: none;
       background:#fff;
     }
-
     .row button{
       padding: 12px 14px;
       border: 1px solid var(--border);
@@ -60,87 +59,68 @@
       cursor: pointer;
       white-space: nowrap;
     }
-
     .hint{
       padding: 0 12px 12px;
-      color: var(--muted);
+      color:var(--muted);
       font-size: 14px;
     }
 
     main{ padding: 12px; }
-
     .grid{
       display:grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: var(--gap);
     }
-
     @media (min-width: 900px){
       .grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
     }
 
     .card{
-      background: var(--card);
+      background:var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow:hidden;
-      box-shadow: 0 6px 22px rgba(15,15,25,.05);
-      display:flex;
-      flex-direction: column;
-      min-width: 0;
+      box-shadow: var(--shadow);
     }
-
     .imgwrap{
-      width:100%;
+      width: 100%;
       aspect-ratio: 3 / 4;
       background:#f1f2f6;
       display:flex;
       align-items:center;
       justify-content:center;
-      position: relative;
-      overflow:hidden;
-      cursor: pointer;
+      position:relative;
+      cursor:pointer;
+      user-select:none;
     }
-
     .imgwrap img{
       width:100%;
       height:100%;
       object-fit: cover;
       display:block;
+      transform: translateZ(0);
     }
+    .imgfallback{ color:#9aa0aa; font-size:14px; }
 
-    .imgfallback{
-      color:#999;
-      font-size: 14px;
-    }
-
-    .meta{
-      padding: 12px;
-      display:flex;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 0;
-    }
-
+    .meta{ padding: 12px; }
     .brand{
       font-weight: 900;
       letter-spacing: .2px;
       font-size: 18px;
       text-transform: uppercase;
-      line-height: 1.15;
-      word-break: break-word;
+      line-height: 1.1;
     }
-
     .price{
+      margin-top: 6px;
       font-weight: 900;
-      font-size: 20px;
-      line-height: 1.15;
+      font-size: 26px;
+      line-height: 1.1;
       word-break: break-word;
     }
-
     .sizes{
-      font-size: 15px;
+      margin-top: 8px;
       color: var(--text);
+      font-size: 15px;
       line-height: 1.25;
       white-space: pre-wrap;
       word-break: break-word;
@@ -149,50 +129,28 @@
     .actions{
       display:flex;
       gap:10px;
-      margin-top: 6px;
-      width: 100%;
+      margin-top: 12px;
     }
-
     .btn{
       flex: 1;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding: 11px 10px;
-      border-radius: 16px;
+      padding: 12px;
+      border-radius: var(--btnRadius);
       font-weight: 800;
-      font-size: 13px;
-      text-decoration: none;
+      font-size: 14px;
+      text-decoration:none;
       user-select:none;
+      white-space: nowrap;
       min-width: 0;
-      white-space: normal;
-      text-align: center;
-      line-height: 1.15;
+      text-align:center;
+      line-height: 1.1;
     }
+    .btn-tg{ background:#111; color:#fff; border: 1px solid #111; }
+    .btn-wa{ background:#fff; color:#111; border: 2px solid #111; }
 
-    .btn-tg{
-      background:#111;
-      color:#fff;
-      border: 1px solid #111;
-    }
-
-    .btn-wa{
-      background:#fff;
-      color:#111;
-      border: 2px solid #111;
-    }
-
-    @media (max-width: 380px){
-      .actions{ flex-direction: column; }
-      .btn{ width: 100%; }
-    }
-
-    .more{
-      margin: 14px 0 30px;
-      display:flex;
-      justify-content:center;
-    }
-
+    .more{ margin: 14px 0 30px; display:flex; justify-content:center; }
     .more button{
       padding: 12px 16px;
       border: 1px solid var(--border);
@@ -202,492 +160,413 @@
       cursor:pointer;
     }
 
-    .empty{
-      color: var(--muted);
-      text-align:center;
-      padding: 18px 0 8px;
+    /* ---------- Luxury Viewer (fullscreen) ---------- */
+    .viewer{
+      position: fixed;
+      inset: 0;
+      background: rgba(10,12,16,.86);
+      display:none;
+      z-index: 9999;
+    }
+    .viewer.show{ display:block; }
+    .viewer-top{
+      position:absolute;
+      left:0; right:0; top:0;
+      padding: env(safe-area-inset-top) 14px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      height: calc(env(safe-area-inset-top) + 56px);
+    }
+    .viewer-btn{
+      width:44px; height:44px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(20,22,28,.55);
+      color:#fff;
+      font-size: 22px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .viewer-count{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(20,22,28,.55);
+      color:#fff;
+      font-weight: 800;
       font-size: 14px;
     }
 
-    /* =========================
-       LUXURY VIEWER (Farfetch-like)
-       ========================= */
-    .lv{
-      position:fixed; inset:0;
-      background: rgba(0,0,0,.92);
-      display:none;
-      z-index:99999;
-      overscroll-behavior: contain;
+    .viewer-stage{
+      position:absolute;
+      inset: 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: calc(env(safe-area-inset-top) + 70px) 12px calc(env(safe-area-inset-bottom) + 110px);
     }
-    .lv.show{ display:block; }
-
-    .lvTop{
-      position:fixed; left:0; right:0; top:0;
-      height:56px;
-      display:flex; align-items:center; justify-content:space-between;
-      padding:10px 12px;
-      z-index: 3;
-    }
-    .lvBtn{
-      width:42px; height:42px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.22);
-      background: rgba(255,255,255,.10);
-      color:#fff; font-size:20px; font-weight:800;
-      cursor:pointer;
-    }
-    .lvCounter{
-      color:#fff;
-      font-weight:800;
-      letter-spacing:.3px;
-      padding:8px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.10);
-    }
-
-    .lvStage{
-      position:absolute; inset:56px 0 94px 0;
-      display:flex; align-items:center; justify-content:center;
-      touch-action: none; /* pinch/drag */
-    }
-    .lvImg{
-      max-width: 92vw;
-      max-height: calc(100vh - 160px);
+    .viewer-img{
+      max-width: min(980px, 94vw);
+      max-height: min(78vh, 820px);
+      width: auto;
+      height: auto;
+      border-radius: 18px;
+      background:#fff;
       object-fit: contain;
-      user-select:none;
-      transform: translate3d(0,0,0) scale(1);
-      transition: transform .16s ease;
-      will-change: transform;
+      box-shadow: 0 24px 80px rgba(0,0,0,.45);
     }
 
-    .lvNav{
-      position:fixed;
-      top:50%;
+    .viewer-nav{
+      position:absolute;
+      top: 50%;
       transform: translateY(-50%);
-      width:48px; height:72px;
+      width: 48px; height: 76px;
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.20);
-      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(20,22,28,.35);
       color:#fff;
-      font-size:44px;
-      line-height: 1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 28px;
       cursor:pointer;
-      z-index:3;
+      user-select:none;
     }
-    .lvPrev{ left:10px; }
-    .lvNext{ right:10px; }
-    @media (max-width: 520px){
-      .lvNav{ width:44px; height:64px; font-size:40px; }
-    }
+    .viewer-nav.left{ left: 12px; }
+    .viewer-nav.right{ right: 12px; }
 
-    .lvThumbs{
-      position:fixed; left:0; right:0; bottom:0;
-      height:94px;
+    .thumbs{
+      position:absolute;
+      left:0; right:0;
+      bottom: 0;
+      padding: 10px 12px calc(env(safe-area-inset-bottom) + 12px);
       display:flex;
       gap:10px;
-      padding: 10px 12px 12px;
-      overflow-x:auto;
-      align-items:center;
-      background: linear-gradient(to top, rgba(0,0,0,.65), rgba(0,0,0,0));
-      z-index:3;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      justify-content: center;
     }
-    .lvT{
-      width:64px; height:64px;
-      border-radius: 14px;
+    .thumb{
+      width: 54px; height: 54px;
+      border-radius: 16px;
       border: 2px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
       overflow:hidden;
       flex: 0 0 auto;
       cursor:pointer;
-      opacity:.85;
     }
-    .lvT.active{
+    .thumb img{
+      width:100%; height:100%;
+      object-fit: cover;
+      display:block;
+    }
+    .thumb.active{
       border-color: rgba(255,255,255,.85);
-      opacity: 1;
+      transform: translateZ(0);
     }
-    .lvT img{ width:100%; height:100%; object-fit: cover; display:block; }
+
+    @media (max-width: 420px){
+      .btn{ font-size: 13px; padding: 12px 10px; }
+      .viewer-nav{ display:none; } /* mobile = swipe */
+      .thumbs{ justify-content: flex-start; }
+    }
   </style>
 </head>
 
 <body>
-  <header>
-    <div class="row">
-      <input id="q" placeholder="Поиск (текст/описание)" />
-    </div>
-    <div class="row" style="padding-top:0">
-      <input id="brand" placeholder="Бренд (например dior)" />
-      <button onclick="resetAndLoad()">Найти</button>
-    </div>
-    <div class="hint">Совет: бренд можно вводить как “dior” без #</div>
-  </header>
+<header>
+  <div class="row">
+    <input id="q" placeholder="Поиск (текст/описание)" />
+  </div>
+  <div class="row" style="padding-top:0">
+    <input id="brand" placeholder="Бренд (например dior)" />
+    <button onclick="resetAndLoad()">Найти</button>
+  </div>
+  <div class="hint">Совет: бренд можно вводить как “dior” без #</div>
+</header>
 
-  <main>
-    <div class="grid" id="grid"></div>
-    <div class="empty" id="empty" style="display:none;">Ничего не найдено</div>
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="more">
+    <button id="moreBtn" onclick="loadMore()">Показать ещё</button>
+  </div>
+</main>
 
-    <div class="more">
-      <button id="moreBtn" onclick="loadMore()">Показать ещё</button>
-    </div>
-  </main>
-
-  <!-- LUXURY VIEWER -->
-  <div id="lv" class="lv" aria-hidden="true">
-    <div class="lvTop">
-      <button class="lvBtn" id="lvClose">✕</button>
-      <div class="lvCounter" id="lvCounter">1 / 1</div>
-    </div>
-
-    <button class="lvNav lvPrev" id="lvPrev">‹</button>
-    <button class="lvNav lvNext" id="lvNext">›</button>
-
-    <div class="lvStage" id="lvStage">
-      <img id="lvImg" class="lvImg" draggable="false" />
-    </div>
-
-    <div class="lvThumbs" id="lvThumbs"></div>
+<!-- Luxury Viewer -->
+<div class="viewer" id="viewer" aria-hidden="true">
+  <div class="viewer-top">
+    <div class="viewer-btn" onclick="closeViewer()" aria-label="Close">×</div>
+    <div class="viewer-count" id="viewerCount">1/1</div>
+    <div style="width:44px;height:44px;"></div>
   </div>
 
-  <script>
-    let offset = 0;
-    const limit = 30;
-    let buyTelegram = "";
-    let buyWhatsapp = "393463203783";
-    let loading = false;
+  <div class="viewer-stage" id="viewerStage">
+    <div class="viewer-nav left" onclick="prevImg()">‹</div>
+    <img id="viewerImg" class="viewer-img" src="" alt="" />
+    <div class="viewer-nav right" onclick="nextImg()">›</div>
+  </div>
 
-    function esc(s){
-      return (s || "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#39;");
+  <div class="thumbs" id="thumbs"></div>
+</div>
+
+<script>
+  let offset = 0;
+  const limit = 30;
+  let buyTelegram = "";
+  let buyWhatsapp = "393463203783";
+  let loading = false;
+
+  // viewer state
+  let viewerOpen = false;
+  let viewerList = [];
+  let viewerIndex = 0;
+
+  async function getBuyTarget(){
+    try{
+      const r = await fetch("/api/buy_target");
+      const j = await r.json();
+      buyTelegram = (j.telegram || "").trim();
+      buyWhatsapp = (j.whatsapp || buyWhatsapp).trim();
+    }catch(e){}
+  }
+
+  function escapeHtml(str){
+    return (str || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+
+  function buildTelegramLink(p){
+    const text =
+`Здравствуйте! Хочу заказать:
+
+${p.brand || ""}
+
+${p.price_raw || ""}
+
+${(p.caption || "").slice(0, 800)}`;
+    const encoded = encodeURIComponent(text);
+
+    if (buyTelegram){
+      return `https://t.me/${buyTelegram}?text=${encoded}`;
     }
+    return `https://t.me/share/url?url=&text=${encoded}`;
+  }
 
-    async function getBuyTarget(){
-      try{
-        const r = await fetch("/api/buy_target");
-        const j = await r.json();
-        buyTelegram = (j.telegram || "").trim().replace(/^@/, "");
-        buyWhatsapp = (j.whatsapp || buyWhatsapp).trim().replace("+","");
-      }catch(e){}
+  function buildWhatsappLink(p){
+    const text =
+`Здравствуйте! Хочу заказать:
+
+${p.brand || ""}
+
+${p.price_raw || ""}
+
+${(p.caption || "").slice(0, 800)}`;
+    const encoded = encodeURIComponent(text);
+    return `https://wa.me/${buyWhatsapp}?text=${encoded}`;
+  }
+
+  function fileIdToUrl(fid){
+    return `/img/${encodeURIComponent(fid)}`;
+  }
+
+  function openViewer(fileIds, startIndex=0){
+    viewerList = (fileIds || []).filter(Boolean);
+    if (!viewerList.length) return;
+
+    viewerIndex = Math.max(0, Math.min(startIndex, viewerList.length-1));
+    viewerOpen = true;
+
+    document.getElementById("viewer").classList.add("show");
+    document.getElementById("viewer").setAttribute("aria-hidden","false");
+    renderViewer();
+  }
+
+  function closeViewer(){
+    viewerOpen = false;
+    document.getElementById("viewer").classList.remove("show");
+    document.getElementById("viewer").setAttribute("aria-hidden","true");
+  }
+
+  function renderViewer(){
+    const img = document.getElementById("viewerImg");
+    const count = document.getElementById("viewerCount");
+    const thumbs = document.getElementById("thumbs");
+
+    const total = viewerList.length;
+    count.textContent = `${viewerIndex+1}/${total}`;
+
+    img.src = fileIdToUrl(viewerList[viewerIndex]);
+
+    // thumbs
+    thumbs.innerHTML = "";
+    viewerList.forEach((fid, i) => {
+      const div = document.createElement("div");
+      div.className = "thumb" + (i===viewerIndex ? " active" : "");
+      div.onclick = () => { viewerIndex = i; renderViewer(); };
+      const im = document.createElement("img");
+      im.src = fileIdToUrl(fid);
+      im.loading = "lazy";
+      div.appendChild(im);
+      thumbs.appendChild(div);
+    });
+
+    // center active thumb (nice)
+    const active = thumbs.querySelector(".thumb.active");
+    if (active){
+      const rect = active.getBoundingClientRect();
+      const wrapRect = thumbs.getBoundingClientRect();
+      const delta = (rect.left + rect.width/2) - (wrapRect.left + wrapRect.width/2);
+      thumbs.scrollLeft += delta;
     }
+  }
 
-    function getImages(p){
-      if (Array.isArray(p.file_ids) && p.file_ids.length) return p.file_ids;
-      if (p.file_id) return [p.file_id];
-      return [];
-    }
+  function nextImg(){
+    if (!viewerOpen) return;
+    viewerIndex = (viewerIndex + 1) % viewerList.length;
+    renderViewer();
+  }
+  function prevImg(){
+    if (!viewerOpen) return;
+    viewerIndex = (viewerIndex - 1 + viewerList.length) % viewerList.length;
+    renderViewer();
+  }
 
-    function buildTelegramLink(p){
-      const brand = (p.brand || "—").trim();
-      const price = (p.price_raw || "").trim();
-      const sizes = (p.caption || "").trim();
-      const imgs = getImages(p);
-      const img = imgs.length ? `${location.origin}/img/${encodeURIComponent(imgs[0])}` : "";
+  // Swipe (mobile)
+  (function(){
+    let startX = 0, startY = 0, moved = false;
 
-      let text = `Здравствуйте! Хочу заказать:\n\n${brand}`;
-      if (price) text += `\n${price}`;
-      if (sizes) text += `\n${sizes}`;
-      if (img) text += `\n\nФото: ${img}`;
+    const stage = document.getElementById("viewerStage");
+    stage.addEventListener("touchstart", (e) => {
+      if (!viewerOpen) return;
+      const t = e.touches[0];
+      startX = t.clientX; startY = t.clientY; moved=false;
+    }, {passive:true});
 
-      const encoded = encodeURIComponent(text.slice(0, 3500));
-      if (buyTelegram){
-        return `https://t.me/${buyTelegram}?text=${encoded}`;
+    stage.addEventListener("touchmove", (e) => {
+      if (!viewerOpen) return;
+      moved = true;
+    }, {passive:true});
+
+    stage.addEventListener("touchend", (e) => {
+      if (!viewerOpen) return;
+      if (!moved) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40){
+        if (dx < 0) nextImg(); else prevImg();
       }
-      return `https://t.me/share/url?url=&text=${encoded}`;
-    }
+    }, {passive:true});
+  })();
 
-    function buildWhatsappLink(p){
-      const brand = (p.brand || "—").trim();
-      const price = (p.price_raw || "").trim();
-      const sizes = (p.caption || "").trim();
-      const imgs = getImages(p);
-      const img = imgs.length ? `${location.origin}/img/${encodeURIComponent(imgs[0])}` : "";
+  // Close by ESC / tap outside
+  document.addEventListener("keydown", (e) => {
+    if (!viewerOpen) return;
+    if (e.key === "Escape") closeViewer();
+    if (e.key === "ArrowRight") nextImg();
+    if (e.key === "ArrowLeft") prevImg();
+  });
+  document.getElementById("viewer").addEventListener("click", (e) => {
+    if (e.target.id === "viewer") closeViewer();
+  });
 
-      let text = `Здравствуйте! Хочу заказать:\n\n${brand}`;
-      if (price) text += `\n${price}`;
-      if (sizes) text += `\n${sizes}`;
-      if (img) text += `\n\nФото: ${img}`;
+  async function fetchProducts(){
+    const q = document.getElementById("q").value.trim();
+    const brand = document.getElementById("brand").value.trim();
 
-      const encoded = encodeURIComponent(text.slice(0, 3500));
-      return `https://wa.me/${buyWhatsapp}?text=${encoded}`;
-    }
+    const url = new URL(location.origin + "/api/products");
+    url.searchParams.set("limit", String(limit));
+    url.searchParams.set("offset", String(offset));
+    if (q) url.searchParams.set("q", q);
+    if (brand) url.searchParams.set("brand", brand);
 
-    function imgBlock(p){
-      const imgs = getImages(p);
-      if (!imgs.length){
-        return `<div class="imgwrap"><div class="imgfallback">Фото</div></div>`;
-      }
-      const src = `/img/${encodeURIComponent(imgs[0])}`;
-      const safe = encodeURIComponent(JSON.stringify(imgs));
-      return `
-        <div class="imgwrap" onclick="openViewerFromAttr(this)" data-imgs="${safe}">
-          <img src="${src}" alt="" loading="lazy"
-               onerror="this.outerHTML='<div class=&quot;imgwrap&quot;><div class=&quot;imgfallback&quot;>Фото</div></div>'" />
-        </div>`;
-    }
+    const r = await fetch(url.toString());
+    if (!r.ok) throw new Error("API error");
+    return await r.json();
+  }
 
-    function card(p){
-      const brand = ((p.brand || "—") + "").toUpperCase();
-      const price = (p.price_raw || "").trim();
-      const sizes = (p.caption || "").trim();
+  function card(p){
+    const b = (p.brand || "ITEM").toUpperCase();
+    const price = p.price_raw || "";
+    const sizes = p.caption || "";
 
-      const tg = buildTelegramLink(p);
-      const wa = buildWhatsappLink(p);
+    const tg = buildTelegramLink(p);
+    const wa = buildWhatsappLink(p);
 
-      return `
-        <div class="card">
-          ${imgBlock(p)}
-          <div class="meta">
-            <div class="brand">${esc(brand)}</div>
-            ${price ? `<div class="price">${esc(price)}</div>` : ""}
-            ${sizes ? `<div class="sizes">${esc(sizes)}</div>` : ""}
-            <div class="actions">
-              <a class="btn btn-tg" href="${tg}" target="_blank" rel="noopener">Купить в Telegram</a>
-              <a class="btn btn-wa" href="${wa}" target="_blank" rel="noopener">Купить в WhatsApp</a>
-            </div>
+    const fileIds = (p.file_ids || []).filter(Boolean);
+    const first = fileIds[0];
+
+    const imgHtml = first
+      ? `<img src="${fileIdToUrl(first)}" alt="" loading="lazy" />`
+      : `<div class="imgfallback">Фото</div>`;
+
+    const imgClick = first ? `onclick='openViewer(${escapeHtml(JSON.stringify(fileIds))},0)'` : "";
+
+    return `
+      <div class="card">
+        <div class="imgwrap" ${imgClick}>
+          ${imgHtml}
+        </div>
+
+        <div class="meta">
+          <div class="brand">${escapeHtml(b)}</div>
+          <div class="price">${escapeHtml(price)}</div>
+          ${sizes ? `<div class="sizes">${escapeHtml(sizes)}</div>` : ""}
+
+          <div class="actions">
+            <a class="btn btn-tg" href="${tg}" target="_blank" rel="noopener">Купить в Telegram</a>
+            <a class="btn btn-wa" href="${wa}" target="_blank" rel="noopener">Купить в WhatsApp</a>
           </div>
         </div>
-      `;
+      </div>
+    `;
+  }
+
+  async function loadMore(){
+    if (loading) return;
+    loading = true;
+
+    const btn = document.getElementById("moreBtn");
+    btn.disabled = true;
+    btn.textContent = "Загружаю…";
+
+    try{
+      const data = await fetchProducts();
+      const grid = document.getElementById("grid");
+      data.forEach(p => grid.insertAdjacentHTML("beforeend", card(p)));
+      offset += data.length;
+
+      if (data.length < limit) btn.style.display = "none";
+      else btn.style.display = "inline-block";
+    }catch(e){
+      alert("Не удалось загрузить товары. Проверь /api/products");
+    }finally{
+      btn.disabled = false;
+      btn.textContent = "Показать ещё";
+      loading = false;
     }
+  }
 
-    async function fetchProducts(){
-      const q = document.getElementById("q").value.trim();
-      const brand = document.getElementById("brand").value.trim();
+  async function resetAndLoad(){
+    offset = 0;
+    document.getElementById("grid").innerHTML = "";
+    document.getElementById("moreBtn").style.display = "inline-block";
+    await loadMore();
+  }
 
-      const url = new URL(location.origin + "/api/products");
-      url.searchParams.set("limit", String(limit));
-      url.searchParams.set("offset", String(offset));
-      if (q) url.searchParams.set("q", q);
-      if (brand) url.searchParams.set("brand", brand.replace(/^#/, ""));
-
-      const r = await fetch(url.toString());
-      if (!r.ok) throw new Error("API error");
-      return await r.json();
-    }
-
-    async function loadMore(){
-      if (loading) return;
-      loading = true;
-
-      const btn = document.getElementById("moreBtn");
-      const empty = document.getElementById("empty");
-      btn.disabled = true;
-      btn.textContent = "Загружаю…";
-
-      try{
-        const data = await fetchProducts();
-        const grid = document.getElementById("grid");
-
-        data.forEach(p => grid.insertAdjacentHTML("beforeend", card(p)));
-        offset += data.length;
-
-        if (offset === data.length && data.length === 0){
-          empty.style.display = "block";
-          btn.style.display = "none";
-        } else {
-          empty.style.display = "none";
-          if (data.length < limit) btn.style.display = "none";
-          else btn.style.display = "inline-block";
-        }
-
-      }catch(e){
-        alert("Не удалось загрузить товары. Проверь /api/products");
-      }finally{
-        btn.disabled = false;
-        btn.textContent = "Показать ещё";
-        loading = false;
-      }
-    }
-
-    async function resetAndLoad(){
-      offset = 0;
-      document.getElementById("grid").innerHTML = "";
-      document.getElementById("moreBtn").style.display = "inline-block";
-      document.getElementById("empty").style.display = "none";
-      await loadMore();
-    }
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") resetAndLoad();
-    });
-
-    /* =========================
-       LUXURY VIEWER JS
-       ========================= */
-    let LV = { imgs: [], i: 0, scale: 1, tx: 0, ty: 0 };
-
-    const elLV = document.getElementById("lv");
-    const elImg = document.getElementById("lvImg");
-    const elCounter = document.getElementById("lvCounter");
-    const elThumbs = document.getElementById("lvThumbs");
-    const elStage = document.getElementById("lvStage");
-
-    function preload(src){
-      const im = new Image();
-      im.src = src;
-    }
-
-    function setTransform(){
-      elImg.style.transform = `translate3d(${LV.tx}px, ${LV.ty}px, 0) scale(${LV.scale})`;
-    }
-
-    function resetZoom(){
-      LV.scale = 1; LV.tx = 0; LV.ty = 0;
-      setTransform();
-    }
-
-    function showLV(){
-      elLV.classList.add("show");
-      elLV.setAttribute("aria-hidden", "false");
-      document.body.style.overflow = "hidden";
-    }
-
-    function hideLV(){
-      elLV.classList.remove("show");
-      elLV.setAttribute("aria-hidden", "true");
-      document.body.style.overflow = "";
-    }
-
-    function renderThumbs(){
-      elThumbs.innerHTML = "";
-      LV.imgs.forEach((id, idx) => {
-        const src = "/img/" + encodeURIComponent(id);
-        const div = document.createElement("div");
-        div.className = "lvT" + (idx === LV.i ? " active" : "");
-        div.innerHTML = `<img src="${src}" loading="lazy">`;
-        div.onclick = () => go(idx);
-        elThumbs.appendChild(div);
-      });
-    }
-
-    function go(idx){
-      if (!LV.imgs.length) return;
-      LV.i = (idx + LV.imgs.length) % LV.imgs.length;
-      const id = LV.imgs[LV.i];
-      const src = "/img/" + encodeURIComponent(id);
-
-      preload("/img/" + encodeURIComponent(LV.imgs[(LV.i+1)%LV.imgs.length]));
-      preload("/img/" + encodeURIComponent(LV.imgs[(LV.i-1+LV.imgs.length)%LV.imgs.length]));
-
-      elImg.src = src;
-      elCounter.textContent = `${LV.i+1} / ${LV.imgs.length}`;
-      resetZoom();
-
-      [...elThumbs.children].forEach((c, k) => c.classList.toggle("active", k === LV.i));
-      const active = elThumbs.children[LV.i];
-      if (active) active.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
-    }
-
-    window.openViewerFromAttr = function(el){
-      try{
-        const safe = el.getAttribute("data-imgs") || "";
-        const imgs = JSON.parse(decodeURIComponent(safe));
-        if (Array.isArray(imgs) && imgs.length){
-          LV.imgs = imgs;
-          LV.i = 0;
-          renderThumbs();
-          showLV();
-          go(0);
-        }
-      }catch(e){}
-    }
-
-    document.getElementById("lvClose").onclick = hideLV;
-    document.getElementById("lvPrev").onclick = () => go(LV.i - 1);
-    document.getElementById("lvNext").onclick = () => go(LV.i + 1);
-
-    document.addEventListener("keydown", (e) => {
-      if (!elLV.classList.contains("show")) return;
-      if (e.key === "Escape") hideLV();
-      if (e.key === "ArrowLeft") go(LV.i - 1);
-      if (e.key === "ArrowRight") go(LV.i + 1);
-    });
-
-    // Swipe + Pinch zoom (pointer events)
-    let pointers = new Map();
-    let startDist = 0, startScale = 1;
-    let startX = 0, startY = 0, startTX = 0, startTY = 0;
-    let swipeStartX = 0, swipeStartY = 0, swipeTime = 0;
-
-    elStage.addEventListener("pointerdown", (e) => {
-      elStage.setPointerCapture(e.pointerId);
-      pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
-
-      swipeStartX = e.clientX; swipeStartY = e.clientY; swipeTime = Date.now();
-      startX = e.clientX; startY = e.clientY;
-      startTX = LV.tx; startTY = LV.ty;
-
-      if (pointers.size === 2){
-        const pts = [...pointers.values()];
-        startDist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
-        startScale = LV.scale;
-      }
-    });
-
-    elStage.addEventListener("pointermove", (e) => {
-      if (!pointers.has(e.pointerId)) return;
-      pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
-
-      if (pointers.size === 2){
-        const pts = [...pointers.values()];
-        const dist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
-        const factor = dist / (startDist || dist);
-        LV.scale = Math.min(4, Math.max(1, startScale * factor));
-        setTransform();
-        return;
-      }
-
-      if (LV.scale > 1.01){
-        LV.tx = startTX + (e.clientX - startX);
-        LV.ty = startTY + (e.clientY - startY);
-        setTransform();
-      }
-    });
-
-    elStage.addEventListener("pointerup", (e) => {
-      pointers.delete(e.pointerId);
-
-      if (LV.scale <= 1.01){
-        const dx = e.clientX - swipeStartX;
-        const dy = e.clientY - swipeStartY;
-        const dt = Date.now() - swipeTime;
-
-        if (dt < 500 && Math.abs(dx) > 60 && Math.abs(dy) < 60){
-          if (dx < 0) go(LV.i + 1);
-          else go(LV.i - 1);
-        }
-      }
-    });
-
-    elStage.addEventListener("pointercancel", (e) => pointers.delete(e.pointerId));
-
-    // Double tap / click to zoom
-    let lastTap = 0;
-    elStage.addEventListener("click", () => {
-      if (!elLV.classList.contains("show")) return;
-      const now = Date.now();
-      if (now - lastTap < 280){
-        if (LV.scale > 1.01) resetZoom();
-        else { LV.scale = 2; LV.tx = 0; LV.ty = 0; setTransform(); }
-      }
-      lastTap = now;
-    });
-
-    // Wheel zoom (desktop)
-    elStage.addEventListener("wheel", (e) => {
-      if (!elLV.classList.contains("show")) return;
-      e.preventDefault();
-      const delta = -Math.sign(e.deltaY) * 0.15;
-      LV.scale = Math.min(4, Math.max(1, LV.scale + delta));
-      if (LV.scale <= 1.01) resetZoom();
-      setTransform();
-    }, {passive:false});
-
-    (async () => {
-      await getBuyTarget();
-      await resetAndLoad();
-    })();
-  </script>
+  (async () => {
+    await getBuyTarget();
+    await resetAndLoad();
+  })();
+</script>
 </body>
 </html>
