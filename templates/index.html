@@ -2,338 +2,745 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Каталог</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TG Catalog — Luxury</title>
+
   <style>
     :root{
-      --gap:12px; --radius:18px; --border:#ececf2; --shadow: 0 10px 30px rgba(10,10,20,.06);
-      --bg:#fafafb; --text:#111; --muted:#666;
+      --bg:#f6f7fb;
+      --card:#fff;
+      --text:#0f172a;
+      --muted:#6b7280;
+      --stroke:#e6e8ee;
+      --shadow:0 10px 30px rgba(0,0,0,.06);
+      --r:22px;
+      --btnR:18px;
+      --black:#111;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
-    header{position:sticky;top:0;background:rgba(250,250,251,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:10}
-    .row{display:flex;gap:10px;padding:12px;align-items:center}
-    .row input{flex:1;padding:12px 14px;border:1px solid var(--border);border-radius:14px;font-size:16px;outline:none;background:#fff}
-    .row button{padding:12px 14px;border:1px solid var(--border);border-radius:14px;font-size:16px;background:#f2f3f7;cursor:pointer}
-    .hint{padding:0 12px 12px;color:var(--muted);font-size:14px}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:var(--bg);
+    }
 
-    main{padding:12px}
-    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap)}
-    @media (min-width:900px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    /* Header */
+    .top{
+      position:sticky; top:0; z-index:10;
+      background: rgba(246,247,251,.92);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--stroke);
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:14px 14px;}
+    .inputs{display:grid; gap:10px;}
+    .row1{display:grid; grid-template-columns: 1fr; gap:10px;}
+    .row2{display:grid; grid-template-columns: 1fr 110px; gap:10px;}
+    input{
+      width:100%;
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      font-size:16px;
+      outline:none;
+    }
+    input:focus{border-color:#cfd5e3; box-shadow:0 0 0 4px rgba(59,130,246,.12)}
+    button{
+      border:0;
+      border-radius:18px;
+      background:#e9eefc;
+      color:#1f2a44;
+      font-weight:700;
+      font-size:16px;
+      cursor:pointer;
+    }
+    button:active{transform: translateY(1px)}
+    .hint{margin-top:6px; color:var(--muted); font-size:13px}
 
+    /* Grid */
+    .gridWrap{max-width:1100px; margin:0 auto; padding:14px;}
+    .grid{
+      display:grid;
+      gap:14px;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+    @media (min-width: 900px){
+      .grid{grid-template-columns: repeat(3, minmax(0,1fr));}
+      .row2{grid-template-columns: 1fr 140px;}
+    }
+
+    /* Card */
     .card{
-      background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);
-      display:flex;flex-direction:column;
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: 520px; /* чтобы кнопки не прыгали */
     }
-    .imgwrap{
-      width:100%;aspect-ratio:3/4;background:#f1f2f6;display:flex;align-items:center;justify-content:center;
-      position:relative; cursor:pointer;
+
+    .media{
+      position:relative;
+      background:#f0f2f7;
+      width:100%;
+      aspect-ratio: 1 / 1; /* квадрат как у Farfetch */
+      overflow:hidden;
     }
-    .imgwrap img{width:100%;height:100%;object-fit:cover;display:block}
-    .imgfallback{color:#999;font-size:14px}
-
-    .meta{padding:12px}
-    .brand{font-weight:900;letter-spacing:.2px;font-size:18px;text-transform:uppercase}
-    .price{margin-top:6px;font-weight:900;font-size:24px;line-height:1.1;word-break:break-word}
-    .cap{margin-top:8px;white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.25;color:#111}
-
-    .actions{display:flex;gap:10px;margin-top:12px}
-    .btn{
-      flex:1;display:flex;align-items:center;justify-content:center;
-      padding:12px 10px;border-radius:16px;font-weight:900;font-size:14px;text-decoration:none;user-select:none;
-      min-width:0;
+    .media img{
+      width:100%;
+      height:100%;
+      object-fit: cover; /* заполнение без уродства */
+      display:block;
+      transform: translateZ(0);
     }
-    .btn span{
-      display:block; text-align:center; line-height:1.05;
-      white-space:normal; /* чтобы текст не обрезался */
+
+    .badge{
+      position:absolute;
+      right:10px; top:10px;
+      background: rgba(17,17,17,.72);
+      color:#fff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
     }
-    .btn-tg{background:#111;color:#fff;border:1px solid #111}
-    .btn-wa{background:#fff;color:#111;border:2px solid #111}
 
-    .more{margin:14px 0 30px;display:flex;justify-content:center}
-    .more button{padding:12px 16px;border:1px solid var(--border);border-radius:14px;background:#fff;font-weight:800;cursor:pointer}
+    .body{
+      padding:14px 14px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      flex:1;
+    }
+    .brand{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.3px;
+      text-transform: uppercase;
+      line-height:1.1;
+    }
 
-    /* ---------- LUXURY VIEWER ---------- */
+    /* Описание (caption) */
+    .caption{
+      color:#111;
+      font-size:14px;
+      line-height:1.35;
+      white-space:pre-wrap;
+      overflow:hidden;
+      display:-webkit-box;
+      -webkit-line-clamp: 5;
+      -webkit-box-orient: vertical;
+      min-height: 96px; /* фикс блока, чтобы кнопки не прыгали */
+    }
+    .caption.expanded{
+      -webkit-line-clamp: unset;
+      max-height:none;
+    }
+
+    .more{
+      color:#111;
+      font-weight:800;
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:auto;
+      padding-top:6px;
+    }
+    .aBtn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:12px 10px;
+      border-radius: var(--btnR);
+      font-weight:900;
+      text-decoration:none;
+      font-size:14px;
+      border:2px solid var(--black);
+      white-space:nowrap;
+    }
+    .aBtn.tg{background:var(--black); color:#fff;}
+    .aBtn.wa{background:#fff; color:#111;}
+
+    /* Skeleton */
+    .skeleton{
+      background: linear-gradient(90deg,#eef0f6 0%, #f6f7fb 40%, #eef0f6 80%);
+      background-size: 200% 100%;
+      animation: sk 1.2s infinite;
+    }
+    @keyframes sk{0%{background-position:0% 0}100%{background-position:-200% 0}}
+
+    /* Viewer (Farfetch-like) */
     .viewer{
-      position:fixed; inset:0; background:rgba(0,0,0,.92);
-      display:none; z-index:9999;
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.92);
+      display:none;
+      z-index:999;
     }
     .viewer.open{display:block}
-    .viewerTop{
-      position:absolute; top:10px; left:10px; right:10px;
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    .vTop{
+      position:absolute;
+      top:14px; left:14px; right:14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
       pointer-events:none;
     }
-    .vbtn{
+    .vClose, .vCount{
       pointer-events:auto;
-      width:44px;height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.18);
-      background:rgba(255,255,255,.08); color:#fff; font-size:22px; display:flex;align-items:center;justify-content:center;
+      background: rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      color:#fff;
+      border-radius: 14px;
+      padding:10px 12px;
+      font-weight:900;
+      backdrop-filter: blur(8px);
     }
-    .vcounter{
-      pointer-events:auto;
-      padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.18);
-      background:rgba(255,255,255,.08); color:#fff; font-weight:900;
-    }
-    .stage{
+    .vClose{cursor:pointer}
+    .vMain{
       position:absolute; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      padding:64px 14px 120px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:70px 16px 110px;
     }
-    .stageImg{
-      max-width:min(92vw, 760px);
-      max-height:72vh;
-      width:auto; height:auto;
-      border-radius:18px;
-      background:#111;
-      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+    .vImgWrap{
+      width:min(92vw, 920px);
+      height:min(70vh, 920px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      position:relative;
+      touch-action: pan-y;
     }
-    .nav{
-      position:absolute; top:0; bottom:0; width:20%;
-      display:flex; align-items:center; justify-content:center;
-      color:#fff; font-size:44px; user-select:none;
-      opacity:.65;
+    .vImg{
+      max-width:100%;
+      max-height:100%;
+      user-select:none;
+      -webkit-user-drag:none;
+      transform-origin:center center;
+      transition: transform .14s ease;
     }
-    .nav:hover{opacity:1}
-    .nav.left{left:0}
-    .nav.right{right:0}
-    .thumbs{
-      position:absolute; left:0; right:0; bottom:18px;
-      display:flex; gap:10px; justify-content:center; align-items:center;
-      padding:0 14px;
+    .vArrow{
+      position:absolute;
+      top:50%;
+      transform: translateY(-50%);
+      width:54px; height:54px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.10);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:26px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      backdrop-filter: blur(8px);
+    }
+    .vArrow.left{left:14px}
+    .vArrow.right{right:14px}
+    .vArrow:active{transform: translateY(-50%) scale(.98)}
+
+    .vThumbs{
+      position:absolute;
+      left:0; right:0; bottom:0;
+      padding:14px 14px 18px;
+      display:flex;
+      gap:10px;
       overflow:auto;
-      -webkit-overflow-scrolling:touch;
+      justify-content:center;
     }
     .thumb{
-      width:54px;height:54px;border-radius:14px;overflow:hidden;border:2px solid rgba(255,255,255,.18);
-      flex:0 0 auto; opacity:.75; cursor:pointer;
+      width:54px; height:54px;
+      border-radius:14px;
+      overflow:hidden;
+      border:2px solid rgba(255,255,255,.18);
+      opacity:.7;
+      cursor:pointer;
+      flex:0 0 auto;
+      background: rgba(255,255,255,.06);
     }
-    .thumb.active{border-color:#fff; opacity:1}
-    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .thumb.active{
+      opacity:1;
+      border-color:#fff;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .empty{
+      max-width:1100px;
+      margin:20px auto;
+      padding:0 14px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .err{
+      color:#b91c1c;
+      font-weight:900;
+      margin-top:10px;
+    }
   </style>
 </head>
 
 <body>
-<header>
-  <div class="row">
-    <input id="q" placeholder="Поиск (текст/описание)" />
-  </div>
-  <div class="row" style="padding-top:0">
-    <input id="brand" placeholder="Бренд (например dior)" />
-    <button onclick="resetAndLoad()">Найти</button>
-  </div>
-  <div class="hint">Совет: бренд можно вводить как “dior” без #</div>
-</header>
-
-<main>
-  <div class="grid" id="grid"></div>
-  <div class="more">
-    <button id="moreBtn" onclick="loadMore()">Показать ещё</button>
-  </div>
-</main>
-
-<!-- Viewer -->
-<div class="viewer" id="viewer">
-  <div class="viewerTop">
-    <div class="vbtn" onclick="closeViewer()">×</div>
-    <div class="vcounter" id="vcounter">1/1</div>
-  </div>
-
-  <div class="stage" id="stage">
-    <div class="nav left" onclick="prevImg()">‹</div>
-    <img class="stageImg" id="stageImg" alt="">
-    <div class="nav right" onclick="nextImg()">›</div>
-  </div>
-
-  <div class="thumbs" id="thumbs"></div>
-</div>
-
-<script>
-  let offset = 0;
-  const limit = 30;
-  let buyTelegram = "";
-  let buyWhatsapp = "393463203783";
-  let loading = false;
-
-  // viewer state
-  let V = { open:false, imgs:[], idx:0 };
-
-  async function getBuyTarget(){
-    try{
-      const r = await fetch("/api/buy_target");
-      const j = await r.json();
-      buyTelegram = (j.telegram || "").trim();
-      buyWhatsapp = (j.whatsapp || buyWhatsapp).trim();
-    }catch(e){}
-  }
-
-  function escapeHtml(str){
-    return (str || "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
-  }
-
-  function buildTelegramLink(p){
-    const text = `Здравствуйте! Хочу заказать:\n\n${p.brand || ""}\n${p.price_raw || ""}\n${p.caption ? ("\n" + p.caption) : ""}`;
-    const encoded = encodeURIComponent(text);
-    if (buyTelegram) return `https://t.me/${buyTelegram}?text=${encoded}`;
-    return `https://t.me/share/url?url=&text=${encoded}`;
-  }
-
-  function buildWhatsappLink(p){
-    const text = `Здравствуйте! Хочу заказать:\n\n${p.brand || ""}\n${p.price_raw || ""}\n${p.caption ? ("\n" + p.caption) : ""}`;
-    const encoded = encodeURIComponent(text);
-    return `https://wa.me/${buyWhatsapp}?text=${encoded}`;
-  }
-
-  function imgSrc(file_id){
-    return `/img/${encodeURIComponent(file_id)}`;
-  }
-
-  function imgBlock(p){
-    const ids = (p.file_ids && p.file_ids.length) ? p.file_ids : (p.file_id ? [p.file_id] : []);
-    if (!ids.length){
-      return `<div class="imgwrap"><div class="imgfallback">Фото</div></div>`;
-    }
-    const first = ids[0];
-    return `
-      <div class="imgwrap" onclick='openViewer(${JSON.stringify(ids)})'>
-        <img src="${imgSrc(first)}" alt="" loading="lazy"
-             onerror="this.outerHTML='<div class=&quot;imgfallback&quot;>Фото</div>'" />
-      </div>`;
-  }
-
-  function card(p){
-    const b = (p.brand || "ITEM").toUpperCase();
-    const tg = buildTelegramLink(p);
-    const wa = buildWhatsappLink(p);
-
-    const price = p.price_raw || "";
-    const cap = p.caption ? `<div class="cap">${escapeHtml(p.caption)}</div>` : "";
-
-    return `
-      <div class="card">
-        ${imgBlock(p)}
-        <div class="meta">
-          <div class="brand">${escapeHtml(b)}</div>
-          <div class="price">${escapeHtml(price)}</div>
-          ${cap}
-          <div class="actions">
-            <a class="btn btn-tg" href="${tg}" target="_blank" rel="noopener"><span>Купить в<br>Telegram</span></a>
-            <a class="btn btn-wa" href="${wa}" target="_blank" rel="noopener"><span>Купить в<br>WhatsApp</span></a>
-          </div>
+  <div class="top">
+    <div class="wrap">
+      <div class="inputs">
+        <div class="row1">
+          <input id="q" placeholder="Поиск (текст/описание)" autocomplete="off" />
+        </div>
+        <div class="row2">
+          <input id="brand" placeholder="Бренд (например dior)" autocomplete="off" />
+          <button id="find">Найти</button>
         </div>
       </div>
-    `;
-  }
+      <div class="hint">Совет: бренд можно вводить как “dior” без #</div>
+      <div id="status" class="err" style="display:none"></div>
+    </div>
+  </div>
 
-  async function fetchProducts(){
-    const q = document.getElementById("q").value.trim();
-    const brand = document.getElementById("brand").value.trim();
+  <div class="gridWrap">
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" style="display:none">Ничего не найдено.</div>
+  </div>
 
-    const url = new URL(location.origin + "/api/products");
-    url.searchParams.set("limit", String(limit));
-    url.searchParams.set("offset", String(offset));
-    if (q) url.searchParams.set("q", q);
-    if (brand) url.searchParams.set("brand", brand);
+  <!-- Viewer -->
+  <div id="viewer" class="viewer" aria-hidden="true">
+    <div class="vTop">
+      <div id="vClose" class="vClose">✕</div>
+      <div id="vCount" class="vCount">1/1</div>
+    </div>
 
-    const r = await fetch(url.toString());
-    if (!r.ok) throw new Error("API error");
-    return await r.json();
-  }
+    <div class="vMain">
+      <div class="vImgWrap" id="vImgWrap">
+        <div class="vArrow left" id="vLeft">‹</div>
+        <img id="vImg" class="vImg" alt="photo" />
+        <div class="vArrow right" id="vRight">›</div>
+      </div>
+    </div>
 
-  async function loadMore(){
-    if (loading) return;
-    loading = true;
+    <div id="vThumbs" class="vThumbs"></div>
+  </div>
 
-    const btn = document.getElementById("moreBtn");
-    btn.disabled = true;
-    btn.textContent = "Загружаю…";
+  <script>
+    // =========================
+    // Helpers
+    // =========================
+    const $ = (id)=>document.getElementById(id);
 
-    try{
-      const data = await fetchProducts();
-      const grid = document.getElementById("grid");
-
-      data.forEach(p => grid.insertAdjacentHTML("beforeend", card(p)));
-      offset += data.length;
-
-      if (data.length < limit) btn.style.display = "none";
-      else btn.style.display = "inline-block";
-    }catch(e){
-      alert("Не удалось загрузить товары. Проверь /api/products и логи Render.");
-    }finally{
-      btn.disabled = false;
-      btn.textContent = "Показать ещё";
-      loading = false;
+    function normBrand(s){
+      return (s || "").toString().trim().replace(/^#/, "").toLowerCase();
     }
-  }
 
-  async function resetAndLoad(){
-    offset = 0;
-    document.getElementById("grid").innerHTML = "";
-    document.getElementById("moreBtn").style.display = "inline-block";
-    await loadMore();
-  }
+    function isUselessBrand(b){
+      const x = normBrand(b);
+      return !x || x === "item" || x === "-" || x === "—";
+    }
 
-  // -------- Viewer --------
-  function openViewer(ids){
-    V.open = true;
-    V.imgs = ids || [];
-    V.idx = 0;
-    document.getElementById("viewer").classList.add("open");
-    renderViewer();
-  }
-  function closeViewer(){
-    V.open = false;
-    document.getElementById("viewer").classList.remove("open");
-    document.getElementById("thumbs").innerHTML = "";
-  }
-  function renderViewer(){
-    const total = V.imgs.length || 1;
-    const idx = Math.max(0, Math.min(V.idx, total-1));
-    V.idx = idx;
+    // Убираем верхнюю "формулу цены" типа "3900€-20%=€3.12"
+    // и просто НЕ показываем price_raw как отдельную строку.
+    // Описание из Телеграма оставляем (caption).
+    function cleanCaption(text){
+      if(!text) return "";
+      let t = text.toString();
 
-    document.getElementById("vcounter").textContent = `${idx+1}/${total}`;
-    const img = document.getElementById("stageImg");
-    img.src = imgSrc(V.imgs[idx]);
+      // Вырезаем строки с паттерном "€-...%=€" (формула скидки)
+      const lines = t.split("\n");
+      const filtered = lines.filter(line=>{
+        const s = line.trim();
+        if(!s) return true;
+        // удаляем строки формулы
+        if(/€\s*-\s*\d{1,3}\s*%\s*=\s*€?/i.test(s)) return false;
+        if(/=\s*€\s*\d/i.test(s) && s.includes("%")) return false;
+        return true;
+      });
 
-    const thumbs = document.getElementById("thumbs");
-    thumbs.innerHTML = "";
-    V.imgs.forEach((fid, i) => {
-      const div = document.createElement("div");
-      div.className = "thumb" + (i===idx ? " active" : "");
-      div.onclick = () => { V.idx = i; renderViewer(); };
-      div.innerHTML = `<img src="${imgSrc(fid)}" alt="">`;
-      thumbs.appendChild(div);
-    });
-  }
-  function nextImg(){ if(!V.open) return; if(V.idx < V.imgs.length-1){ V.idx++; renderViewer(); } }
-  function prevImg(){ if(!V.open) return; if(V.idx > 0){ V.idx--; renderViewer(); } }
+      return filtered.join("\n").trim();
+    }
 
-  // swipe
-  (function(){
-    const stage = document.getElementById("stage");
-    let x0 = null;
-    stage.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, {passive:true});
-    stage.addEventListener("touchend", e => {
-      if(x0===null) return;
-      const x1 = e.changedTouches[0].clientX;
-      const dx = x1 - x0;
-      x0 = null;
-      if(Math.abs(dx) < 40) return;
-      if(dx < 0) nextImg(); else prevImg();
+    // =========================
+    // Image URL resolver
+    // (пробуем несколько вариантов, чтобы вытянуть лучшее качество)
+    // =========================
+    function imgCandidates(fileId){
+      if(!fileId) return [];
+      const id = encodeURIComponent(fileId);
+
+      // 1) если у тебя есть endpoint в бэке (самый правильный)
+      const local1 = `/api/photo/${id}`;                  // GET -> image
+      const local2 = `/api/image/${id}`;                  // альтернативы
+      const local3 = `/api/tgfile/${id}`;
+      const local4 = `/api/file/${id}`;
+
+      // 2) если ты когда-то отдавал прямую ссылку
+      // (некоторые бэки возвращают file_id как URL)
+      const direct = fileId.startsWith("http") ? [fileId] : [];
+
+      return [...direct, local1, local2, local3, local4];
+    }
+
+    async function loadFirstWorkingImage(imgEl, fileId){
+      const tries = imgCandidates(fileId);
+      if(tries.length === 0){
+        imgEl.classList.add("skeleton");
+        imgEl.alt = "no image";
+        return;
+      }
+
+      imgEl.classList.add("skeleton");
+      for(const url of tries){
+        const ok = await new Promise((resolve)=>{
+          const t = new Image();
+          t.onload = ()=>resolve(true);
+          t.onerror = ()=>resolve(false);
+          t.referrerPolicy = "no-referrer";
+          t.src = url;
+        });
+        if(ok){
+          imgEl.src = url;
+          imgEl.classList.remove("skeleton");
+          return;
+        }
+      }
+      // если ничего не сработало — показываем пустой блок
+      imgEl.removeAttribute("src");
+      imgEl.classList.remove("skeleton");
+      imgEl.alt = "image not available";
+    }
+
+    // =========================
+    // Viewer
+    // =========================
+    let viewerState = { photos: [], idx: 0, scale: 1, tx: 0, ty: 0 };
+
+    function openViewer(photos, startIdx=0){
+      viewerState.photos = photos || [];
+      viewerState.idx = Math.max(0, Math.min(startIdx, viewerState.photos.length-1));
+      viewerState.scale = 1;
+      viewerState.tx = 0;
+      viewerState.ty = 0;
+
+      $("viewer").classList.add("open");
+      $("viewer").setAttribute("aria-hidden","false");
+      renderViewer();
+    }
+
+    function closeViewer(){
+      $("viewer").classList.remove("open");
+      $("viewer").setAttribute("aria-hidden","true");
+    }
+
+    async function renderViewer(){
+      const total = viewerState.photos.length || 1;
+      const i = viewerState.idx;
+
+      $("vCount").textContent = `${i+1}/${total}`;
+
+      // main image
+      const fileId = viewerState.photos[i];
+      $("vImg").style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
+      await loadFirstWorkingImage($("vImg"), fileId);
+
+      // thumbs
+      const thumbs = $("vThumbs");
+      thumbs.innerHTML = "";
+      viewerState.photos.forEach((pid, idx)=>{
+        const d = document.createElement("div");
+        d.className = "thumb" + (idx===i ? " active" : "");
+        const im = document.createElement("img");
+        d.appendChild(im);
+        loadFirstWorkingImage(im, pid);
+
+        d.onclick = ()=>{
+          viewerState.idx = idx;
+          viewerState.scale = 1; viewerState.tx = 0; viewerState.ty = 0;
+          renderViewer();
+        };
+        thumbs.appendChild(d);
+      });
+    }
+
+    function nextPhoto(delta){
+      const n = viewerState.photos.length;
+      if(n<=1) return;
+      viewerState.idx = (viewerState.idx + delta + n) % n;
+      viewerState.scale = 1; viewerState.tx = 0; viewerState.ty = 0;
+      renderViewer();
+    }
+
+    // swipe
+    let touchStartX = null;
+    $("vImgWrap").addEventListener("touchstart", (e)=>{
+      if(!e.touches || !e.touches[0]) return;
+      touchStartX = e.touches[0].clientX;
     }, {passive:true});
-    document.getElementById("viewer").addEventListener("click", (e) => {
-      if(e.target.id === "viewer") closeViewer();
-    });
-  })();
 
-  (async () => {
-    await getBuyTarget();
-    await resetAndLoad();
-  })();
-</script>
+    $("vImgWrap").addEventListener("touchend", (e)=>{
+      if(touchStartX === null) return;
+      const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : touchStartX;
+      const dx = endX - touchStartX;
+      touchStartX = null;
+      if(Math.abs(dx) > 45){
+        nextPhoto(dx < 0 ? +1 : -1);
+      }
+    });
+
+    // zoom on double tap/click
+    let lastTap = 0;
+    $("vImgWrap").addEventListener("click", ()=>{
+      const now = Date.now();
+      if(now - lastTap < 280){
+        // double
+        viewerState.scale = (viewerState.scale === 1) ? 2 : 1;
+        viewerState.tx = 0; viewerState.ty = 0;
+        $("vImg").style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
+      }
+      lastTap = now;
+    });
+
+    // keys
+    window.addEventListener("keydown", (e)=>{
+      if(!$("viewer").classList.contains("open")) return;
+      if(e.key === "Escape") closeViewer();
+      if(e.key === "ArrowRight") nextPhoto(+1);
+      if(e.key === "ArrowLeft") nextPhoto(-1);
+    });
+
+    $("vClose").onclick = closeViewer;
+    $("vLeft").onclick = ()=>nextPhoto(-1);
+    $("vRight").onclick = ()=>nextPhoto(+1);
+    $("viewer").addEventListener("click", (e)=>{
+      if(e.target === $("viewer")) closeViewer();
+    });
+
+    // =========================
+    // Render cards
+    // =========================
+    function buyLinks(){
+      // BUY_TELEGRAM = mikab16 (username)
+      // BUY_WHATSAPP = 3934... (phone)
+      // Если у тебя в бэке отдаётся уже готовая ссылка — просто подставь.
+      const tgUser = "mikab16";
+      const wa = "393463203783";
+      return {
+        tg: `https://t.me/${encodeURIComponent(tgUser)}`,
+        wa: `https://wa.me/${encodeURIComponent(wa)}`
+      };
+    }
+
+    function cardTemplate(p){
+      // Собираем фото: file_ids (альбом) или одиночное file_id
+      const photos = Array.isArray(p.file_ids) && p.file_ids.length ? p.file_ids : (p.file_id ? [p.file_id] : []);
+      const count = photos.length || 0;
+
+      // brand: скрываем ITEM/пусто
+      const brand = isUselessBrand(p.brand) ? "" : (p.brand || "").toString().trim();
+
+      // caption: чистим от формулы
+      const caption = cleanCaption(p.caption || "");
+
+      const {tg, wa} = buyLinks();
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const media = document.createElement("div");
+      media.className = "media";
+
+      const img = document.createElement("img");
+      img.alt = brand || "Фото";
+      media.appendChild(img);
+
+      if(count > 1){
+        const badge = document.createElement("div");
+        badge.className = "badge";
+        badge.textContent = `${count} фото`;
+        media.appendChild(badge);
+      }
+
+      // клик по фото -> viewer
+      media.style.cursor = "pointer";
+      media.onclick = ()=>{
+        if(!photos.length) return;
+        openViewer(photos, 0);
+      };
+
+      // грузим обложку = первое фото
+      loadFirstWorkingImage(img, photos[0]);
+
+      const body = document.createElement("div");
+      body.className = "body";
+
+      if(brand){
+        const b = document.createElement("div");
+        b.className = "brand";
+        b.textContent = brand;
+        body.appendChild(b);
+      }
+
+      // Описание (из Телеграм) — оставляем
+      const cap = document.createElement("div");
+      cap.className = "caption";
+      cap.textContent = caption || "";
+      body.appendChild(cap);
+
+      // если много текста — кнопка "ещё"
+      if((caption || "").length > 160){
+        const more = document.createElement("div");
+        more.className = "more";
+        more.textContent = "Показать полностью";
+        more.onclick = ()=>{
+          const exp = cap.classList.toggle("expanded");
+          more.textContent = exp ? "Свернуть" : "Показать полностью";
+        };
+        body.appendChild(more);
+      } else {
+        // чтобы сетка не прыгала — добавим пустой фикс
+        const spacer = document.createElement("div");
+        spacer.style.height = "18px";
+        body.appendChild(spacer);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const tgBtn = document.createElement("a");
+      tgBtn.className = "aBtn tg";
+      tgBtn.href = tg;
+      tgBtn.target = "_blank";
+      tgBtn.rel = "noopener";
+      tgBtn.textContent = "Купить в Telegram";
+
+      const waBtn = document.createElement("a");
+      waBtn.className = "aBtn wa";
+      waBtn.href = wa;
+      waBtn.target = "_blank";
+      waBtn.rel = "noopener";
+      waBtn.textContent = "Купить в WhatsApp";
+
+      actions.appendChild(tgBtn);
+      actions.appendChild(waBtn);
+
+      body.appendChild(actions);
+
+      card.appendChild(media);
+      card.appendChild(body);
+
+      return card;
+    }
+
+    // =========================
+    // Fetch products
+    // =========================
+    let allProducts = [];
+
+    async function fetchProducts(){
+      $("status").style.display="none";
+      $("empty").style.display="none";
+
+      // skeleton cards
+      const grid = $("grid");
+      grid.innerHTML = "";
+      for(let i=0;i<6;i++){
+        const sk = document.createElement("div");
+        sk.className = "card";
+        sk.innerHTML = `
+          <div class="media skeleton"></div>
+          <div class="body">
+            <div class="skeleton" style="height:22px;border-radius:12px"></div>
+            <div class="skeleton" style="height:96px;border-radius:12px"></div>
+            <div class="skeleton" style="height:46px;border-radius:18px;margin-top:auto"></div>
+          </div>
+        `;
+        grid.appendChild(sk);
+      }
+
+      try{
+        const r = await fetch("/api/products", {cache:"no-store"});
+        if(!r.ok){
+          throw new Error("API /api/products вернул " + r.status);
+        }
+        const data = await r.json();
+        if(!Array.isArray(data)) throw new Error("API вернул не массив");
+
+        allProducts = data;
+
+        renderFiltered();
+      }catch(e){
+        grid.innerHTML = "";
+        $("status").style.display="block";
+        $("status").textContent = "Не удалось загрузить товары. Проверь /api/products и логи Render. " + e.message;
+      }
+    }
+
+    function renderFiltered(){
+      const q = ($("q").value || "").trim().toLowerCase();
+      const b = normBrand($("brand").value);
+
+      let list = allProducts.slice();
+
+      // сортировка по ts/created_at/id
+      list.sort((a,c)=>{
+        const ta = Number(a.ts || 0);
+        const tc = Number(c.ts || 0);
+        if(tc !== ta) return tc - ta;
+        const ia = Number(a.id || 0), ic = Number(c.id || 0);
+        return ic - ia;
+      });
+
+      if(b){
+        list = list.filter(p=> normBrand(p.brand).includes(b) || (p.caption||"").toLowerCase().includes("#"+b));
+      }
+      if(q){
+        list = list.filter(p=>{
+          const hay = `${p.brand||""}\n${p.caption||""}`.toLowerCase();
+          return hay.includes(q);
+        });
+      }
+
+      const grid = $("grid");
+      grid.innerHTML = "";
+
+      if(!list.length){
+        $("empty").style.display="block";
+        return;
+      }
+
+      $("empty").style.display="none";
+
+      // рендер
+      list.forEach(p=>{
+        grid.appendChild(cardTemplate(p));
+      });
+    }
+
+    $("find").onclick = renderFiltered;
+    $("q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
+    $("brand").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
+
+    // старт
+    fetchProducts();
+  </script>
 </body>
 </html>
