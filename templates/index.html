@@ -6,36 +6,213 @@
   <title>Каталог</title>
 
   <style>
-    :root { --gap: 12px; --radius: 18px; --border: #e9e9ef; }
-    body { margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial; background:#fafafb; color:#111; }
-    header { position: sticky; top: 0; background: rgba(250,250,251,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); z-index: 10; }
-    .row { display:flex; gap:10px; padding: 12px; align-items:center; }
-    .row input { flex: 1; padding: 12px 14px; border: 1px solid var(--border); border-radius: 14px; font-size: 16px; outline: none; background:#fff; }
-    .row button { padding: 12px 14px; border: 1px solid var(--border); border-radius: 14px; font-size: 16px; background:#f2f3f7; cursor: pointer; }
-    .hint { padding: 0 12px 12px; color:#666; font-size: 14px; }
+    :root{
+      --gap: 12px;
+      --radius: 18px;
+      --border: #e9e9ef;
+      --bg: #fafafb;
+      --card: #fff;
+      --text: #111;
+      --muted: #666;
+    }
 
-    main { padding: 12px; }
-    .grid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); }
-    @media (min-width: 900px){ .grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background: var(--bg);
+      color: var(--text);
+    }
 
-    .card { background:#fff; border: 1px solid var(--border); border-radius: var(--radius); overflow:hidden; box-shadow: 0 6px 22px rgba(15,15,25,.05); }
-    .imgwrap { width: 100%; aspect-ratio: 3 / 4; background:#f1f2f6; display:flex; align-items:center; justify-content:center; }
-    .imgwrap img { width:100%; height:100%; object-fit: cover; display:block; }
-    .imgfallback { color:#999; font-size: 14px; }
+    header{
+      position: sticky;
+      top: 0;
+      background: rgba(250,250,251,.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+    }
 
-    .meta { padding: 12px; }
-    .brand { font-weight: 900; letter-spacing: .2px; font-size: 18px; text-transform: uppercase; }
-    .price { margin-top: 6px; font-weight: 900; font-size: 28px; line-height: 1.05; }
-    .raw { margin-top: 4px; color:#666; font-size: 13px; }
-    .cap { margin-top: 10px; white-space: pre-wrap; word-break: break-word; font-size: 15px; line-height: 1.25; }
+    .row{
+      display:flex;
+      gap:10px;
+      padding: 12px;
+      align-items:center;
+    }
 
-    .actions { display:flex; gap:10px; margin-top: 12px; }
-    .btn { flex: 1; display:flex; align-items:center; justify-content:center; gap:8px; padding: 12px; border-radius: 16px; font-weight: 800; font-size: 15px; text-decoration: none; user-select:none; }
-    .btn-tg { background:#111; color:#fff; border: 1px solid #111; }
-    .btn-wa { background:#fff; color:#111; border: 2px solid #111; }
+    .row input{
+      flex: 1;
+      min-width: 0;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 16px;
+      outline: none;
+      background:#fff;
+    }
 
-    .more { margin: 14px 0 30px; display:flex; justify-content:center; }
-    .more button { padding: 12px 16px; border: 1px solid var(--border); border-radius: 14px; background:#fff; font-weight: 700; cursor:pointer; }
+    .row button{
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 16px;
+      background:#f2f3f7;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .hint{
+      padding: 0 12px 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    main{ padding: 12px; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--gap);
+    }
+
+    @media (min-width: 900px){
+      .grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow:hidden;
+      box-shadow: 0 6px 22px rgba(15,15,25,.05);
+      display:flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .imgwrap{
+      width:100%;
+      aspect-ratio: 3 / 4;
+      background:#f1f2f6;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position: relative;
+      overflow:hidden;
+    }
+
+    .imgwrap img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+    }
+
+    .imgfallback{
+      color:#999;
+      font-size: 14px;
+    }
+
+    .meta{
+      padding: 12px;
+      display:flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .brand{
+      font-weight: 900;
+      letter-spacing: .2px;
+      font-size: 18px;
+      text-transform: uppercase;
+      line-height: 1.15;
+    }
+
+    /* Цена: показываем РОВНО строку price_raw, не считаем "итого" */
+    .price{
+      margin-top: 0;
+      font-weight: 900;
+      font-size: 22px;
+      line-height: 1.15;
+      word-break: break-word;
+    }
+
+    .sizes{
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.25;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Если захочешь потом показывать оригинальный текст — готово, но сейчас скрыто */
+    .rawtext{
+      display:none;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.25;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top: 6px;
+      width: 100%;
+    }
+
+    .btn{
+      flex: 1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding: 12px 10px;
+      border-radius: 16px;
+      font-weight: 800;
+      font-size: 14px;
+      text-decoration: none;
+      user-select:none;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .btn-tg{
+      background:#111;
+      color:#fff;
+      border: 1px solid #111;
+    }
+
+    .btn-wa{
+      background:#fff;
+      color:#111;
+      border: 2px solid #111;
+    }
+
+    .more{
+      margin: 14px 0 30px;
+      display:flex;
+      justify-content:center;
+    }
+
+    .more button{
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background:#fff;
+      font-weight: 700;
+      cursor:pointer;
+    }
+
+    .empty{
+      color: var(--muted);
+      text-align:center;
+      padding: 18px 0 8px;
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -45,7 +222,7 @@
       <input id="q" placeholder="Поиск (текст/описание)" />
     </div>
     <div class="row" style="padding-top:0">
-      <input id="brand" placeholder="Бренд (например balmain)" />
+      <input id="brand" placeholder="Бренд (например dior)" />
       <button onclick="resetAndLoad()">Найти</button>
     </div>
     <div class="hint">Совет: бренд можно вводить как “dior” без #</div>
@@ -53,6 +230,8 @@
 
   <main>
     <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none;">Ничего не найдено</div>
+
     <div class="more">
       <button id="moreBtn" onclick="loadMore()">Показать ещё</button>
     </div>
@@ -62,20 +241,11 @@
     let offset = 0;
     const limit = 30;
     let buyTelegram = "";
-    let buyWhatsapp = "393463203783"; // твой номер (как ты просила)
+    let buyWhatsapp = "393463203783";
     let loading = false;
 
-    async function getBuyTarget(){
-      try{
-        const r = await fetch("/api/buy_target");
-        const j = await r.json();
-        buyTelegram = (j.telegram || "").trim();
-        buyWhatsapp = (j.whatsapp || buyWhatsapp).trim();
-      }catch(e){}
-    }
-
-    function escapeHtml(str){
-      return (str || "")
+    function esc(s){
+      return (s || "")
         .replaceAll("&","&amp;")
         .replaceAll("<","&lt;")
         .replaceAll(">","&gt;")
@@ -83,32 +253,46 @@
         .replaceAll("'","&#39;");
     }
 
-    function formatEUR(v){
-      if (v === null || v === undefined || v === "") return "";
-      const num = Number(v);
-      if (!Number.isFinite(num)) return "";
+    async function getBuyTarget(){
       try{
-        return new Intl.NumberFormat("it-IT", { style:"currency", currency:"EUR", maximumFractionDigits: 2 }).format(num);
-      }catch(e){
-        return String(num);
-      }
+        const r = await fetch("/api/buy_target");
+        const j = await r.json();
+        buyTelegram = (j.telegram || "").trim().replace(/^@/, "");
+        buyWhatsapp = (j.whatsapp || buyWhatsapp).trim().replace("+","");
+      }catch(e){}
     }
 
     function buildTelegramLink(p){
-      // Если указан username продавца — открываем чат t.me/<username>?text=...
-      const text = `Здравствуйте! Хочу заказать:\n\n${p.brand || ""}\n${p.price_raw || ""}\n\n${(p.caption || "").slice(0, 800)}`;
-      const encoded = encodeURIComponent(text);
+      const brand = (p.brand || "—").trim();
+      const price = (p.price_raw || "").trim();
+      const sizes = (p.caption || "").trim(); // в app.py caption = размеры
+      const img = p.file_id ? `${location.origin}/img/${encodeURIComponent(p.file_id)}` : "";
 
+      // Красивый шаблон заказа
+      let text = `Здравствуйте! Хочу заказать:\n\n${brand}`;
+      if (price) text += `\n${price}`;
+      if (sizes) text += `\n${sizes}`;
+      if (img) text += `\n\nФото: ${img}`;
+
+      const encoded = encodeURIComponent(text.slice(0, 3500));
       if (buyTelegram){
         return `https://t.me/${buyTelegram}?text=${encoded}`;
       }
-      // запасной вариант: share
       return `https://t.me/share/url?url=&text=${encoded}`;
     }
 
     function buildWhatsappLink(p){
-      const text = `Здравствуйте! Хочу заказать:\n\n${p.brand || ""}\n${p.price_raw || ""}\n\n${(p.caption || "").slice(0, 800)}`;
-      const encoded = encodeURIComponent(text);
+      const brand = (p.brand || "—").trim();
+      const price = (p.price_raw || "").trim();
+      const sizes = (p.caption || "").trim();
+      const img = p.file_id ? `${location.origin}/img/${encodeURIComponent(p.file_id)}` : "";
+
+      let text = `Здравствуйте! Хочу заказать:\n\n${brand}`;
+      if (price) text += `\n${price}`;
+      if (sizes) text += `\n${sizes}`;
+      if (img) text += `\n\nФото: ${img}`;
+
+      const encoded = encodeURIComponent(text.slice(0, 3500));
       // wa.me работает без плюса
       return `https://wa.me/${buyWhatsapp}?text=${encoded}`;
     }
@@ -117,7 +301,6 @@
       if (!p.file_id){
         return `<div class="imgwrap"><div class="imgfallback">Фото</div></div>`;
       }
-      // грузим через прокси /img/<file_id>
       const src = `/img/${encodeURIComponent(p.file_id)}`;
       return `
         <div class="imgwrap">
@@ -127,10 +310,9 @@
     }
 
     function card(p){
-      const b = (p.brand || "item").toUpperCase();
-      const priceBig = formatEUR(p.price_value) || (p.price_raw || "");
-      const raw = p.price_raw ? `<div class="raw">${escapeHtml(p.price_raw)}</div>` : "";
-      const cap = p.caption ? `<div class="cap">${escapeHtml(p.caption)}</div>` : "";
+      const brand = ((p.brand || "—") + "").toUpperCase();
+      const price = (p.price_raw || "").trim();     // показываем ровно эту строку
+      const sizes = (p.caption || "").trim();       // размеры (если есть)
 
       const tg = buildTelegramLink(p);
       const wa = buildWhatsappLink(p);
@@ -139,10 +321,9 @@
         <div class="card">
           ${imgBlock(p)}
           <div class="meta">
-            <div class="brand">${escapeHtml(b)}</div>
-            <div class="price">${escapeHtml(priceBig)}</div>
-            ${raw}
-            ${cap}
+            <div class="brand">${esc(brand)}</div>
+            ${price ? `<div class="price">${esc(price)}</div>` : ""}
+            ${sizes ? `<div class="sizes">${esc(sizes)}</div>` : ""}
             <div class="actions">
               <a class="btn btn-tg" href="${tg}" target="_blank" rel="noopener">Купить в Telegram</a>
               <a class="btn btn-wa" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>
@@ -160,7 +341,7 @@
       url.searchParams.set("limit", String(limit));
       url.searchParams.set("offset", String(offset));
       if (q) url.searchParams.set("q", q);
-      if (brand) url.searchParams.set("brand", brand);
+      if (brand) url.searchParams.set("brand", brand.replace(/^#/, ""));
 
       const r = await fetch(url.toString());
       if (!r.ok) throw new Error("API error");
@@ -172,6 +353,7 @@
       loading = true;
 
       const btn = document.getElementById("moreBtn");
+      const empty = document.getElementById("empty");
       btn.disabled = true;
       btn.textContent = "Загружаю…";
 
@@ -182,8 +364,16 @@
         data.forEach(p => grid.insertAdjacentHTML("beforeend", card(p)));
         offset += data.length;
 
-        if (data.length < limit) btn.style.display = "none";
-        else btn.style.display = "inline-block";
+        // пустой результат только на первой странице
+        if (offset === data.length && data.length === 0){
+          empty.style.display = "block";
+          btn.style.display = "none";
+        } else {
+          empty.style.display = "none";
+          if (data.length < limit) btn.style.display = "none";
+          else btn.style.display = "inline-block";
+        }
+
       }catch(e){
         alert("Не удалось загрузить товары. Проверь /api/products");
       }finally{
@@ -197,8 +387,16 @@
       offset = 0;
       document.getElementById("grid").innerHTML = "";
       document.getElementById("moreBtn").style.display = "inline-block";
+      document.getElementById("empty").style.display = "none";
       await loadMore();
     }
+
+    // Enter = искать
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter"){
+        resetAndLoad();
+      }
+    });
 
     (async () => {
       await getBuyTarget();
