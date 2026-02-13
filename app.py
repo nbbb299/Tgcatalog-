@@ -127,3 +127,8 @@ def tgfile(file_id: str):
         content=file_resp.content,
         media_type="image/jpeg"
     )
+from fastapi.responses import FileResponse
+
+@app.get("/")
+def root():
+    return FileResponse("index.html")
