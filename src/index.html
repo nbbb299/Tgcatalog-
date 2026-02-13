@@ -1,201 +1,742 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TG Catalog — Luxury</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TG Catalog — Luxury</title>
 
-<style>
-:root{
---bg:#f6f7fb;
---card:#fff;
---text:#0f172a;
---muted:#6b7280;
---stroke:#e6e8ee;
---shadow:0 10px 30px rgba(0,0,0,.06);
---r:22px;
---btnR:18px;
---black:#111;
-}
-*{box-sizing:border-box}
-body{
-margin:0;
-font-family: ui-sans-serif, system-ui;
-background:var(--bg);
-}
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#fff;
+      --text:#0f172a;
+      --muted:#6b7280;
+      --stroke:#e6e8ee;
+      --shadow:0 10px 30px rgba(0,0,0,.06);
+      --r:22px;
+      --btnR:18px;
+      --black:#111;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:var(--bg);
+    }
 
-/* ===== DATE BADGE ADDED ===== */
-.dateBadge{
-position:absolute;
-left:10px;
-top:10px;
-background: rgba(255,255,255,.92);
-backdrop-filter: blur(6px);
-border-radius:999px;
-padding:6px 10px;
-font-size:11px;
-font-weight:900;
-letter-spacing:.5px;
-border:1px solid rgba(0,0,0,.06);
-}
+    .top{
+      position:sticky; top:0; z-index:10;
+      background: rgba(246,247,251,.92);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--stroke);
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:14px;}
+    .inputs{display:grid; gap:10px;}
+    .row1{display:grid; grid-template-columns: 1fr; gap:10px;}
+    .row2{display:grid; grid-template-columns: 1fr 110px; gap:10px;}
+    input{
+      width:100%;
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      font-size:16px;
+      outline:none;
+    }
+    input:focus{border-color:#cfd5e3; box-shadow:0 0 0 4px rgba(59,130,246,.12)}
+    button{
+      border:0;
+      border-radius:18px;
+      background:#e9eefc;
+      color:#1f2a44;
+      font-weight:800;
+      font-size:16px;
+      cursor:pointer;
+    }
+    button:active{transform: translateY(1px)}
+    .hint{margin-top:6px; color:var(--muted); font-size:13px}
 
-/* твои стили дальше 그대로 */
-.badge{
-position:absolute;
-right:10px;
-top:10px;
-background: rgba(17,17,17,.72);
-color:#fff;
-padding:6px 10px;
-border-radius:999px;
-font-size:12px;
-font-weight:800;
-}
+    .gridWrap{max-width:1100px; margin:0 auto; padding:14px;}
+    .grid{
+      display:grid;
+      gap:14px;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+    @media (min-width: 900px){
+      .grid{grid-template-columns: repeat(3, minmax(0,1fr));}
+      .row2{grid-template-columns: 1fr 140px;}
+    }
 
-.media{
-position:relative;
-aspect-ratio:1/1;
-overflow:hidden;
-background:#f0f2f7;
-}
-.media img{
-width:100%;
-height:100%;
-object-fit:cover;
-}
+    .card{
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: 520px;
+    }
 
-.card{
-background:#fff;
-border-radius:22px;
-overflow:hidden;
-display:flex;
-flex-direction:column;
-}
+    .media{
+      position:relative;
+      background:#f0f2f7;
+      width:100%;
+      aspect-ratio: 1 / 1;
+      overflow:hidden;
+      cursor:pointer;
+    }
+    .media img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+      transform: translateZ(0);
+    }
 
-.actions{
-margin-top:auto;
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-}
+    .badge{
+      position:absolute;
+      right:10px; top:10px;
+      background: rgba(17,17,17,.72);
+      color:#fff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      z-index:3;
+    }
 
-.aBtn{
-display:flex;
-align-items:center;
-justify-content:center;
-padding:10px;
-border:2px solid #111;
-border-radius:18px;
-font-weight:900;
-text-decoration:none;
-white-space:normal;
-text-align:center;
-line-height:1.05;
-}
+    /* ✅ ДАТА (слева сверху) */
+    .dateBadge{
+      position:absolute;
+      left:10px; top:10px;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(6px);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.5px;
+      border:1px solid rgba(0,0,0,.06);
+      z-index:3;
+    }
 
-.aBtn.tg{background:#111;color:#fff;}
-.aBtn.wa{background:#fff;color:#111;}
-</style>
+    .body{
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      flex:1;
+    }
+
+    .brand{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.3px;
+      line-height:1.1;
+    }
+
+    .caption{
+      color:#111;
+      font-size:14px;
+      line-height:1.35;
+      white-space:pre-wrap;
+      overflow:hidden;
+      display:-webkit-box;
+      -webkit-line-clamp: 6;
+      -webkit-box-orient: vertical;
+      min-height: 96px;
+    }
+    .caption.expanded{
+      -webkit-line-clamp: unset;
+      max-height:none;
+    }
+
+    .more{
+      color:#111;
+      font-weight:900;
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    /* ✅ КНОПКИ: всегда влезают (2 строки в тексте) */
+    .actions{
+      margin-top:auto;
+      display:grid;
+      gap:10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .aBtn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 8px;
+      border-radius: var(--btnR);
+      font-weight:900;
+      text-decoration:none;
+      font-size:13px;
+      border:2px solid var(--black);
+      min-height:52px;
+      min-width:0;
+
+      white-space:normal;
+      text-align:center;
+      line-height:1.05;
+      word-break:break-word;
+    }
+    .aBtn .btnText{display:block}
+    .aBtn.tg{background:var(--black); color:#fff;}
+    .aBtn.wa{background:#fff; color:#111;}
+
+    @media (max-width: 390px){
+      .aBtn{font-size:12px; min-height:50px;}
+    }
+
+    .skeleton{
+      background: linear-gradient(90deg,#eef0f6 0%, #f6f7fb 40%, #eef0f6 80%);
+      background-size: 200% 100%;
+      animation: sk 1.2s infinite;
+    }
+    @keyframes sk{0%{background-position:0% 0}100%{background-position:-200% 0}}
+
+    /* Viewer */
+    .viewer{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.92);
+      display:none;
+      z-index:999;
+      touch-action:none; /* важно для pinch */
+    }
+    .viewer.open{display:block}
+    .vTop{
+      position:absolute;
+      top:12px; left:12px; right:12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      z-index:10;
+    }
+    .vClose, .vCount{
+      background: rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      color:#fff;
+      border-radius: 14px;
+      padding:10px 12px;
+      font-weight:900;
+      backdrop-filter: blur(8px);
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .vClose{cursor:pointer}
+
+    .vMain{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:70px 16px 110px;
+    }
+    .vImgWrap{
+      width:min(92vw, 920px);
+      height:min(70vh, 920px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      position:relative;
+      touch-action:none; /* важно для pinch */
+    }
+    .vImg{
+      max-width:100%;
+      max-height:100%;
+      user-select:none;
+      -webkit-user-drag:none;
+      transform-origin:center center;
+      will-change:transform;
+    }
+    .vArrow{
+      position:absolute;
+      top:50%;
+      transform: translateY(-50%);
+      width:54px; height:54px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.10);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:26px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      backdrop-filter: blur(8px);
+      z-index:5;
+    }
+    .vArrow.left{left:14px}
+    .vArrow.right{right:14px}
+
+    .vThumbs{
+      position:absolute;
+      left:0; right:0; bottom:0;
+      padding:14px 14px 18px;
+      display:flex;
+      gap:10px;
+      overflow:auto;
+      justify-content:center;
+      z-index:6;
+    }
+    .thumb{
+      width:54px; height:54px;
+      border-radius:14px;
+      overflow:hidden;
+      border:2px solid rgba(255,255,255,.18);
+      opacity:.7;
+      cursor:pointer;
+      flex:0 0 auto;
+      background: rgba(255,255,255,.06);
+    }
+    .thumb.active{opacity:1;border-color:#fff;}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+
+    .empty{
+      max-width:1100px;
+      margin:20px auto;
+      padding:0 14px;
+      color:var(--muted);
+      font-weight:800;
+    }
+    .err{color:#b91c1c;font-weight:900;margin-top:10px;}
+  </style>
 </head>
 
 <body>
+  <div class="top">
+    <div class="wrap">
+      <div class="inputs">
+        <div class="row1">
+          <input id="q" placeholder="Поиск (текст/описание)" autocomplete="off" />
+        </div>
+        <div class="row2">
+          <input id="brand" placeholder="Бренд (например gucci)" autocomplete="off" />
+          <button id="find">Найти</button>
+        </div>
+      </div>
+      <div class="hint">Совет: можно искать по бренду и по любому тексту из описания.</div>
+      <div id="status" class="err" style="display:none"></div>
+    </div>
+  </div>
 
-<div id="grid"></div>
+  <div class="gridWrap">
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" style="display:none">Ничего не найдено.</div>
+  </div>
 
-<script>
+  <!-- Viewer -->
+  <div id="viewer" class="viewer" aria-hidden="true">
+    <div class="vTop">
+      <div id="vClose" class="vClose" role="button" aria-label="Close">✕</div>
+      <div id="vCount" class="vCount">1/1</div>
+    </div>
 
-function imgUrl(v){
-if(!v) return "";
-if(v.startsWith("http")) return v;
-return "/api/tgfile/"+encodeURIComponent(v);
-}
+    <div class="vMain">
+      <div class="vImgWrap" id="vImgWrap">
+        <div class="vArrow left" id="vLeft">‹</div>
+        <img id="vImg" class="vImg" alt="photo" />
+        <div class="vArrow right" id="vRight">›</div>
+      </div>
+    </div>
 
-function cardTemplate(p){
+    <div id="vThumbs" class="vThumbs"></div>
+  </div>
 
-const photos = (Array.isArray(p.file_ids) && p.file_ids.length)
-? p.file_ids
-: (p.file_id ? [p.file_id] : []);
+  <script>
+    const $ = (id)=>document.getElementById(id);
 
-const card = document.createElement("div");
-card.className="card";
+    function norm(s){
+      return (s || "").toString().trim().toLowerCase();
+    }
+    function normBrand(s){
+      return norm(s).replace(/^#/, "");
+    }
 
-const media=document.createElement("div");
-media.className="media";
+    // ✅ Описание = как в Telegram, удаляем только "по вопросам ..." и "@mikab16"
+    function cleanCaption(text){
+      if(!text) return "";
+      const raw = text.toString();
+      const lines = raw.split("\n");
+      const filtered = lines.filter(line=>{
+        const s = line.trim();
+        if(!s) return true;
+        if(/по вопросам/i.test(s)) return false;
+        if(/@mikab16/i.test(s)) return false;
+        return true;
+      });
+      return filtered.join("\n").trim();
+    }
 
-const img=document.createElement("img");
-img.src=imgUrl(photos[0]);
-media.appendChild(img);
+    function imgUrl(fileIdOrUrl){
+      if(!fileIdOrUrl) return "";
+      const v = String(fileIdOrUrl);
+      if(v.startsWith("http")) return v;
+      return `/api/tgfile/${encodeURIComponent(v)}`;
+    }
 
-/* ===== DATE BADGE ADDED HERE ===== */
+    function preload(url){
+      if(!url) return;
+      const im = new Image();
+      im.decoding = "async";
+      im.loading = "eager";
+      im.src = url;
+    }
 
-if(p.ts){
+    function loadImage(imgEl, fileIdOrUrl){
+      const url = imgUrl(fileIdOrUrl);
+      if(!url){
+        imgEl.classList.add("skeleton");
+        imgEl.alt = "no image";
+        return;
+      }
+      imgEl.classList.add("skeleton");
+      imgEl.decoding = "async";
+      imgEl.loading = "lazy";
+      imgEl.src = url;
+      imgEl.onload = ()=>imgEl.classList.remove("skeleton");
+      imgEl.onerror = ()=>{ imgEl.classList.remove("skeleton"); imgEl.alt="image not available"; };
+    }
 
-const date=new Date(p.ts*1000);
+    /* ✅ формат даты: NEW • 13 FEB */
+    function formatDateBadge(ts){
+      if(!ts) return "";
+      const d = new Date(Number(ts) * 1000);
+      if(isNaN(d.getTime())) return "";
 
-const day=String(date.getDate()).padStart(2,"0");
-const month=date.toLocaleString("en",{month:"short"}).toUpperCase();
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mon = d.toLocaleString("en", { month: "short" }).toUpperCase();
 
-const today=new Date();
-const isToday=today.toDateString()===date.toDateString();
+      const now = new Date();
+      const isToday = now.toDateString() === d.toDateString();
 
-const dateBadge=document.createElement("div");
-dateBadge.className="dateBadge";
-dateBadge.textContent=(isToday?"NEW • ":"")+day+" "+month;
+      return (isToday ? "NEW • " : "") + dd + " " + mon;
+    }
 
-media.appendChild(dateBadge);
-}
+    // ===== Viewer state + pinch zoom =====
+    let viewerState = {
+      photos: [],
+      idx: 0,
+      scale: 1,
+      startDist: 0,
+      startScale: 1,
+      swipeX: null
+    };
 
-/* ===== existing photo count badge ===== */
+    function applyScale(){
+      $("vImg").style.transform = `scale(${viewerState.scale})`;
+    }
 
-if(photos.length>1){
-const badge=document.createElement("div");
-badge.className="badge";
-badge.textContent=photos.length+" фото";
-media.appendChild(badge);
-}
+    function openViewer(photos, startIdx=0){
+      viewerState.photos = photos || [];
+      viewerState.idx = Math.max(0, Math.min(startIdx, viewerState.photos.length-1));
+      viewerState.scale = 1;
+      applyScale();
+      $("viewer").classList.add("open");
+      $("viewer").setAttribute("aria-hidden","false");
+      renderViewer(true);
+    }
 
-card.appendChild(media);
+    function closeViewer(){
+      $("viewer").classList.remove("open");
+      $("viewer").setAttribute("aria-hidden","true");
+      viewerState.scale = 1;
+      applyScale();
+    }
 
-const actions=document.createElement("div");
-actions.className="actions";
+    function renderViewer(preloadNeighbors=false){
+      const total = viewerState.photos.length || 1;
+      const i = viewerState.idx;
+      $("vCount").textContent = `${i+1}/${total}`;
 
-const tg=document.createElement("a");
-tg.className="aBtn tg";
-tg.innerHTML="Купить<br>в Telegram";
-tg.href="https://t.me/mikab16";
+      const main = $("vImg");
+      const url = imgUrl(viewerState.photos[i]);
+      main.decoding = "async";
+      main.loading = "eager";
+      main.src = url;
 
-const wa=document.createElement("a");
-wa.className="aBtn wa";
-wa.innerHTML="Купить<br>в WhatsApp";
-wa.href="https://wa.me/393463203783";
+      if(preloadNeighbors && total > 1){
+        preload(imgUrl(viewerState.photos[(i - 1 + total) % total]));
+        preload(imgUrl(viewerState.photos[(i + 1) % total]));
+      }
 
-actions.appendChild(tg);
-actions.appendChild(wa);
+      const thumbs = $("vThumbs");
+      thumbs.innerHTML = "";
+      viewerState.photos.forEach((pid, idx)=>{
+        const d = document.createElement("div");
+        d.className = "thumb" + (idx===i ? " active" : "");
+        const im = document.createElement("img");
+        im.src = imgUrl(pid);
+        d.appendChild(im);
+        d.onclick = ()=>{
+          viewerState.idx = idx;
+          viewerState.scale = 1;
+          applyScale();
+          renderViewer(true);
+        };
+        thumbs.appendChild(d);
+      });
+    }
 
-card.appendChild(actions);
+    function nextPhoto(delta){
+      const n = viewerState.photos.length;
+      if(n<=1) return;
+      viewerState.idx = (viewerState.idx + delta + n) % n;
+      viewerState.scale = 1;
+      applyScale();
+      renderViewer(true);
+    }
 
-return card;
-}
+    function dist(t1, t2){
+      const dx = t2.clientX - t1.clientX;
+      const dy = t2.clientY - t1.clientY;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
 
-/* demo load */
+    const wrap = $("vImgWrap");
 
-async function load(){
+    wrap.addEventListener("touchstart", (e)=>{
+      if(!$("viewer").classList.contains("open")) return;
 
-const r=await fetch("/api/products",{cache:"no-store"});
-const data=await r.json();
+      if(e.touches.length === 2){
+        viewerState.startDist = dist(e.touches[0], e.touches[1]);
+        viewerState.startScale = viewerState.scale;
+      } else if(e.touches.length === 1){
+        viewerState.swipeX = e.touches[0].clientX;
+      }
+    }, {passive:false});
 
-const grid=document.getElementById("grid");
-grid.innerHTML="";
+    wrap.addEventListener("touchmove", (e)=>{
+      if(!$("viewer").classList.contains("open")) return;
 
-data.forEach(p=>{
-grid.appendChild(cardTemplate(p));
-});
+      if(e.touches.length === 2){
+        e.preventDefault();
+        const d0 = viewerState.startDist || 1;
+        const d1 = dist(e.touches[0], e.touches[1]);
+        let next = viewerState.startScale * (d1 / d0);
+        next = Math.max(1, Math.min(4, next));
+        viewerState.scale = next;
+        applyScale();
+      }
+    }, {passive:false});
 
-}
+    wrap.addEventListener("touchend", (e)=>{
+      if(viewerState.swipeX === null) return;
 
-load();
-setInterval(load,10000);
+      if(viewerState.scale > 1.02){
+        viewerState.swipeX = null;
+        return;
+      }
 
-</script>
+      const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : viewerState.swipeX;
+      const dx = endX - viewerState.swipeX;
+      viewerState.swipeX = null;
+
+      if(Math.abs(dx) > 45){
+        nextPhoto(dx < 0 ? +1 : -1);
+      }
+    }, {passive:true});
+
+    let lastTap = 0;
+    wrap.addEventListener("click", ()=>{
+      if(!$("viewer").classList.contains("open")) return;
+      const now = Date.now();
+      if(now - lastTap < 280){
+        viewerState.scale = (viewerState.scale === 1) ? 2 : 1;
+        applyScale();
+      }
+      lastTap = now;
+    });
+
+    $("vClose").addEventListener("click", closeViewer);
+    $("vLeft").onclick = ()=>nextPhoto(-1);
+    $("vRight").onclick = ()=>nextPhoto(+1);
+    $("viewer").addEventListener("click", (e)=>{
+      if(e.target === $("viewer")) closeViewer();
+    });
+
+    function buyLinks(){
+      const tgUser = "mikab16";
+      const wa = "393463203783";
+      return {
+        tg: `https://t.me/${encodeURIComponent(tgUser)}`,
+        wa: `https://wa.me/${encodeURIComponent(wa)}`
+      };
+    }
+
+    function cardTemplate(p){
+      const photos = (Array.isArray(p.file_ids) && p.file_ids.length) ? p.file_ids : (p.file_id ? [p.file_id] : []);
+      const count = photos.length || 0;
+
+      const brand = (p.brand || "").toString().trim();
+      const caption = cleanCaption(p.caption || "");
+
+      const {tg, wa} = buyLinks();
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const media = document.createElement("div");
+      media.className = "media";
+
+      const img = document.createElement("img");
+      img.alt = brand || "Фото";
+      media.appendChild(img);
+
+      /* ✅ ДАТА В КАРТОЧКЕ (НЕ ЛОМАЕТ КЛИКИ/ГРИД) */
+      const dateText = formatDateBadge(p.ts);
+      if(dateText){
+        const db = document.createElement("div");
+        db.className = "dateBadge";
+        db.textContent = dateText;
+        media.appendChild(db);
+      }
+
+      if(count > 1){
+        const badge = document.createElement("div");
+        badge.className = "badge";
+        badge.textContent = `${count} фото`;
+        media.appendChild(badge);
+      }
+
+      media.onclick = ()=>{
+        if(!photos.length) return;
+        openViewer(photos, 0);
+      };
+
+      loadImage(img, photos[0]);
+
+      const body = document.createElement("div");
+      body.className = "body";
+
+      if(brand){
+        const b = document.createElement("div");
+        b.className = "brand";
+        b.textContent = brand;
+        body.appendChild(b);
+      }
+
+      const cap = document.createElement("div");
+      cap.className = "caption";
+      cap.textContent = caption;
+      body.appendChild(cap);
+
+      if(caption.length > 160){
+        const more = document.createElement("div");
+        more.className = "more";
+        more.textContent = "Показать полностью";
+        more.onclick = ()=>{
+          const exp = cap.classList.toggle("expanded");
+          more.textContent = exp ? "Свернуть" : "Показать полностью";
+        };
+        body.appendChild(more);
+      } else {
+        const spacer = document.createElement("div");
+        spacer.style.height = "18px";
+        body.appendChild(spacer);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const tgBtn = document.createElement("a");
+      tgBtn.className = "aBtn tg";
+      tgBtn.href = tg;
+      tgBtn.target = "_blank";
+      tgBtn.rel = "noopener";
+      tgBtn.innerHTML = `<span class="btnText">Купить в<br>Telegram</span>`;
+
+      const waBtn = document.createElement("a");
+      waBtn.className = "aBtn wa";
+      waBtn.href = wa;
+      waBtn.target = "_blank";
+      waBtn.rel = "noopener";
+      waBtn.innerHTML = `<span class="btnText">Купить в<br>WhatsApp</span>`;
+
+      actions.appendChild(tgBtn);
+      actions.appendChild(waBtn);
+      body.appendChild(actions);
+
+      card.appendChild(media);
+      card.appendChild(body);
+      return card;
+    }
+
+    let allProducts = [];
+
+    async function fetchProducts(){
+      $("status").style.display="none";
+      $("empty").style.display="none";
+
+      try{
+        const r = await fetch("/api/products", {cache:"no-store"});
+        if(!r.ok) throw new Error("API /api/products вернул " + r.status);
+        const data = await r.json();
+        if(!Array.isArray(data)) throw new Error("API вернул не массив");
+
+        allProducts = data;
+        renderFiltered();
+      }catch(e){
+        $("grid").innerHTML = "";
+        $("status").style.display="block";
+        $("status").textContent = "Не удалось загрузить товары. " + e.message;
+      }
+    }
+
+    function renderFiltered(){
+      const q = norm($("q").value);
+      const b = normBrand($("brand").value);
+
+      let list = allProducts.slice();
+
+      if(b){
+        list = list.filter(p=>{
+          const hay = `${p.brand||""}\n${p.caption||""}`.toLowerCase();
+          return hay.includes(b) || hay.includes("#"+b);
+        });
+      }
+      if(q){
+        list = list.filter(p=>{
+          const hay = `${p.brand||""}\n${p.caption||""}`.toLowerCase();
+          return hay.includes(q);
+        });
+      }
+
+      const grid = $("grid");
+      grid.innerHTML = "";
+
+      if(!list.length){
+        $("empty").style.display="block";
+        return;
+      }
+      $("empty").style.display="none";
+
+      list.forEach(p=> grid.appendChild(cardTemplate(p)));
+    }
+
+    $("find").onclick = renderFiltered;
+    $("q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
+    $("brand").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
+
+    fetchProducts();
+    setInterval(fetchProducts, 10000);
+    document.addEventListener("visibilitychange", ()=>{
+      if(!document.hidden) fetchProducts();
+    });
+  </script>
 </body>
 </html>
