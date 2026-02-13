@@ -25,6 +25,7 @@
       background:var(--bg);
     }
 
+    /* Header */
     .top{
       position:sticky; top:0; z-index:10;
       background: rgba(246,247,251,.92);
@@ -57,6 +58,7 @@
     button:active{transform: translateY(1px)}
     .hint{margin-top:6px; color:var(--muted); font-size:13px}
 
+    /* Grid */
     .gridWrap{max-width:1100px; margin:0 auto; padding:14px;}
     .grid{
       display:grid;
@@ -68,6 +70,7 @@
       .row2{grid-template-columns: 1fr 140px;}
     }
 
+    /* Card */
     .card{
       background:var(--card);
       border:1px solid var(--stroke);
@@ -77,6 +80,7 @@
       display:flex;
       flex-direction:column;
       min-height: 520px;
+      position: relative;
     }
 
     .media{
@@ -111,7 +115,9 @@
       flex-direction:column;
       gap:10px;
       flex:1;
+      position:relative;
     }
+
     .brand{
       font-size:18px;
       font-weight:900;
@@ -127,9 +133,9 @@
       white-space:pre-wrap;
       overflow:hidden;
       display:-webkit-box;
-      -webkit-line-clamp: 5;
+      -webkit-line-clamp: 7;
       -webkit-box-orient: vertical;
-      min-height: 96px;
+      min-height: 120px;
     }
     .caption.expanded{
       -webkit-line-clamp: unset;
@@ -144,6 +150,7 @@
       user-select:none;
     }
 
+    /* Actions */
     .actions{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -167,6 +174,30 @@
     .aBtn.tg{background:var(--black); color:#fff;}
     .aBtn.wa{background:#fff; color:#111;}
 
+    /* --- FIX: mobile sticky buy bar inside card --- */
+    @media (max-width: 520px){
+      .card{ min-height: 560px; }
+      .body{
+        padding-bottom: 84px;              /* место под кнопки */
+      }
+      .actions{
+        position:absolute;
+        left:14px;
+        right:14px;
+        bottom:14px;
+        margin-top:0;
+        padding-top:0;
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(8px);
+        border:1px solid var(--stroke);
+        border-radius: 18px;
+        padding:10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.10);
+      }
+      .aBtn{ font-size:13px; padding:12px 8px; }
+    }
+
+    /* Skeleton */
     .skeleton{
       background: linear-gradient(90deg,#eef0f6 0%, #f6f7fb 40%, #eef0f6 80%);
       background-size: 200% 100%;
@@ -174,14 +205,30 @@
     }
     @keyframes sk{0%{background-position:0% 0}100%{background-position:-200% 0}}
 
+    .empty{
+      max-width:1100px;
+      margin:20px auto;
+      padding:0 14px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .err{
+      color:#b91c1c;
+      font-weight:900;
+      margin-top:10px;
+    }
+
+    /* ================= Viewer (fixed) ================= */
     .viewer{
       position:fixed;
       inset:0;
       background: rgba(0,0,0,.92);
       display:none;
-      z-index:999;
+      z-index:9999;
+      touch-action: none;
     }
     .viewer.open{display:block}
+
     .vTop{
       position:absolute;
       top:14px; left:14px; right:14px;
@@ -189,19 +236,21 @@
       justify-content:space-between;
       align-items:center;
       gap:10px;
-      pointer-events:none;
+      z-index: 10000;
     }
+
     .vClose, .vCount{
-      pointer-events:auto;
-      background: rgba(255,255,255,.12);
-      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.22);
       color:#fff;
       border-radius: 14px;
       padding:10px 12px;
       font-weight:900;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(10px);
+      -webkit-tap-highlight-color: transparent;
     }
     .vClose{cursor:pointer}
+
     .vMain{
       position:absolute; inset:0;
       display:flex;
@@ -209,6 +258,7 @@
       justify-content:center;
       padding:70px 16px 110px;
     }
+
     .vImgWrap{
       width:min(92vw, 920px);
       height:min(70vh, 920px);
@@ -220,16 +270,18 @@
       background: rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.12);
       position:relative;
-      touch-action: pan-y;
+      touch-action: none;
     }
+
     .vImg{
       max-width:100%;
       max-height:100%;
       user-select:none;
       -webkit-user-drag:none;
       transform-origin:center center;
-      transition: transform .14s ease;
+      will-change: transform;
     }
+
     .vArrow{
       position:absolute;
       top:50%;
@@ -247,6 +299,7 @@
       cursor:pointer;
       user-select:none;
       backdrop-filter: blur(8px);
+      z-index: 10000;
     }
     .vArrow.left{left:14px}
     .vArrow.right{right:14px}
@@ -260,7 +313,9 @@
       gap:10px;
       overflow:auto;
       justify-content:center;
+      z-index: 10000;
     }
+
     .thumb{
       width:54px; height:54px;
       border-radius:14px;
@@ -271,29 +326,8 @@
       flex:0 0 auto;
       background: rgba(255,255,255,.06);
     }
-    .thumb.active{
-      opacity:1;
-      border-color:#fff;
-    }
-    .thumb img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-
-    .empty{
-      max-width:1100px;
-      margin:20px auto;
-      padding:0 14px;
-      color:var(--muted);
-      font-weight:700;
-    }
-    .err{
-      color:#b91c1c;
-      font-weight:900;
-      margin-top:10px;
-    }
+    .thumb.active{opacity:1;border-color:#fff;}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
   </style>
 </head>
 
@@ -344,24 +378,21 @@
       return (s || "").toString().trim().replace(/^#/, "").toLowerCase();
     }
 
-    // Точно прячем ITEM / null / undefined / пусто
+    // прячем мусор
     function isUselessBrand(b){
       const x = normBrand(b);
       return !x || x === "item" || x === "null" || x === "undefined" || x === "-" || x === "—";
     }
 
-    // 1) удаляем строку формулы скидки (в разных вариантах, даже с кривой кодировкой)
-    // 2) НЕ трогаем остальное описание (его оставляем!)
+    // чистим строку формулы скидки (и кривую кодировку)
     function cleanCaption(text){
       if(!text) return "";
       const raw = text.toString();
-
       const lines = raw.split("\n");
       const filtered = lines.filter(line=>{
         const s = line.trim();
         if(!s) return true;
 
-        // варианты формулы (€, â‚¬, просто цифры-скидка-=)
         const hasPercent = /%/.test(s);
         const hasEq = /=/.test(s);
         const hasDash = /-/.test(s) || /—/.test(s);
@@ -371,14 +402,12 @@
           (/â‚¬/.test(s) && hasPercent);
 
         if(looksPriceFormula) return false;
-
         return true;
       });
-
       return filtered.join("\n").trim();
     }
 
-    // Only use backend proxy (самое стабильное)
+    // Только backend proxy (стабильно)
     function imgCandidates(fileIdOrUrl){
       if(!fileIdOrUrl) return [];
       const v = String(fileIdOrUrl);
@@ -413,19 +442,47 @@
       imgEl.alt = "image not available";
     }
 
-    // Viewer
-    let viewerState = { photos: [], idx: 0, scale: 1, tx: 0, ty: 0 };
+    // ===== Viewer (fix close + pinch zoom) =====
+    let viewerState = {
+      photos: [],
+      idx: 0,
+      scale: 1,
+      tx: 0,
+      ty: 0,
+      isPanning: false,
+      panStartX: 0,
+      panStartY: 0,
+      startTx: 0,
+      startTy: 0,
+
+      pinchStartDist: 0,
+      pinchStartScale: 1,
+
+      swipeStartY: null,
+      swipeStartX: null
+    };
+
+    function applyTransform(){
+      const img = $("vImg");
+      img.style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
+    }
+
+    function resetTransform(){
+      viewerState.scale = 1;
+      viewerState.tx = 0;
+      viewerState.ty = 0;
+      applyTransform();
+    }
 
     function openViewer(photos, startIdx=0){
       viewerState.photos = photos || [];
       viewerState.idx = Math.max(0, Math.min(startIdx, viewerState.photos.length-1));
-      viewerState.scale = 1;
-      viewerState.tx = 0;
-      viewerState.ty = 0;
       $("viewer").classList.add("open");
       $("viewer").setAttribute("aria-hidden","false");
+      resetTransform();
       renderViewer();
     }
+
     function closeViewer(){
       $("viewer").classList.remove("open");
       $("viewer").setAttribute("aria-hidden","true");
@@ -435,8 +492,9 @@
       const total = viewerState.photos.length || 1;
       const i = viewerState.idx;
       $("vCount").textContent = `${i+1}/${total}`;
+
+      resetTransform();
       const fileIdOrUrl = viewerState.photos[i];
-      $("vImg").style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
       await loadFirstWorkingImage($("vImg"), fileIdOrUrl);
 
       const thumbs = $("vThumbs");
@@ -447,9 +505,9 @@
         const im = document.createElement("img");
         d.appendChild(im);
         loadFirstWorkingImage(im, pid);
-        d.onclick = ()=>{
+        d.onclick = (e)=>{
+          e.stopPropagation();
           viewerState.idx = idx;
-          viewerState.scale = 1; viewerState.tx = 0; viewerState.ty = 0;
           renderViewer();
         };
         thumbs.appendChild(d);
@@ -460,36 +518,13 @@
       const n = viewerState.photos.length;
       if(n<=1) return;
       viewerState.idx = (viewerState.idx + delta + n) % n;
-      viewerState.scale = 1; viewerState.tx = 0; viewerState.ty = 0;
       renderViewer();
     }
 
-    let touchStartX = null;
-    $("vImgWrap").addEventListener("touchstart", (e)=>{
-      if(!e.touches || !e.touches[0]) return;
-      touchStartX = e.touches[0].clientX;
-    }, {passive:true});
-
-    $("vImgWrap").addEventListener("touchend", (e)=>{
-      if(touchStartX === null) return;
-      const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : touchStartX;
-      const dx = endX - touchStartX;
-      touchStartX = null;
-      if(Math.abs(dx) > 45){
-        nextPhoto(dx < 0 ? +1 : -1);
-      }
-    });
-
-    let lastTap = 0;
-    $("vImgWrap").addEventListener("click", ()=>{
-      const now = Date.now();
-      if(now - lastTap < 280){
-        viewerState.scale = (viewerState.scale === 1) ? 2 : 1;
-        viewerState.tx = 0; viewerState.ty = 0;
-        $("vImg").style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
-      }
-      lastTap = now;
-    });
+    $("vClose").onclick = (e)=>{ e.stopPropagation(); closeViewer(); };
+    $("viewer").addEventListener("click", (e)=>{ if(e.target === $("viewer")) closeViewer(); });
+    $("vLeft").onclick = (e)=>{ e.stopPropagation(); nextPhoto(-1); };
+    $("vRight").onclick = (e)=>{ e.stopPropagation(); nextPhoto(+1); };
 
     window.addEventListener("keydown", (e)=>{
       if(!$("viewer").classList.contains("open")) return;
@@ -498,13 +533,97 @@
       if(e.key === "ArrowLeft") nextPhoto(-1);
     });
 
-    $("vClose").onclick = closeViewer;
-    $("vLeft").onclick = ()=>nextPhoto(-1);
-    $("vRight").onclick = ()=>nextPhoto(+1);
-    $("viewer").addEventListener("click", (e)=>{
-      if(e.target === $("viewer")) closeViewer();
+    const wrap = $("vImgWrap");
+
+    function dist(t1, t2){
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+
+    wrap.addEventListener("touchstart", (e)=>{
+      if(!$("viewer").classList.contains("open")) return;
+
+      if(e.touches.length === 1){
+        viewerState.swipeStartY = e.touches[0].clientY;
+        viewerState.swipeStartX = e.touches[0].clientX;
+
+        if(viewerState.scale > 1){
+          viewerState.isPanning = true;
+          viewerState.panStartX = e.touches[0].clientX;
+          viewerState.panStartY = e.touches[0].clientY;
+          viewerState.startTx = viewerState.tx;
+          viewerState.startTy = viewerState.ty;
+        }
+      }
+
+      if(e.touches.length === 2){
+        e.preventDefault();
+        viewerState.isPanning = false;
+        viewerState.pinchStartDist = dist(e.touches[0], e.touches[1]);
+        viewerState.pinchStartScale = viewerState.scale;
+      }
+    }, {passive:false});
+
+    wrap.addEventListener("touchmove", (e)=>{
+      if(!$("viewer").classList.contains("open")) return;
+
+      if(e.touches.length === 2){
+        e.preventDefault();
+        const d = dist(e.touches[0], e.touches[1]);
+        if(!viewerState.pinchStartDist) return;
+
+        let newScale = viewerState.pinchStartScale * (d / viewerState.pinchStartDist);
+        newScale = Math.max(1, Math.min(newScale, 4));
+        viewerState.scale = newScale;
+        applyTransform();
+        return;
+      }
+
+      if(e.touches.length === 1 && viewerState.isPanning && viewerState.scale > 1){
+        e.preventDefault();
+        const x = e.touches[0].clientX;
+        const y = e.touches[0].clientY;
+        viewerState.tx = viewerState.startTx + (x - viewerState.panStartX);
+        viewerState.ty = viewerState.startTy + (y - viewerState.panStartY);
+        applyTransform();
+      }
+    }, {passive:false});
+
+    wrap.addEventListener("touchend", (e)=>{
+      if(!$("viewer").classList.contains("open")) return;
+
+      if(viewerState.scale === 1 && viewerState.swipeStartY !== null){
+        const endTouch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+        if(endTouch){
+          const dy = endTouch.clientY - viewerState.swipeStartY;
+          const dx = endTouch.clientX - viewerState.swipeStartX;
+
+          if(dy > 90 && Math.abs(dx) < 80) closeViewer();
+          if(Math.abs(dx) > 45 && Math.abs(dy) < 60) nextPhoto(dx < 0 ? +1 : -1);
+        }
+      }
+
+      viewerState.isPanning = false;
+      viewerState.pinchStartDist = 0;
+      viewerState.swipeStartY = null;
+      viewerState.swipeStartX = null;
+    }, {passive:true});
+
+    // double tap zoom
+    let lastTap = 0;
+    wrap.addEventListener("click", ()=>{
+      const now = Date.now();
+      if(now - lastTap < 280){
+        viewerState.scale = (viewerState.scale === 1) ? 2 : 1;
+        viewerState.tx = 0;
+        viewerState.ty = 0;
+        applyTransform();
+      }
+      lastTap = now;
     });
 
+    // Buy links
     function buyLinks(){
       const tgUser = "mikab16";
       const wa = "393463203783";
@@ -658,9 +777,15 @@
         return ic - ia;
       });
 
+      // ✅ FIX: бренд ищем не только в brand и #hashtag, но и просто по тексту caption
       if(b){
-        list = list.filter(p=> normBrand(p.brand).includes(b) || (p.caption||"").toLowerCase().includes("#"+b));
+        list = list.filter(p=>{
+          const pb = normBrand(p.brand);
+          const cap = (p.caption || "").toLowerCase();
+          return pb.includes(b) || cap.includes("#"+b) || cap.includes(b);
+        });
       }
+
       if(q){
         list = list.filter(p=>{
           const hay = `${p.brand||""}\n${p.caption||""}`.toLowerCase();
