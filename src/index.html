@@ -44,6 +44,7 @@
       font-size:16px;
       outline:none;
     }
+    input:focus{border-color:#cfd5e3; box-shadow:0 0 0 4px rgba(59,130,246,.12)}
     button{
       border:0;
       border-radius:18px;
@@ -53,6 +54,7 @@
       font-size:16px;
       cursor:pointer;
     }
+    button:active{transform: translateY(1px)}
     .hint{margin-top:6px; color:var(--muted); font-size:13px}
 
     .gridWrap{max-width:1100px; margin:0 auto; padding:14px;}
@@ -143,7 +145,7 @@
       user-select:none;
     }
 
-    /* ✅ Кнопки: всегда 2 кнопки видны, а текст внутри — в 2 строки */
+    /* ✅ КНОПКИ: всегда влезают (2 строки в тексте) */
     .actions{
       margin-top:auto;
       display:grid;
@@ -154,30 +156,28 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:12px 8px;
+      padding:10px 8px;
       border-radius: var(--btnR);
       font-weight:900;
       text-decoration:none;
+      font-size:13px;
       border:2px solid var(--black);
-      min-height:46px;
+      min-height:52px;
       min-width:0;
 
-      /* ✅ 2 строки */
+      /* ВАЖНО: разрешаем перенос */
       white-space:normal;
       text-align:center;
       line-height:1.05;
+      word-break:break-word;
     }
-    .aBtn .t1{display:block; font-size:12px; opacity:.95; font-weight:900;}
-    .aBtn .t2{display:block; font-size:15px; font-weight:1000; letter-spacing:.2px;}
-
+    .aBtn .btnText{display:block}
     .aBtn.tg{background:var(--black); color:#fff;}
     .aBtn.wa{background:#fff; color:#111;}
 
-    /* чуть компактнее на узких экранах */
-    @media (max-width: 380px){
-      .actions{gap:8px;}
-      .aBtn{padding:10px 6px;}
-      .aBtn .t2{font-size:14px;}
+    /* если совсем узко — чуть уменьшаем шрифт */
+    @media (max-width: 390px){
+      .aBtn{font-size:12px; min-height:50px;}
     }
 
     .skeleton{
@@ -194,12 +194,9 @@
       background: rgba(0,0,0,.92);
       display:none;
       z-index:999;
-
-      /* ✅ важно для pinch */
-      touch-action:none;
+      touch-action:none; /* важно для pinch */
     }
     .viewer.open{display:block}
-
     .vTop{
       position:absolute;
       top:12px; left:12px; right:12px;
@@ -240,21 +237,15 @@
       background: rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.12);
       position:relative;
-
-      /* ✅ важно для pinch */
-      touch-action:none;
+      touch-action:none; /* важно для pinch */
     }
     .vImg{
       max-width:100%;
       max-height:100%;
       user-select:none;
       -webkit-user-drag:none;
-
       transform-origin:center center;
-      will-change: transform;
-
-      /* ✅ важно для pinch */
-      touch-action:none;
+      will-change:transform;
     }
     .vArrow{
       position:absolute;
@@ -273,6 +264,7 @@
       cursor:pointer;
       user-select:none;
       backdrop-filter: blur(8px);
+      z-index:5;
     }
     .vArrow.left{left:14px}
     .vArrow.right{right:14px}
@@ -285,6 +277,7 @@
       gap:10px;
       overflow:auto;
       justify-content:center;
+      z-index:6;
     }
     .thumb{
       width:54px; height:54px;
@@ -360,7 +353,7 @@
       return norm(s).replace(/^#/, "");
     }
 
-    // ✅ Описание = как в Telegram, но УДАЛЯЕМ только строку "по вопросам @..."
+    // ✅ Описание = как в Telegram, удаляем только "по вопросам ..." и "@mikab16"
     function cleanCaption(text){
       if(!text) return "";
       const raw = text.toString();
@@ -368,7 +361,8 @@
       const filtered = lines.filter(line=>{
         const s = line.trim();
         if(!s) return true;
-        if(/по вопросам/i.test(s)) return false; // удаляем "по вопросам ..."
+        if(/по вопросам/i.test(s)) return false;
+        if(/@mikab16/i.test(s)) return false;
         return true;
       });
       return filtered.join("\n").trim();
@@ -389,7 +383,7 @@
       im.src = url;
     }
 
-    async function loadImage(imgEl, fileIdOrUrl){
+    function loadImage(imgEl, fileIdOrUrl){
       const url = imgUrl(fileIdOrUrl);
       if(!url){
         imgEl.classList.add("skeleton");
@@ -404,45 +398,25 @@
       imgEl.onerror = ()=>{ imgEl.classList.remove("skeleton"); imgEl.alt="image not available"; };
     }
 
-    // Viewer state
+    // ===== Viewer state + pinch zoom =====
     let viewerState = {
       photos: [],
       idx: 0,
-
-      // zoom/pan
       scale: 1,
-      tx: 0,
-      ty: 0,
-      pinching: false,
-      dragging: false,
       startDist: 0,
       startScale: 1,
-      startTx: 0,
-      startTy: 0,
-      dragStartX: 0,
-      dragStartY: 0,
-
-      // swipe
-      swipeStartX: null
+      swipeX: null
     };
 
-    function applyTransform(){
-      $("vImg").style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
-    }
-
-    function resetZoom(){
-      viewerState.scale = 1;
-      viewerState.tx = 0;
-      viewerState.ty = 0;
-      applyTransform();
+    function applyScale(){
+      $("vImg").style.transform = `scale(${viewerState.scale})`;
     }
 
     function openViewer(photos, startIdx=0){
       viewerState.photos = photos || [];
       viewerState.idx = Math.max(0, Math.min(startIdx, viewerState.photos.length-1));
-
-      resetZoom();
-
+      viewerState.scale = 1;
+      applyScale();
       $("viewer").classList.add("open");
       $("viewer").setAttribute("aria-hidden","false");
       renderViewer(true);
@@ -451,7 +425,8 @@
     function closeViewer(){
       $("viewer").classList.remove("open");
       $("viewer").setAttribute("aria-hidden","true");
-      resetZoom();
+      viewerState.scale = 1;
+      applyScale();
     }
 
     function renderViewer(preloadNeighbors=false){
@@ -466,9 +441,8 @@
       main.src = url;
 
       if(preloadNeighbors && total > 1){
-        const prev = imgUrl(viewerState.photos[(i - 1 + total) % total]);
-        const next = imgUrl(viewerState.photos[(i + 1) % total]);
-        preload(prev); preload(next);
+        preload(imgUrl(viewerState.photos[(i - 1 + total) % total]));
+        preload(imgUrl(viewerState.photos[(i + 1) % total]));
       }
 
       const thumbs = $("vThumbs");
@@ -477,37 +451,26 @@
         const d = document.createElement("div");
         d.className = "thumb" + (idx===i ? " active" : "");
         const im = document.createElement("img");
-        d.appendChild(im);
         im.src = imgUrl(pid);
+        d.appendChild(im);
         d.onclick = ()=>{
           viewerState.idx = idx;
-          resetZoom();
+          viewerState.scale = 1;
+          applyScale();
           renderViewer(true);
         };
         thumbs.appendChild(d);
       });
-
-      applyTransform();
     }
 
     function nextPhoto(delta){
       const n = viewerState.photos.length;
       if(n<=1) return;
       viewerState.idx = (viewerState.idx + delta + n) % n;
-      resetZoom();
+      viewerState.scale = 1;
+      applyScale();
       renderViewer(true);
     }
-
-    // arrows + close
-    $("vClose").addEventListener("click", closeViewer);
-    $("vLeft").onclick = ()=>nextPhoto(-1);
-    $("vRight").onclick = ()=>nextPhoto(+1);
-    $("viewer").addEventListener("click", (e)=>{
-      if(e.target === $("viewer")) closeViewer();
-    });
-
-    // ✅ swipe + pinch zoom
-    const wrap = $("vImgWrap");
 
     function dist(t1, t2){
       const dx = t2.clientX - t1.clientX;
@@ -515,82 +478,72 @@
       return Math.sqrt(dx*dx + dy*dy);
     }
 
+    const wrap = $("vImgWrap");
+
+    // touchstart: pinch или swipe
     wrap.addEventListener("touchstart", (e)=>{
       if(!$("viewer").classList.contains("open")) return;
-      e.preventDefault();
 
       if(e.touches.length === 2){
-        viewerState.pinching = true;
-        viewerState.dragging = false;
         viewerState.startDist = dist(e.touches[0], e.touches[1]);
         viewerState.startScale = viewerState.scale;
       } else if(e.touches.length === 1){
-        viewerState.pinching = false;
-        viewerState.dragging = true;
-
-        viewerState.dragStartX = e.touches[0].clientX;
-        viewerState.dragStartY = e.touches[0].clientY;
-        viewerState.startTx = viewerState.tx;
-        viewerState.startTy = viewerState.ty;
-
-        // swipe стартуем только если не увеличено
-        viewerState.swipeStartX = (viewerState.scale <= 1) ? e.touches[0].clientX : null;
+        viewerState.swipeX = e.touches[0].clientX;
       }
     }, {passive:false});
 
+    // touchmove: pinch zoom
     wrap.addEventListener("touchmove", (e)=>{
       if(!$("viewer").classList.contains("open")) return;
-      e.preventDefault();
 
-      // pinch
-      if(viewerState.pinching && e.touches.length === 2){
+      if(e.touches.length === 2){
+        e.preventDefault();
         const d0 = viewerState.startDist || 1;
         const d1 = dist(e.touches[0], e.touches[1]);
         let next = viewerState.startScale * (d1 / d0);
         next = Math.max(1, Math.min(4, next));
         viewerState.scale = next;
+        applyScale();
+      }
+    }, {passive:false});
 
-        if(viewerState.scale <= 1.02){
-          viewerState.scale = 1;
-          viewerState.tx = 0;
-          viewerState.ty = 0;
-        }
-        applyTransform();
+    // touchend: swipe left/right (только если не увеличено)
+    wrap.addEventListener("touchend", (e)=>{
+      if(viewerState.swipeX === null) return;
+
+      // если увеличено — не листаем свайпом, чтобы не мешать зуму
+      if(viewerState.scale > 1.02){
+        viewerState.swipeX = null;
         return;
       }
 
-      // pan (только если увеличено)
-      if(viewerState.dragging && e.touches.length === 1 && viewerState.scale > 1){
-        const x = e.touches[0].clientX;
-        const y = e.touches[0].clientY;
-        viewerState.tx = viewerState.startTx + (x - viewerState.dragStartX);
-        viewerState.ty = viewerState.startTy + (y - viewerState.dragStartY);
-        applyTransform();
-      }
-    }, {passive:false});
+      const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : viewerState.swipeX;
+      const dx = endX - viewerState.swipeX;
+      viewerState.swipeX = null;
 
-    wrap.addEventListener("touchend", (e)=>{
+      if(Math.abs(dx) > 45){
+        nextPhoto(dx < 0 ? +1 : -1);
+      }
+    }, {passive:true});
+
+    // dbl tap: zoom 1 <-> 2
+    let lastTap = 0;
+    wrap.addEventListener("click", ()=>{
       if(!$("viewer").classList.contains("open")) return;
-      e.preventDefault();
-
-      // swipe переключение (только если не увеличено)
-      if(viewerState.scale <= 1 && viewerState.swipeStartX !== null){
-        const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : viewerState.swipeStartX;
-        const dx = endX - viewerState.swipeStartX;
-        viewerState.swipeStartX = null;
-
-        if(Math.abs(dx) > 45){
-          nextPhoto(dx < 0 ? +1 : -1);
-        }
-      } else {
-        viewerState.swipeStartX = null;
+      const now = Date.now();
+      if(now - lastTap < 280){
+        viewerState.scale = (viewerState.scale === 1) ? 2 : 1;
+        applyScale();
       }
+      lastTap = now;
+    });
 
-      if(e.touches.length === 0){
-        viewerState.pinching = false;
-        viewerState.dragging = false;
-      }
-    }, {passive:false});
+    $("vClose").addEventListener("click", closeViewer);
+    $("vLeft").onclick = ()=>nextPhoto(-1);
+    $("vRight").onclick = ()=>nextPhoto(+1);
+    $("viewer").addEventListener("click", (e)=>{
+      if(e.target === $("viewer")) closeViewer();
+    });
 
     // Buy links
     function buyLinks(){
@@ -673,18 +626,17 @@
       tgBtn.href = tg;
       tgBtn.target = "_blank";
       tgBtn.rel = "noopener";
-      tgBtn.innerHTML = `<span class="t1">Купить в</span><span class="t2">Telegram</span>`;
+      tgBtn.innerHTML = `<span class="btnText">Купить в<br>Telegram</span>`;
 
       const waBtn = document.createElement("a");
       waBtn.className = "aBtn wa";
       waBtn.href = wa;
       waBtn.target = "_blank";
       waBtn.rel = "noopener";
-      waBtn.innerHTML = `<span class="t1">Купить в</span><span class="t2">WhatsApp</span>`;
+      waBtn.innerHTML = `<span class="btnText">Купить в<br>WhatsApp</span>`;
 
       actions.appendChild(tgBtn);
       actions.appendChild(waBtn);
-
       body.appendChild(actions);
 
       card.appendChild(media);
@@ -749,7 +701,7 @@
     $("brand").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
 
     fetchProducts();
-    setInterval(fetchProducts, 20000);
+    setInterval(fetchProducts, 10000); // ✅ каждые 10 секунд
     document.addEventListener("visibilitychange", ()=>{
       if(!document.hidden) fetchProducts();
     });
