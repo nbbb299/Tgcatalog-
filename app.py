@@ -1,13 +1,19 @@
 import os
+import asyncio
+import traceback
 import requests
 from pathlib import Path
 from typing import List, Optional
 
 from fastapi import FastAPI, Request
 from fastapi.responses import Response, FileResponse, JSONResponse
+
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
+
 from supabase import create_client
+
+# ================= ENV =================
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -17,9 +23,31 @@ TABLE = os.getenv("SUPABASE_TABLE", "products")
 if not BOT_TOKEN or not SUPABASE_URL or not SUPABASE_KEY:
     raise RuntimeError("Missing env: BOT_TOKEN / SUPABASE_URL / SUPABASE_KEY")
 
+# ================= INIT =================
+
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = FastAPI()
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+# ================= STARTUP / SHUTDOWN (ВАЖНО) =================
+# Без этого process_update() часто падает -> Telegram видит 500 -> новые фото не приходят
+
+@app.on_event("startup")
+async def on_startup():
+    await telegram_app.initialize()
+    await telegram_app.start()
+    print("✅ telegram_app started")
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    try:
+        await telegram_app.stop()
+    finally:
+        await telegram_app.shutdown()
+    print("🛑 telegram_app stopped")
+
+
+# ================= HELPERS =================
 
 def extract_brand_from_caption(caption: str) -> str:
     if "#" in caption:
@@ -41,6 +69,8 @@ def safe_append_file_id(existing: Optional[List[str]], file_id: str) -> List[str
         arr.append(file_id)
     return arr
 
+# ================= SAVE PRODUCT =================
+
 def save_product(msg):
     caption = msg.caption or ""
     brand = extract_brand_from_caption(caption)
@@ -49,7 +79,7 @@ def save_product(msg):
 
     file_id = ""
     if msg.photo:
-        file_id = msg.photo[-1].file_id
+        file_id = msg.photo[-1].file_id  # best size
 
     ts = msg_ts(msg)
 
@@ -67,7 +97,7 @@ def save_product(msg):
             row = existing.data[0]
             new_file_ids = safe_append_file_id(row.get("file_ids"), file_id)
 
-            # caption/brand/ts берем первое непустое (чтобы было как в телеге)
+            # caption/brand/ts берем первое непустое (как в телеге)
             new_caption = row.get("caption") or caption
             new_brand = row.get("brand") or brand
             new_ts = row.get("ts") or ts
@@ -104,21 +134,45 @@ def save_product(msg):
         "ts": ts
     }, on_conflict="message_id").execute()
 
+
+# ================= TELEGRAM HANDLER =================
+
 async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.channel_post
     if not msg:
         return
     if msg.photo:
+        # supabase calls sync -> просто вызываем
         save_product(msg)
 
 telegram_app.add_handler(MessageHandler(filters.ALL, handler))
 
+
+# ================= WEBHOOK =================
+
 @app.post("/webhook")
 async def webhook(req: Request):
-    data = await req.json()
-    update = Update.de_json(data, telegram_app.bot)
-    await telegram_app.process_update(update)
-    return {"ok": True}
+    try:
+        data = await req.json()
+        upd_id = data.get("update_id", "no_update_id")
+        print("WEBHOOK HIT ✅ update_id:", upd_id)
+
+        update = Update.de_json(data, telegram_app.bot)
+
+        # ✅ НЕ блокируем ответ Telegram — обрабатываем в фоне
+        asyncio.create_task(telegram_app.process_update(update))
+
+        # ✅ Telegram должен получить 200 всегда
+        return {"ok": True}
+
+    except Exception as e:
+        print("WEBHOOK ERROR ❌", repr(e))
+        traceback.print_exc()
+        # ✅ Все равно отдаём 200, чтобы Telegram не копил очередь и не отключал вебхук
+        return {"ok": True}
+
+
+# ================= PRODUCTS API =================
 
 @app.get("/api/products")
 def get_products():
@@ -129,6 +183,9 @@ def get_products():
         .execute()
     )
     return res.data or []
+
+
+# ================= TELEGRAM FILE PROXY =================
 
 @app.get("/api/tgfile/{file_id}")
 def tgfile(file_id: str):
@@ -150,6 +207,9 @@ def tgfile(file_id: str):
 
     content_type = file_resp.headers.get("content-type", "image/jpeg")
     return Response(content=file_resp.content, media_type=content_type)
+
+
+# ================= ROOT =================
 
 @app.get("/")
 def root():
