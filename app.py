@@ -1,5 +1,6 @@
 import os
 import requests
+import time
 
 from fastapi import FastAPI, Request
 from fastapi.responses import Response, FileResponse, JSONResponse
@@ -10,21 +11,15 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 from supabase import create_client
 
 
-# ================= ENV =================
-
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-TABLE = os.getenv("SUPABASE_TABLE", "products")
-
-
-# ================= INIT =================
+TABLE = "products"
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
-
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 
@@ -32,72 +27,81 @@ telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 def save_product(msg):
 
-    photos = []
-
-    if msg.photo:
-        best = msg.photo[-1]
-        photos.append(best.file_id)
-
+    new_file_id = msg.photo[-1].file_id
     media_group = msg.media_group_id
     caption = msg.caption or ""
 
     brand = ""
-
     if "#" in caption:
         brand = caption.split("#")[1].split()[0]
 
+    # 👉 если это альбом — ищем существующую запись
+    if media_group:
+
+        existing = supabase.table(TABLE)\
+            .select("*")\
+            .eq("media_group_id", media_group)\
+            .execute()
+
+        if existing.data:
+
+            row = existing.data[0]
+            files = row.get("file_ids") or []
+
+            if new_file_id not in files:
+                files.append(new_file_id)
+
+            supabase.table(TABLE)\
+                .update({"file_ids": files})\
+                .eq("id", row["id"])\
+                .execute()
+
+            return
+
+    # новая запись
     data = {
         "brand": brand,
         "caption": caption,
-        "file_ids": photos,
+        "file_ids": [new_file_id],
         "media_group_id": media_group,
-        "message_id": msg.message_id
+        "message_id": msg.message_id,
+        "ts": int(time.time())
     }
 
-    supabase.table(TABLE).upsert(data).execute()
+    supabase.table(TABLE).insert(data).execute()
 
-
-# ================= TELEGRAM HANDLER =================
 
 async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     msg = update.channel_post
-
     if not msg:
         return
 
     if msg.photo:
         save_product(msg)
 
-
 telegram_app.add_handler(MessageHandler(filters.ALL, handler))
 
-
-# ================= WEBHOOK =================
 
 @app.post("/webhook")
 async def webhook(req: Request):
 
     data = await req.json()
-
     update = Update.de_json(data, telegram_app.bot)
-
     await telegram_app.process_update(update)
-
     return {"ok": True}
 
-
-# ================= PRODUCTS API =================
 
 @app.get("/api/products")
 def get_products():
 
-    res = supabase.table(TABLE).select("*").execute()
+    res = supabase.table(TABLE)\
+        .select("*")\
+        .order("ts", desc=True)\
+        .execute()
 
     return res.data or []
 
-
-# ================= TELEGRAM FILE PROXY =================
 
 @app.get("/api/tgfile/{file_id}")
 def tgfile(file_id: str):
@@ -110,32 +114,18 @@ def tgfile(file_id: str):
     data = r.json()
 
     if not data.get("ok"):
-        return JSONResponse(
-            {"detail": "Telegram get_file failed"},
-            status_code=400
-        )
+        return JSONResponse({"detail": "Telegram error"}, status_code=400)
 
     file_path = data["result"]["file_path"]
-
     file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
 
     file_resp = requests.get(file_url)
 
-    if file_resp.status_code != 200:
-        return JSONResponse(
-            {"detail": "Telegram file fetch failed"},
-            status_code=404
-        )
-
-    content_type = file_resp.headers.get("content-type", "image/jpeg")
-
     return Response(
         content=file_resp.content,
-        media_type=content_type
+        media_type=file_resp.headers.get("content-type","image/jpeg")
     )
 
-
-# ================= ROOT =================
 
 @app.get("/")
 def root():
