@@ -1,168 +1,206 @@
 import os
 import time
-from typing import Any, Dict, List, Optional
+import requests
+from typing import List, Dict, Any, Optional
 
-import httpx
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import FileResponse, Response, JSONResponse
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 from supabase import create_client
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "")
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+
+# =========================
+# ENV
+# =========================
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 TABLE = os.getenv("SUPABASE_TABLE", "products")
 
-if not BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN is missing in env")
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError("SUPABASE_URL / SUPABASE_KEY is missing in env")
+if not BOT_TOKEN or not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("Missing env vars: BOT_TOKEN / SUPABASE_URL / SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
-telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
+tg_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 
+# =========================
+# Helpers
+# =========================
 def extract_brand(caption: str) -> str:
-    # Берём первое слово после #
+    # brand from #Dior -> dior
     if not caption:
         return ""
     if "#" not in caption:
         return ""
     try:
-        return caption.split("#", 1)[1].split()[0].strip()
+        b = caption.split("#", 1)[1].split()[0].strip()
+        return b.lower()
     except Exception:
         return ""
 
 
-def mgid_for_message(msg) -> str:
-    # Если это альбом — media_group_id будет одинаковый у всех фоток
-    # Если одиночное фото — делаем стабильный "альбом" из одного элемента
-    return str(msg.media_group_id) if msg.media_group_id else f"msg_{msg.message_id}"
+def now_ts() -> int:
+    return int(time.time())
 
 
-def supa_select_one_by_mgid(mgid: str) -> Optional[Dict[str, Any]]:
-    r = supabase.table(TABLE).select("*").eq("media_group_id", mgid).limit(1).execute()
-    data = getattr(r, "data", None) or []
-    return data[0] if data else None
+def safe_list(v) -> List:
+    return v if isinstance(v, list) else []
 
 
-def supa_upsert_album_row(mgid: str, new_file_id: str, msg) -> None:
+# =========================
+# Serve INDEX (catalog page)
+# =========================
+@app.get("/")
+def root():
+    # ВАЖНО: файл index.html должен лежать РЯДОМ с app.py в репозитории
+    return FileResponse("index.html")
+
+
+# =========================
+# API: Products for frontend
+# =========================
+@app.get("/api/products")
+def api_products(limit: int = 200):
+    try:
+        resp = (
+            supabase.table(TABLE)
+            .select("*")
+            .order("ts", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return JSONResponse(resp.data or [])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Supabase error: {e}")
+
+
+# =========================
+# Telegram file proxy
+# =========================
+@app.get("/api/tgfile/{file_id}")
+def tgfile(file_id: str):
+    # 1) getFile -> file_path
+    r = requests.get(
+        f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
+        params={"file_id": file_id},
+        timeout=20,
+    )
+    data = r.json()
+
+    if not data.get("ok"):
+        # Telegram вернул ok:false (чаще всего — битый file_id из копипаста)
+        raise HTTPException(status_code=400, detail="Telegram get_file failed")
+
+    file_path = data["result"]["file_path"]
+
+    # 2) download file
+    file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+    fr = requests.get(file_url, timeout=40)
+
+    if fr.status_code != 200:
+        raise HTTPException(status_code=404, detail="Telegram file fetch failed")
+
+    # Telegram обычно отдаёт jpeg/png. Если хочешь — можно определить по headers.
+    ct = fr.headers.get("Content-Type") or "image/jpeg"
+    return Response(content=fr.content, media_type=ct)
+
+
+# =========================
+# Save / Update product (album aware)
+# =========================
+def upsert_product_from_message(msg) -> None:
     caption = msg.caption or ""
     brand = extract_brand(caption)
-    ts = int(msg.date.timestamp()) if getattr(msg, "date", None) else int(time.time())
+    ts = int(msg.date.timestamp()) if getattr(msg, "date", None) else now_ts()
 
-    existing = supa_select_one_by_mgid(mgid)
+    media_group_id = msg.media_group_id
+    message_id = msg.message_id
 
-    if existing:
-        # дописываем file_id в массив file_ids, без дублей
-        file_ids: List[str] = existing.get("file_ids") or []
-        if new_file_id and new_file_id not in file_ids:
-            file_ids.append(new_file_id)
+    # достаём лучший файл_id из photo (последний = лучший)
+    new_file_ids: List[str] = []
+    if msg.photo:
+        best = msg.photo[-1]
+        new_file_ids.append(best.file_id)
 
-        # caption/brand обновляем только если в новом сообщении они есть
-        upd: Dict[str, Any] = {
-            "media_group_id": mgid,
-            "file_ids": file_ids,
-            "ts": existing.get("ts") or ts,
+    # Если это альбом — собираем в одну запись по media_group_id
+    if media_group_id:
+        # берём существующую запись
+        existing = (
+            supabase.table(TABLE)
+            .select("id,file_ids,caption,brand,ts,media_group_id")
+            .eq("media_group_id", str(media_group_id))
+            .limit(1)
+            .execute()
+        )
+        if existing.data:
+            row = existing.data[0]
+            current = safe_list(row.get("file_ids"))
+            merged = current + [x for x in new_file_ids if x not in current]
+            merged = merged[:20]  # максимум 20 фото
+
+            # caption/brand берём последний НЕ пустой
+            new_caption = caption if caption.strip() else (row.get("caption") or "")
+            new_brand = brand if brand.strip() else (row.get("brand") or "")
+
+            update_data = {
+                "file_ids": merged,
+                "caption": new_caption,
+                "brand": new_brand,
+                "ts": max(int(row.get("ts") or 0), ts),
+                "message_id": message_id,
+            }
+
+            supabase.table(TABLE).update(update_data).eq("id", row["id"]).execute()
+            return
+
+        # если записи ещё нет — создаём
+        insert_data = {
+            "media_group_id": str(media_group_id),
+            "file_ids": new_file_ids[:20],
+            "caption": caption,
+            "brand": brand,
+            "ts": ts,
+            "message_id": message_id,
         }
-        if caption:
-            upd["caption"] = caption
-        if brand:
-            upd["brand"] = brand
-
-        # message_id можно хранить последний
-        upd["message_id"] = msg.message_id
-
-        supabase.table(TABLE).upsert(upd).execute()
+        supabase.table(TABLE).insert(insert_data).execute()
         return
 
-    # если записи ещё нет — создаём новую
-    row = {
-        "media_group_id": mgid,
-        "file_ids": [new_file_id] if new_file_id else [],
+    # одиночное фото (не альбом)
+    insert_data = {
+        "media_group_id": None,
+        "file_ids": new_file_ids[:20],
         "caption": caption,
         "brand": brand,
-        "message_id": msg.message_id,
         "ts": ts,
+        "message_id": message_id,
     }
-    supabase.table(TABLE).insert(row).execute()
+    supabase.table(TABLE).insert(insert_data).execute()
 
 
-# ---------- TELEGRAM HANDLER ----------
+# =========================
+# Telegram handler
+# =========================
 async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.channel_post
     if not msg:
         return
-
-    if not msg.photo:
-        return
-
-    # best quality photo
-    best = msg.photo[-1]
-    file_id = best.file_id
-
-    mgid = mgid_for_message(msg)
-    supa_upsert_album_row(mgid, file_id, msg)
+    if msg.photo:
+        upsert_product_from_message(msg)
 
 
-telegram_app.add_handler(MessageHandler(filters.ALL, handler))
+tg_app.add_handler(MessageHandler(filters.ALL, handler))
 
 
-# ---------- FASTAPI LIFECYCLE ----------
-@app.on_event("startup")
-async def on_startup():
-    # Важно: инициализация PTB для webhook режима
-    await telegram_app.initialize()
-    await telegram_app.start()
-
-
-@app.on_event("shutdown")
-async def on_shutdown():
-    await telegram_app.stop()
-    await telegram_app.shutdown()
-
-
-# ---------- WEBHOOK ----------
+# =========================
+# Webhook endpoint
+# =========================
 @app.post("/webhook")
 async def webhook(req: Request):
     data = await req.json()
-    upd = Update.de_json(data, telegram_app.bot)
-    await telegram_app.process_update(upd)
+    update = Update.de_json(data, tg_app.bot)
+    await tg_app.process_update(update)
     return {"ok": True}
-
-
-# ---------- API: PRODUCTS ----------
-@app.get("/api/products")
-async def api_products():
-    # отдаём последние товары (можно увеличить лимит)
-    r = supabase.table(TABLE).select("*").order("ts", desc=True).limit(200).execute()
-    data = getattr(r, "data", None)
-    if data is None:
-        return JSONResponse([], status_code=200)
-    return JSONResponse(data, status_code=200)
-
-
-# ---------- API: TELEGRAM FILE PROXY (best quality) ----------
-@app.get("/api/tgfile/{file_id}")
-async def api_tgfile(file_id: str):
-    try:
-        f = await telegram_app.bot.get_file(file_id)
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Telegram get_file failed: {e}")
-
-    if not getattr(f, "file_path", None):
-        raise HTTPException(status_code=404, detail="No file_path")
-
-    url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{f.file_path}"
-
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.get(url)
-        if resp.status_code != 200:
-            raise HTTPException(status_code=502, detail=f"Telegram file fetch failed: {resp.status_code}")
-
-    # telegram обычно отдаёт image/jpeg, но бывает image/webp
-    ctype = resp.headers.get("content-type", "application/octet-stream")
-    return Response(content=resp.content, media_type=ctype)
