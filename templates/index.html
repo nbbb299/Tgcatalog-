@@ -25,7 +25,6 @@
       background:var(--bg);
     }
 
-    /* Header */
     .top{
       position:sticky; top:0; z-index:10;
       background: rgba(246,247,251,.92);
@@ -58,7 +57,6 @@
     button:active{transform: translateY(1px)}
     .hint{margin-top:6px; color:var(--muted); font-size:13px}
 
-    /* Grid */
     .gridWrap{max-width:1100px; margin:0 auto; padding:14px;}
     .grid{
       display:grid;
@@ -70,7 +68,6 @@
       .row2{grid-template-columns: 1fr 140px;}
     }
 
-    /* Card */
     .card{
       background:var(--card);
       border:1px solid var(--stroke);
@@ -79,14 +76,14 @@
       overflow:hidden;
       display:flex;
       flex-direction:column;
-      min-height: 520px; /* чтобы кнопки не прыгали */
+      min-height: 520px;
     }
 
     .media{
       position:relative;
       background:#f0f2f7;
       width:100%;
-      aspect-ratio: 1 / 1; /* квадрат как у Farfetch */
+      aspect-ratio: 1 / 1;
       overflow:hidden;
     }
     .media img{
@@ -123,7 +120,6 @@
       line-height:1.1;
     }
 
-    /* caption */
     .caption{
       color:#111;
       font-size:14px;
@@ -171,7 +167,6 @@
     .aBtn.tg{background:var(--black); color:#fff;}
     .aBtn.wa{background:#fff; color:#111;}
 
-    /* Skeleton */
     .skeleton{
       background: linear-gradient(90deg,#eef0f6 0%, #f6f7fb 40%, #eef0f6 80%);
       background-size: 200% 100%;
@@ -179,7 +174,6 @@
     }
     @keyframes sk{0%{background-position:0% 0}100%{background-position:-200% 0}}
 
-    /* Viewer */
     .viewer{
       position:fixed;
       inset:0;
@@ -349,39 +343,47 @@
     function normBrand(s){
       return (s || "").toString().trim().replace(/^#/, "").toLowerCase();
     }
+
+    // Точно прячем ITEM / null / undefined / пусто
     function isUselessBrand(b){
       const x = normBrand(b);
-      return !x || x === "item" || x === "-" || x === "—";
+      return !x || x === "item" || x === "null" || x === "undefined" || x === "-" || x === "—";
     }
 
-    // Убираем строку "3900€-20%=€3.120,00" из caption
+    // 1) удаляем строку формулы скидки (в разных вариантах, даже с кривой кодировкой)
+    // 2) НЕ трогаем остальное описание (его оставляем!)
     function cleanCaption(text){
       if(!text) return "";
-      const lines = text.toString().split("\n");
+      const raw = text.toString();
+
+      const lines = raw.split("\n");
       const filtered = lines.filter(line=>{
         const s = line.trim();
         if(!s) return true;
-        if(/€\s*-\s*\d{1,3}\s*%\s*=\s*€?/i.test(s)) return false;
-        if(/=\s*€\s*\d/i.test(s) && s.includes("%")) return false;
+
+        // варианты формулы (€, â‚¬, просто цифры-скидка-=)
+        const hasPercent = /%/.test(s);
+        const hasEq = /=/.test(s);
+        const hasDash = /-/.test(s) || /—/.test(s);
+        const looksPriceFormula =
+          (hasPercent && hasEq && hasDash) ||
+          (/€/.test(s) && hasPercent) ||
+          (/â‚¬/.test(s) && hasPercent);
+
+        if(looksPriceFormula) return false;
+
         return true;
       });
+
       return filtered.join("\n").trim();
     }
 
-    // Candidates for image URLs
+    // Only use backend proxy (самое стабильное)
     function imgCandidates(fileIdOrUrl){
       if(!fileIdOrUrl) return [];
       const v = String(fileIdOrUrl);
       if(v.startsWith("http")) return [v];
-      const id = encodeURIComponent(v);
-      // Prefer your backend proxy endpoint:
-      // if your backend provides /api/tgfile/<file_id> (recommended) it will work.
-      return [
-        `/api/tgfile/${id}`,
-        `/api/photo/${id}`,
-        `/api/image/${id}`,
-        `/api/file/${id}`,
-      ];
+      return [`/api/tgfile/${encodeURIComponent(v)}`];
     }
 
     async function loadFirstWorkingImage(imgEl, fileIdOrUrl){
@@ -411,7 +413,7 @@
       imgEl.alt = "image not available";
     }
 
-    // Viewer state
+    // Viewer
     let viewerState = { photos: [], idx: 0, scale: 1, tx: 0, ty: 0 };
 
     function openViewer(photos, startIdx=0){
@@ -462,7 +464,6 @@
       renderViewer();
     }
 
-    // swipe
     let touchStartX = null;
     $("vImgWrap").addEventListener("touchstart", (e)=>{
       if(!e.touches || !e.touches[0]) return;
@@ -479,7 +480,6 @@
       }
     });
 
-    // double click zoom
     let lastTap = 0;
     $("vImgWrap").addEventListener("click", ()=>{
       const now = Date.now();
@@ -505,7 +505,6 @@
       if(e.target === $("viewer")) closeViewer();
     });
 
-    // Buy links (use your values)
     function buyLinks(){
       const tgUser = "mikab16";
       const wa = "393463203783";
@@ -516,12 +515,12 @@
     }
 
     function cardTemplate(p){
-      // photos can come as file_ids OR images (already URLs)
       const photos = (Array.isArray(p.file_ids) && p.file_ids.length)
         ? p.file_ids
-        : (Array.isArray(p.images) && p.images.length ? p.images : (p.file_id ? [p.file_id] : []));
+        : (p.file_id ? [p.file_id] : []);
 
       const count = photos.length || 0;
+
       const brand = isUselessBrand(p.brand) ? "" : (p.brand || "").toString().trim();
       const caption = cleanCaption(p.caption || "");
       const {tg, wa} = buyLinks();
@@ -651,7 +650,6 @@
 
       let list = allProducts.slice();
 
-      // sort newest first
       list.sort((a,c)=>{
         const ta = Number(a.ts || 0);
         const tc = Number(c.ts || 0);
