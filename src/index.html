@@ -1,1 +1,692 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TG Catalog — Luxury</title>
 
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#fff;
+      --text:#0f172a;
+      --muted:#6b7280;
+      --stroke:#e6e8ee;
+      --shadow:0 10px 30px rgba(0,0,0,.06);
+      --r:22px;
+      --btnR:18px;
+      --black:#111;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:var(--bg);
+    }
+
+    .top{
+      position:sticky; top:0; z-index:10;
+      background: rgba(246,247,251,.92);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--stroke);
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:14px 14px;}
+    .inputs{display:grid; gap:10px;}
+    .row1{display:grid; grid-template-columns: 1fr; gap:10px;}
+    .row2{display:grid; grid-template-columns: 1fr 110px; gap:10px;}
+    input{
+      width:100%;
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      font-size:16px;
+      outline:none;
+    }
+    input:focus{border-color:#cfd5e3; box-shadow:0 0 0 4px rgba(59,130,246,.12)}
+    button{
+      border:0;
+      border-radius:18px;
+      background:#e9eefc;
+      color:#1f2a44;
+      font-weight:700;
+      font-size:16px;
+      cursor:pointer;
+    }
+    button:active{transform: translateY(1px)}
+    .hint{margin-top:6px; color:var(--muted); font-size:13px}
+
+    .gridWrap{max-width:1100px; margin:0 auto; padding:14px;}
+    .grid{
+      display:grid;
+      gap:14px;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+    @media (min-width: 900px){
+      .grid{grid-template-columns: repeat(3, minmax(0,1fr));}
+      .row2{grid-template-columns: 1fr 140px;}
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: 520px;
+    }
+
+    .media{
+      position:relative;
+      background:#f0f2f7;
+      width:100%;
+      aspect-ratio: 1 / 1;
+      overflow:hidden;
+    }
+    .media img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+      transform: translateZ(0);
+    }
+
+    .badge{
+      position:absolute;
+      right:10px; top:10px;
+      background: rgba(17,17,17,.72);
+      color:#fff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .body{
+      padding:14px 14px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      flex:1;
+    }
+    .brand{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.3px;
+      text-transform: uppercase;
+      line-height:1.1;
+    }
+
+    .caption{
+      color:#111;
+      font-size:14px;
+      line-height:1.35;
+      white-space:pre-wrap;
+      overflow:hidden;
+      display:-webkit-box;
+      -webkit-line-clamp: 5;
+      -webkit-box-orient: vertical;
+      min-height: 96px;
+    }
+    .caption.expanded{
+      -webkit-line-clamp: unset;
+      max-height:none;
+    }
+
+    .more{
+      color:#111;
+      font-weight:800;
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:auto;
+      padding-top:6px;
+    }
+    .aBtn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:12px 10px;
+      border-radius: var(--btnR);
+      font-weight:900;
+      text-decoration:none;
+      font-size:14px;
+      border:2px solid var(--black);
+      white-space:nowrap;
+    }
+    .aBtn.tg{background:var(--black); color:#fff;}
+    .aBtn.wa{background:#fff; color:#111;}
+
+    .skeleton{
+      background: linear-gradient(90deg,#eef0f6 0%, #f6f7fb 40%, #eef0f6 80%);
+      background-size: 200% 100%;
+      animation: sk 1.2s infinite;
+    }
+    @keyframes sk{0%{background-position:0% 0}100%{background-position:-200% 0}}
+
+    .viewer{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.92);
+      display:none;
+      z-index:999;
+    }
+    .viewer.open{display:block}
+    .vTop{
+      position:absolute;
+      top:14px; left:14px; right:14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      pointer-events:none;
+    }
+    .vClose, .vCount{
+      pointer-events:auto;
+      background: rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      color:#fff;
+      border-radius: 14px;
+      padding:10px 12px;
+      font-weight:900;
+      backdrop-filter: blur(8px);
+    }
+    .vClose{cursor:pointer}
+    .vMain{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:70px 16px 110px;
+    }
+    .vImgWrap{
+      width:min(92vw, 920px);
+      height:min(70vh, 920px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      position:relative;
+      touch-action: pan-y;
+    }
+    .vImg{
+      max-width:100%;
+      max-height:100%;
+      user-select:none;
+      -webkit-user-drag:none;
+      transform-origin:center center;
+      transition: transform .14s ease;
+    }
+    .vArrow{
+      position:absolute;
+      top:50%;
+      transform: translateY(-50%);
+      width:54px; height:54px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.10);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:26px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      backdrop-filter: blur(8px);
+    }
+    .vArrow.left{left:14px}
+    .vArrow.right{right:14px}
+    .vArrow:active{transform: translateY(-50%) scale(.98)}
+
+    .vThumbs{
+      position:absolute;
+      left:0; right:0; bottom:0;
+      padding:14px 14px 18px;
+      display:flex;
+      gap:10px;
+      overflow:auto;
+      justify-content:center;
+    }
+    .thumb{
+      width:54px; height:54px;
+      border-radius:14px;
+      overflow:hidden;
+      border:2px solid rgba(255,255,255,.18);
+      opacity:.7;
+      cursor:pointer;
+      flex:0 0 auto;
+      background: rgba(255,255,255,.06);
+    }
+    .thumb.active{
+      opacity:1;
+      border-color:#fff;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .empty{
+      max-width:1100px;
+      margin:20px auto;
+      padding:0 14px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .err{
+      color:#b91c1c;
+      font-weight:900;
+      margin-top:10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top">
+    <div class="wrap">
+      <div class="inputs">
+        <div class="row1">
+          <input id="q" placeholder="Поиск (текст/описание)" autocomplete="off" />
+        </div>
+        <div class="row2">
+          <input id="brand" placeholder="Бренд (например dior)" autocomplete="off" />
+          <button id="find">Найти</button>
+        </div>
+      </div>
+      <div class="hint">Совет: бренд можно вводить как “dior” без #</div>
+      <div id="status" class="err" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="gridWrap">
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" style="display:none">Ничего не найдено.</div>
+  </div>
+
+  <!-- Viewer -->
+  <div id="viewer" class="viewer" aria-hidden="true">
+    <div class="vTop">
+      <div id="vClose" class="vClose">✕</div>
+      <div id="vCount" class="vCount">1/1</div>
+    </div>
+
+    <div class="vMain">
+      <div class="vImgWrap" id="vImgWrap">
+        <div class="vArrow left" id="vLeft">‹</div>
+        <img id="vImg" class="vImg" alt="photo" />
+        <div class="vArrow right" id="vRight">›</div>
+      </div>
+    </div>
+
+    <div id="vThumbs" class="vThumbs"></div>
+  </div>
+
+  <script>
+    const $ = (id)=>document.getElementById(id);
+
+    function normBrand(s){
+      return (s || "").toString().trim().replace(/^#/, "").toLowerCase();
+    }
+
+    // Точно прячем ITEM / null / undefined / пусто
+    function isUselessBrand(b){
+      const x = normBrand(b);
+      return !x || x === "item" || x === "null" || x === "undefined" || x === "-" || x === "—";
+    }
+
+    // 1) удаляем строку формулы скидки (в разных вариантах, даже с кривой кодировкой)
+    // 2) НЕ трогаем остальное описание (его оставляем!)
+    function cleanCaption(text){
+      if(!text) return "";
+      const raw = text.toString();
+
+      const lines = raw.split("\n");
+      const filtered = lines.filter(line=>{
+        const s = line.trim();
+        if(!s) return true;
+
+        // варианты формулы (€, â‚¬, просто цифры-скидка-=)
+        const hasPercent = /%/.test(s);
+        const hasEq = /=/.test(s);
+        const hasDash = /-/.test(s) || /—/.test(s);
+        const looksPriceFormula =
+          (hasPercent && hasEq && hasDash) ||
+          (/€/.test(s) && hasPercent) ||
+          (/â‚¬/.test(s) && hasPercent);
+
+        if(looksPriceFormula) return false;
+
+        return true;
+      });
+
+      return filtered.join("\n").trim();
+    }
+
+    // Only use backend proxy (самое стабильное)
+    function imgCandidates(fileIdOrUrl){
+      if(!fileIdOrUrl) return [];
+      const v = String(fileIdOrUrl);
+      if(v.startsWith("http")) return [v];
+      return [`/api/tgfile/${encodeURIComponent(v)}`];
+    }
+
+    async function loadFirstWorkingImage(imgEl, fileIdOrUrl){
+      const tries = imgCandidates(fileIdOrUrl);
+      if(tries.length === 0){
+        imgEl.classList.add("skeleton");
+        imgEl.alt = "no image";
+        return;
+      }
+      imgEl.classList.add("skeleton");
+      for(const url of tries){
+        const ok = await new Promise((resolve)=>{
+          const t = new Image();
+          t.onload = ()=>resolve(true);
+          t.onerror = ()=>resolve(false);
+          t.referrerPolicy = "no-referrer";
+          t.src = url;
+        });
+        if(ok){
+          imgEl.src = url;
+          imgEl.classList.remove("skeleton");
+          return;
+        }
+      }
+      imgEl.removeAttribute("src");
+      imgEl.classList.remove("skeleton");
+      imgEl.alt = "image not available";
+    }
+
+    // Viewer
+    let viewerState = { photos: [], idx: 0, scale: 1, tx: 0, ty: 0 };
+
+    function openViewer(photos, startIdx=0){
+      viewerState.photos = photos || [];
+      viewerState.idx = Math.max(0, Math.min(startIdx, viewerState.photos.length-1));
+      viewerState.scale = 1;
+      viewerState.tx = 0;
+      viewerState.ty = 0;
+      $("viewer").classList.add("open");
+      $("viewer").setAttribute("aria-hidden","false");
+      renderViewer();
+    }
+    function closeViewer(){
+      $("viewer").classList.remove("open");
+      $("viewer").setAttribute("aria-hidden","true");
+    }
+
+    async function renderViewer(){
+      const total = viewerState.photos.length || 1;
+      const i = viewerState.idx;
+      $("vCount").textContent = `${i+1}/${total}`;
+      const fileIdOrUrl = viewerState.photos[i];
+      $("vImg").style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
+      await loadFirstWorkingImage($("vImg"), fileIdOrUrl);
+
+      const thumbs = $("vThumbs");
+      thumbs.innerHTML = "";
+      viewerState.photos.forEach((pid, idx)=>{
+        const d = document.createElement("div");
+        d.className = "thumb" + (idx===i ? " active" : "");
+        const im = document.createElement("img");
+        d.appendChild(im);
+        loadFirstWorkingImage(im, pid);
+        d.onclick = ()=>{
+          viewerState.idx = idx;
+          viewerState.scale = 1; viewerState.tx = 0; viewerState.ty = 0;
+          renderViewer();
+        };
+        thumbs.appendChild(d);
+      });
+    }
+
+    function nextPhoto(delta){
+      const n = viewerState.photos.length;
+      if(n<=1) return;
+      viewerState.idx = (viewerState.idx + delta + n) % n;
+      viewerState.scale = 1; viewerState.tx = 0; viewerState.ty = 0;
+      renderViewer();
+    }
+
+    let touchStartX = null;
+    $("vImgWrap").addEventListener("touchstart", (e)=>{
+      if(!e.touches || !e.touches[0]) return;
+      touchStartX = e.touches[0].clientX;
+    }, {passive:true});
+
+    $("vImgWrap").addEventListener("touchend", (e)=>{
+      if(touchStartX === null) return;
+      const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : touchStartX;
+      const dx = endX - touchStartX;
+      touchStartX = null;
+      if(Math.abs(dx) > 45){
+        nextPhoto(dx < 0 ? +1 : -1);
+      }
+    });
+
+    let lastTap = 0;
+    $("vImgWrap").addEventListener("click", ()=>{
+      const now = Date.now();
+      if(now - lastTap < 280){
+        viewerState.scale = (viewerState.scale === 1) ? 2 : 1;
+        viewerState.tx = 0; viewerState.ty = 0;
+        $("vImg").style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
+      }
+      lastTap = now;
+    });
+
+    window.addEventListener("keydown", (e)=>{
+      if(!$("viewer").classList.contains("open")) return;
+      if(e.key === "Escape") closeViewer();
+      if(e.key === "ArrowRight") nextPhoto(+1);
+      if(e.key === "ArrowLeft") nextPhoto(-1);
+    });
+
+    $("vClose").onclick = closeViewer;
+    $("vLeft").onclick = ()=>nextPhoto(-1);
+    $("vRight").onclick = ()=>nextPhoto(+1);
+    $("viewer").addEventListener("click", (e)=>{
+      if(e.target === $("viewer")) closeViewer();
+    });
+
+    function buyLinks(){
+      const tgUser = "mikab16";
+      const wa = "393463203783";
+      return {
+        tg: `https://t.me/${encodeURIComponent(tgUser)}`,
+        wa: `https://wa.me/${encodeURIComponent(wa)}`
+      };
+    }
+
+    function cardTemplate(p){
+      const photos = (Array.isArray(p.file_ids) && p.file_ids.length)
+        ? p.file_ids
+        : (p.file_id ? [p.file_id] : []);
+
+      const count = photos.length || 0;
+
+      const brand = isUselessBrand(p.brand) ? "" : (p.brand || "").toString().trim();
+      const caption = cleanCaption(p.caption || "");
+      const {tg, wa} = buyLinks();
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const media = document.createElement("div");
+      media.className = "media";
+
+      const img = document.createElement("img");
+      img.alt = brand || "Фото";
+      media.appendChild(img);
+
+      if(count > 1){
+        const badge = document.createElement("div");
+        badge.className = "badge";
+        badge.textContent = `${count} фото`;
+        media.appendChild(badge);
+      }
+
+      media.style.cursor = "pointer";
+      media.onclick = ()=>{
+        if(!photos.length) return;
+        openViewer(photos, 0);
+      };
+
+      loadFirstWorkingImage(img, photos[0]);
+
+      const body = document.createElement("div");
+      body.className = "body";
+
+      if(brand){
+        const b = document.createElement("div");
+        b.className = "brand";
+        b.textContent = brand;
+        body.appendChild(b);
+      }
+
+      const cap = document.createElement("div");
+      cap.className = "caption";
+      cap.textContent = caption || "";
+      body.appendChild(cap);
+
+      if((caption || "").length > 160){
+        const more = document.createElement("div");
+        more.className = "more";
+        more.textContent = "Показать полностью";
+        more.onclick = ()=>{
+          const exp = cap.classList.toggle("expanded");
+          more.textContent = exp ? "Свернуть" : "Показать полностью";
+        };
+        body.appendChild(more);
+      } else {
+        const spacer = document.createElement("div");
+        spacer.style.height = "18px";
+        body.appendChild(spacer);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const tgBtn = document.createElement("a");
+      tgBtn.className = "aBtn tg";
+      tgBtn.href = tg;
+      tgBtn.target = "_blank";
+      tgBtn.rel = "noopener";
+      tgBtn.textContent = "Купить в Telegram";
+
+      const waBtn = document.createElement("a");
+      waBtn.className = "aBtn wa";
+      waBtn.href = wa;
+      waBtn.target = "_blank";
+      waBtn.rel = "noopener";
+      waBtn.textContent = "Купить в WhatsApp";
+
+      actions.appendChild(tgBtn);
+      actions.appendChild(waBtn);
+
+      body.appendChild(actions);
+
+      card.appendChild(media);
+      card.appendChild(body);
+
+      return card;
+    }
+
+    let allProducts = [];
+
+    async function fetchProducts(){
+      $("status").style.display="none";
+      $("empty").style.display="none";
+
+      const grid = $("grid");
+      grid.innerHTML = "";
+      for(let i=0;i<6;i++){
+        const sk = document.createElement("div");
+        sk.className = "card";
+        sk.innerHTML = `
+          <div class="media skeleton"></div>
+          <div class="body">
+            <div class="skeleton" style="height:22px;border-radius:12px"></div>
+            <div class="skeleton" style="height:96px;border-radius:12px"></div>
+            <div class="skeleton" style="height:46px;border-radius:18px;margin-top:auto"></div>
+          </div>
+        `;
+        grid.appendChild(sk);
+      }
+
+      try{
+        const r = await fetch("/api/products", {cache:"no-store"});
+        if(!r.ok) throw new Error("API /api/products вернул " + r.status);
+        const data = await r.json();
+        if(!Array.isArray(data)) throw new Error("API вернул не массив");
+        allProducts = data;
+        renderFiltered();
+      }catch(e){
+        grid.innerHTML = "";
+        $("status").style.display="block";
+        $("status").textContent = "Не удалось загрузить товары. Проверь /api/products и логи Render. " + e.message;
+      }
+    }
+
+    function renderFiltered(){
+      const q = ($("q").value || "").trim().toLowerCase();
+      const b = normBrand($("brand").value);
+
+      let list = allProducts.slice();
+
+      list.sort((a,c)=>{
+        const ta = Number(a.ts || 0);
+        const tc = Number(c.ts || 0);
+        if(tc !== ta) return tc - ta;
+        const ia = Number(a.id || 0), ic = Number(c.id || 0);
+        return ic - ia;
+      });
+
+      if(b){
+        list = list.filter(p=> normBrand(p.brand).includes(b) || (p.caption||"").toLowerCase().includes("#"+b));
+      }
+      if(q){
+        list = list.filter(p=>{
+          const hay = `${p.brand||""}\n${p.caption||""}`.toLowerCase();
+          return hay.includes(q);
+        });
+      }
+
+      const grid = $("grid");
+      grid.innerHTML = "";
+
+      if(!list.length){
+        $("empty").style.display="block";
+        return;
+      }
+      $("empty").style.display="none";
+
+      list.forEach(p=>{
+        grid.appendChild(cardTemplate(p));
+      });
+    }
+
+    $("find").onclick = renderFiltered;
+    $("q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
+    $("brand").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
+
+    fetchProducts();
+  </script>
+</body>
+</html>
