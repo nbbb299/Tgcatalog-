@@ -69,6 +69,10 @@ def safe_append_file_id(existing: Optional[List[str]], file_id: str) -> List[str
         arr.append(file_id)
     return arr
 
+def is_empty_caption(val) -> bool:
+    return val is None or str(val).strip() == ""
+
+
 # ================= SAVE PRODUCT =================
 
 def save_product(msg):
@@ -135,15 +139,79 @@ def save_product(msg):
     }, on_conflict="message_id").execute()
 
 
+# ================= CAPTION FIX (НОВОЕ) =================
+# Если фото пришло без caption, а текст ты написала отдельным сообщением —
+# мы в течение 120 секунд приклеим этот текст к последнему товару без caption.
+
+def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
+    text = (msg.text or "").strip()
+    if not text:
+        return False
+
+    ts = msg_ts(msg)
+    if not ts:
+        return False
+
+    brand = extract_brand_from_caption(text)
+
+    try:
+        # Берем последние записи за окно времени, сверху вниз
+        res = (
+            supabase.table(TABLE)
+            .select("id,caption,brand,ts,message_id,media_group_id")
+            .gte("ts", ts - window_seconds)
+            .order("ts", desc=True)
+            .limit(15)
+            .execute()
+        )
+
+        rows = res.data or []
+        if not rows:
+            return False
+
+        # Ищем первую запись БЕЗ caption (пустая/NULL)
+        target = None
+        for r in rows:
+            if is_empty_caption(r.get("caption")):
+                target = r
+                break
+
+        if not target:
+            return False
+
+        upd = {"caption": text}
+
+        # бренд ставим ТОЛЬКО если в записи пустой
+        if (not (target.get("brand") or "").strip()) and brand:
+            upd["brand"] = brand
+
+        supabase.table(TABLE).update(upd).eq("id", target["id"]).execute()
+        print(f"🧩 Caption FIX applied -> row id={target['id']}")
+        return True
+
+    except Exception as e:
+        print("Caption FIX ERROR ❌", repr(e))
+        traceback.print_exc()
+        return False
+
+
 # ================= TELEGRAM HANDLER =================
 
 async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.channel_post
     if not msg:
         return
+
+    # 1) Фото -> сохраняем товар как обычно
     if msg.photo:
-        # supabase calls sync -> просто вызываем
         save_product(msg)
+        return
+
+    # 2) Текст без фото -> пытаемся приклеить как caption (120 секунд)
+    if msg.text:
+        attach_text_caption_to_recent_item(msg, window_seconds=120)
+        return
+
 
 telegram_app.add_handler(MessageHandler(filters.ALL, handler))
 
