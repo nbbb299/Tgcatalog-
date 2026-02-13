@@ -1,8 +1,7 @@
 import os
 import requests
-from pathlib import Path
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.responses import Response, FileResponse, JSONResponse
 
 from telegram import Update
@@ -22,13 +21,6 @@ TABLE = os.getenv("SUPABASE_TABLE", "products")
 
 # ================= INIT =================
 
-if not BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN is missing")
-if not SUPABASE_URL:
-    raise RuntimeError("SUPABASE_URL is missing")
-if not SUPABASE_KEY:
-    raise RuntimeError("SUPABASE_KEY is missing")
-
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
@@ -39,17 +31,20 @@ telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 # ================= SAVE PRODUCT =================
 
 def save_product(msg):
+
     photos = []
+
     if msg.photo:
-        best = msg.photo[-1]  # max size
+        best = msg.photo[-1]
         photos.append(best.file_id)
 
     media_group = msg.media_group_id
     caption = msg.caption or ""
 
     brand = ""
+
     if "#" in caption:
-        brand = caption.split("#", 1)[1].split()[0]
+        brand = caption.split("#")[1].split()[0]
 
     data = {
         "brand": brand,
@@ -59,18 +54,21 @@ def save_product(msg):
         "message_id": msg.message_id
     }
 
-    # upsert требует разрешения UPDATE в RLS
     supabase.table(TABLE).upsert(data).execute()
 
 
 # ================= TELEGRAM HANDLER =================
 
 async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     msg = update.channel_post
+
     if not msg:
         return
+
     if msg.photo:
         save_product(msg)
+
 
 telegram_app.add_handler(MessageHandler(filters.ALL, handler))
 
@@ -79,9 +77,13 @@ telegram_app.add_handler(MessageHandler(filters.ALL, handler))
 
 @app.post("/webhook")
 async def webhook(req: Request):
+
     data = await req.json()
+
     update = Update.de_json(data, telegram_app.bot)
+
     await telegram_app.process_update(update)
+
     return {"ok": True}
 
 
@@ -89,7 +91,9 @@ async def webhook(req: Request):
 
 @app.get("/api/products")
 def get_products():
+
     res = supabase.table(TABLE).select("*").execute()
+
     return res.data or []
 
 
@@ -97,64 +101,44 @@ def get_products():
 
 @app.get("/api/tgfile/{file_id}")
 def tgfile(file_id: str):
-    # 1) getFile
+
     r = requests.get(
         f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
-        params={"file_id": file_id},
-        timeout=20
+        params={"file_id": file_id}
     )
+
     data = r.json()
 
     if not data.get("ok"):
         return JSONResponse(
-            {"detail": f"Telegram get_file failed: {data.get('description', 'unknown')}"},
+            {"detail": "Telegram get_file failed"},
             status_code=400
         )
 
     file_path = data["result"]["file_path"]
 
-    # 2) download
     file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
-    file_resp = requests.get(file_url, timeout=40)
+
+    file_resp = requests.get(file_url)
 
     if file_resp.status_code != 200:
         return JSONResponse(
-            {"detail": f"Telegram file fetch failed: {file_resp.status_code}"},
+            {"detail": "Telegram file fetch failed"},
             status_code=404
         )
 
-    # Telegram иногда отдаёт png/webp — но jpeg тоже ок, браузер обычно покажет
     content_type = file_resp.headers.get("content-type", "image/jpeg")
-    return Response(content=file_resp.content, media_type=content_type)
+
+    return Response(
+        content=file_resp.content,
+        media_type=content_type
+    )
 
 
-# ================= ROOT (SERVE INDEX) =================
+# ================= ROOT =================
 
 @app.get("/")
 def root():
-    """
-    Render часто запускает код из /opt/render/project/src/
-    а index.html может быть:
-    - /opt/render/project/index.html  (в корне репо)
-    - /opt/render/project/src/index.html (если ты его туда положила)
-    Мы поддерживаем оба варианта.
-    """
-
-    # текущая папка где лежит app.py
-    here = Path(__file__).resolve().parent
-
-    # 1) рядом с app.py (обычно /src)
-    p1 = here / "index.html"
-
-    # 2) на уровень выше (корень репозитория)
-    p2 = here.parent / "index.html"
-
-    if p1.exists():
-        return FileResponse(str(p1))
-    if p2.exists():
-        return FileResponse(str(p2))
-
-    raise HTTPException(
-        status_code=404,
-        detail=f"index.html not found at {p1} or {p2}"
+    return FileResponse(
+        os.path.join(os.path.dirname(__file__), "src", "index.html")
     )
