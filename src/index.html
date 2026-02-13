@@ -51,7 +51,7 @@
       border-radius:18px;
       background:#e9eefc;
       color:#1f2a44;
-      font-weight:700;
+      font-weight:800;
       font-size:16px;
       cursor:pointer;
     }
@@ -106,7 +106,7 @@
       padding:6px 10px;
       border-radius:999px;
       font-size:12px;
-      font-weight:700;
+      font-weight:800;
     }
 
     .body{
@@ -115,15 +115,33 @@
       flex-direction:column;
       gap:10px;
       flex:1;
-      position:relative;
+    }
+
+    .titleRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
     }
 
     .brand{
       font-size:18px;
       font-weight:900;
       letter-spacing:.3px;
-      text-transform: uppercase;
+      text-transform: capitalize;
       line-height:1.1;
+      margin-right:auto;
+    }
+
+    .price{
+      font-weight:900;
+      font-size:14px;
+      background:#111;
+      color:#fff;
+      padding:8px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+      flex:0 0 auto;
     }
 
     .caption{
@@ -133,9 +151,9 @@
       white-space:pre-wrap;
       overflow:hidden;
       display:-webkit-box;
-      -webkit-line-clamp: 7;
+      -webkit-line-clamp: 6;
       -webkit-box-orient: vertical;
-      min-height: 120px;
+      min-height: 96px;
     }
     .caption.expanded{
       -webkit-line-clamp: unset;
@@ -144,13 +162,12 @@
 
     .more{
       color:#111;
-      font-weight:800;
+      font-weight:900;
       font-size:13px;
       cursor:pointer;
       user-select:none;
     }
 
-    /* Actions */
     .actions{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -158,6 +175,7 @@
       margin-top:auto;
       padding-top:6px;
     }
+
     .aBtn{
       display:flex;
       align-items:center;
@@ -170,31 +188,28 @@
       font-size:14px;
       border:2px solid var(--black);
       white-space:nowrap;
+      min-height:46px;
     }
     .aBtn.tg{background:var(--black); color:#fff;}
     .aBtn.wa{background:#fff; color:#111;}
 
-    /* --- FIX: mobile sticky buy bar inside card --- */
-    @media (max-width: 520px){
-      .card{ min-height: 560px; }
-      .body{
-        padding-bottom: 84px;              /* место под кнопки */
-      }
+    /* ✅ Mobile: fixed buy bar inside card */
+    @media (max-width: 560px){
+      .body{ padding-bottom: 84px; }
       .actions{
         position:absolute;
         left:14px;
         right:14px;
         bottom:14px;
-        margin-top:0;
-        padding-top:0;
-        background: rgba(255,255,255,.92);
-        backdrop-filter: blur(8px);
-        border:1px solid var(--stroke);
-        border-radius: 18px;
+        margin:0;
+        padding:0;
+        background: rgba(255,255,255,.96);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
         padding:10px;
-        box-shadow: 0 8px 24px rgba(0,0,0,.10);
+        box-shadow: 0 10px 30px rgba(0,0,0,.08);
+        border:1px solid rgba(230,232,238,.9);
       }
-      .aBtn{ font-size:13px; padding:12px 8px; }
     }
 
     /* Skeleton */
@@ -205,51 +220,40 @@
     }
     @keyframes sk{0%{background-position:0% 0}100%{background-position:-200% 0}}
 
-    .empty{
-      max-width:1100px;
-      margin:20px auto;
-      padding:0 14px;
-      color:var(--muted);
-      font-weight:700;
-    }
-    .err{
-      color:#b91c1c;
-      font-weight:900;
-      margin-top:10px;
-    }
-
-    /* ================= Viewer (fixed) ================= */
+    /* Viewer */
     .viewer{
       position:fixed;
       inset:0;
       background: rgba(0,0,0,.92);
       display:none;
-      z-index:9999;
+      z-index:999;
       touch-action: none;
     }
     .viewer.open{display:block}
 
     .vTop{
       position:absolute;
-      top:14px; left:14px; right:14px;
+      top:12px; left:12px; right:12px;
       display:flex;
       justify-content:space-between;
       align-items:center;
       gap:10px;
-      z-index: 10000;
+      z-index:10;
     }
-
     .vClose, .vCount{
-      background: rgba(255,255,255,.14);
-      border:1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
       color:#fff;
       border-radius: 14px;
       padding:10px 12px;
       font-weight:900;
-      backdrop-filter: blur(10px);
-      -webkit-tap-highlight-color: transparent;
+      backdrop-filter: blur(8px);
+      user-select:none;
+      -webkit-user-select:none;
     }
-    .vClose{cursor:pointer}
+    .vClose{
+      cursor:pointer;
+    }
 
     .vMain{
       position:absolute; inset:0;
@@ -258,7 +262,6 @@
       justify-content:center;
       padding:70px 16px 110px;
     }
-
     .vImgWrap{
       width:min(92vw, 920px);
       height:min(70vh, 920px);
@@ -272,16 +275,15 @@
       position:relative;
       touch-action: none;
     }
-
     .vImg{
       max-width:100%;
       max-height:100%;
       user-select:none;
       -webkit-user-drag:none;
       transform-origin:center center;
+      transition: transform .06s linear;
       will-change: transform;
     }
-
     .vArrow{
       position:absolute;
       top:50%;
@@ -299,7 +301,7 @@
       cursor:pointer;
       user-select:none;
       backdrop-filter: blur(8px);
-      z-index: 10000;
+      z-index:5;
     }
     .vArrow.left{left:14px}
     .vArrow.right{right:14px}
@@ -313,9 +315,8 @@
       gap:10px;
       overflow:auto;
       justify-content:center;
-      z-index: 10000;
+      z-index:6;
     }
-
     .thumb{
       width:54px; height:54px;
       border-radius:14px;
@@ -326,8 +327,29 @@
       flex:0 0 auto;
       background: rgba(255,255,255,.06);
     }
-    .thumb.active{opacity:1;border-color:#fff;}
-    .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+    .thumb.active{
+      opacity:1;
+      border-color:#fff;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .empty{
+      max-width:1100px;
+      margin:20px auto;
+      padding:0 14px;
+      color:var(--muted);
+      font-weight:800;
+    }
+    .err{
+      color:#b91c1c;
+      font-weight:900;
+      margin-top:10px;
+    }
   </style>
 </head>
 
@@ -339,11 +361,11 @@
           <input id="q" placeholder="Поиск (текст/описание)" autocomplete="off" />
         </div>
         <div class="row2">
-          <input id="brand" placeholder="Бренд (например dior)" autocomplete="off" />
+          <input id="brand" placeholder="Бренд (например gucci)" autocomplete="off" />
           <button id="find">Найти</button>
         </div>
       </div>
-      <div class="hint">Совет: бренд можно вводить как “dior” без #</div>
+      <div class="hint">Совет: бренд можно вводить как “gucci” без # (поиск идёт по бренду и по описанию)</div>
       <div id="status" class="err" style="display:none"></div>
     </div>
   </div>
@@ -356,7 +378,7 @@
   <!-- Viewer -->
   <div id="viewer" class="viewer" aria-hidden="true">
     <div class="vTop">
-      <div id="vClose" class="vClose">✕</div>
+      <div id="vClose" class="vClose" role="button" aria-label="Close">✕</div>
       <div id="vCount" class="vCount">1/1</div>
     </div>
 
@@ -374,45 +396,94 @@
   <script>
     const $ = (id)=>document.getElementById(id);
 
-    function normBrand(s){
-      return (s || "").toString().trim().replace(/^#/, "").toLowerCase();
+    function norm(s){
+      return (s || "").toString().trim().toLowerCase();
     }
 
-    // прячем мусор
+    function normBrand(s){
+      return norm(s).replace(/^#/, "");
+    }
+
+    // "бренд" может быть пустым — поэтому показываем/ищем и по caption
     function isUselessBrand(b){
       const x = normBrand(b);
       return !x || x === "item" || x === "null" || x === "undefined" || x === "-" || x === "—";
     }
 
-    // чистим строку формулы скидки (и кривую кодировку)
+    // Достаём финальную цену (после "="), либо последнюю € сумму в строке
+    function extractFinalPrice(text){
+      if(!text) return "";
+      const t = text.toString();
+
+      // ищем строку с формулой скидки: "...%...=€..."
+      const line = t.split("\n").map(x=>x.trim()).find(x=>{
+        return x && /%/.test(x) && /=/.test(x) && ( /€/.test(x) || /â‚¬/.test(x) || /\d+€/.test(x) );
+      });
+      if(!line) return "";
+
+      // Нормализуем кривой евро символ
+      const s = line.replace(/â‚¬/g, "€");
+
+      // 1) если есть "=...€...." — берём после "="
+      const afterEq = s.split("=").pop().trim();
+      if(afterEq){
+        // вытащить первую € сумму
+        const m = afterEq.match(/€\s*[\d\.\,]+/);
+        if(m) return m[0].replace(/\s+/g,"");
+      }
+
+      // 2) иначе берём последнюю € сумму в строке
+      const all = s.match(/€\s*[\d\.\,]+/g);
+      if(all && all.length) return all[all.length-1].replace(/\s+/g,"");
+
+      // 3) формат "1750€"
+      const m2 = s.match(/[\d\.\,]+\s*€/g);
+      if(m2 && m2.length) return m2[m2.length-1].replace(/\s+/g,"");
+
+      return "";
+    }
+
+    // Чистим caption:
+    // - убираем формулу скидки
+    // - убираем "по вопросам @mikab16"
     function cleanCaption(text){
       if(!text) return "";
-      const raw = text.toString();
+      const raw = text.toString().replace(/â‚¬/g, "€");
       const lines = raw.split("\n");
+
       const filtered = lines.filter(line=>{
         const s = line.trim();
         if(!s) return true;
 
+        // ❌ убрать "по вопросам ..."
+        if(/по вопросам/i.test(s)) return false;
+
+        // ❌ убрать формулу скидки (оставляем цену отдельно badge)
         const hasPercent = /%/.test(s);
         const hasEq = /=/.test(s);
         const hasDash = /-/.test(s) || /—/.test(s);
-        const looksPriceFormula =
-          (hasPercent && hasEq && hasDash) ||
-          (/€/.test(s) && hasPercent) ||
-          (/â‚¬/.test(s) && hasPercent);
+        const hasEuro = /€/.test(s);
 
-        if(looksPriceFormula) return false;
+        const looksFormula = (hasPercent && hasEq && hasDash) || (hasEuro && hasPercent && (hasEq || hasDash));
+        if(looksFormula) return false;
+
         return true;
       });
+
       return filtered.join("\n").trim();
     }
 
-    // Только backend proxy (стабильно)
+    // Candidates for image URLs (через backend proxy)
     function imgCandidates(fileIdOrUrl){
       if(!fileIdOrUrl) return [];
       const v = String(fileIdOrUrl);
       if(v.startsWith("http")) return [v];
       return [`/api/tgfile/${encodeURIComponent(v)}`];
+    }
+
+    function withCacheBuster(url){
+      const sep = url.includes("?") ? "&" : "?";
+      return url + sep + "cb=" + Date.now();
     }
 
     async function loadFirstWorkingImage(imgEl, fileIdOrUrl){
@@ -423,7 +494,9 @@
         return;
       }
       imgEl.classList.add("skeleton");
-      for(const url of tries){
+
+      for(const url0 of tries){
+        const url = withCacheBuster(url0);
         const ok = await new Promise((resolve)=>{
           const t = new Image();
           t.onload = ()=>resolve(true);
@@ -442,59 +515,53 @@
       imgEl.alt = "image not available";
     }
 
-    // ===== Viewer (fix close + pinch zoom) =====
+    // Viewer state
     let viewerState = {
       photos: [],
       idx: 0,
       scale: 1,
       tx: 0,
       ty: 0,
-      isPanning: false,
-      panStartX: 0,
-      panStartY: 0,
+      // gestures:
+      pinching: false,
+      dragging: false,
+      startDist: 0,
+      startScale: 1,
       startTx: 0,
       startTy: 0,
-
-      pinchStartDist: 0,
-      pinchStartScale: 1,
-
-      swipeStartY: null,
-      swipeStartX: null
+      dragStartX: 0,
+      dragStartY: 0
     };
 
     function applyTransform(){
-      const img = $("vImg");
-      img.style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
-    }
-
-    function resetTransform(){
-      viewerState.scale = 1;
-      viewerState.tx = 0;
-      viewerState.ty = 0;
-      applyTransform();
+      $("vImg").style.transform = `translate(${viewerState.tx}px, ${viewerState.ty}px) scale(${viewerState.scale})`;
     }
 
     function openViewer(photos, startIdx=0){
       viewerState.photos = photos || [];
       viewerState.idx = Math.max(0, Math.min(startIdx, viewerState.photos.length-1));
+      viewerState.scale = 1;
+      viewerState.tx = 0;
+      viewerState.ty = 0;
       $("viewer").classList.add("open");
       $("viewer").setAttribute("aria-hidden","false");
-      resetTransform();
       renderViewer();
     }
 
     function closeViewer(){
       $("viewer").classList.remove("open");
       $("viewer").setAttribute("aria-hidden","true");
+      // reset
+      viewerState.scale = 1; viewerState.tx = 0; viewerState.ty = 0;
+      applyTransform();
     }
 
     async function renderViewer(){
       const total = viewerState.photos.length || 1;
       const i = viewerState.idx;
       $("vCount").textContent = `${i+1}/${total}`;
-
-      resetTransform();
       const fileIdOrUrl = viewerState.photos[i];
+      applyTransform();
       await loadFirstWorkingImage($("vImg"), fileIdOrUrl);
 
       const thumbs = $("vThumbs");
@@ -505,9 +572,9 @@
         const im = document.createElement("img");
         d.appendChild(im);
         loadFirstWorkingImage(im, pid);
-        d.onclick = (e)=>{
-          e.stopPropagation();
+        d.onclick = ()=>{
           viewerState.idx = idx;
+          viewerState.scale = 1; viewerState.tx = 0; viewerState.ty = 0;
           renderViewer();
         };
         thumbs.appendChild(d);
@@ -518,74 +585,56 @@
       const n = viewerState.photos.length;
       if(n<=1) return;
       viewerState.idx = (viewerState.idx + delta + n) % n;
+      viewerState.scale = 1; viewerState.tx = 0; viewerState.ty = 0;
       renderViewer();
     }
 
-    $("vClose").onclick = (e)=>{ e.stopPropagation(); closeViewer(); };
-    $("viewer").addEventListener("click", (e)=>{ if(e.target === $("viewer")) closeViewer(); });
-    $("vLeft").onclick = (e)=>{ e.stopPropagation(); nextPhoto(-1); };
-    $("vRight").onclick = (e)=>{ e.stopPropagation(); nextPhoto(+1); };
-
-    window.addEventListener("keydown", (e)=>{
-      if(!$("viewer").classList.contains("open")) return;
-      if(e.key === "Escape") closeViewer();
-      if(e.key === "ArrowRight") nextPhoto(+1);
-      if(e.key === "ArrowLeft") nextPhoto(-1);
-    });
-
-    const wrap = $("vImgWrap");
-
+    // ✅ Pinch zoom + pan (touch)
     function dist(t1, t2){
-      const dx = t1.clientX - t2.clientX;
-      const dy = t1.clientY - t2.clientY;
+      const dx = t2.clientX - t1.clientX;
+      const dy = t2.clientY - t1.clientY;
       return Math.sqrt(dx*dx + dy*dy);
     }
+
+    const wrap = $("vImgWrap");
 
     wrap.addEventListener("touchstart", (e)=>{
       if(!$("viewer").classList.contains("open")) return;
 
-      if(e.touches.length === 1){
-        viewerState.swipeStartY = e.touches[0].clientY;
-        viewerState.swipeStartX = e.touches[0].clientX;
-
-        if(viewerState.scale > 1){
-          viewerState.isPanning = true;
-          viewerState.panStartX = e.touches[0].clientX;
-          viewerState.panStartY = e.touches[0].clientY;
-          viewerState.startTx = viewerState.tx;
-          viewerState.startTy = viewerState.ty;
-        }
-      }
-
       if(e.touches.length === 2){
-        e.preventDefault();
-        viewerState.isPanning = false;
-        viewerState.pinchStartDist = dist(e.touches[0], e.touches[1]);
-        viewerState.pinchStartScale = viewerState.scale;
+        viewerState.pinching = true;
+        viewerState.dragging = false;
+        viewerState.startDist = dist(e.touches[0], e.touches[1]);
+        viewerState.startScale = viewerState.scale;
+        viewerState.startTx = viewerState.tx;
+        viewerState.startTy = viewerState.ty;
+      }else if(e.touches.length === 1){
+        viewerState.dragging = true;
+        viewerState.pinching = false;
+        viewerState.dragStartX = e.touches[0].clientX;
+        viewerState.dragStartY = e.touches[0].clientY;
+        viewerState.startTx = viewerState.tx;
+        viewerState.startTy = viewerState.ty;
       }
     }, {passive:false});
 
     wrap.addEventListener("touchmove", (e)=>{
       if(!$("viewer").classList.contains("open")) return;
+      e.preventDefault();
 
-      if(e.touches.length === 2){
-        e.preventDefault();
-        const d = dist(e.touches[0], e.touches[1]);
-        if(!viewerState.pinchStartDist) return;
-
-        let newScale = viewerState.pinchStartScale * (d / viewerState.pinchStartDist);
-        newScale = Math.max(1, Math.min(newScale, 4));
-        viewerState.scale = newScale;
+      if(viewerState.pinching && e.touches.length === 2){
+        const d0 = viewerState.startDist || 1;
+        const d1 = dist(e.touches[0], e.touches[1]);
+        let next = viewerState.startScale * (d1 / d0);
+        next = Math.max(1, Math.min(4, next));
+        viewerState.scale = next;
         applyTransform();
-        return;
-      }
-
-      if(e.touches.length === 1 && viewerState.isPanning && viewerState.scale > 1){
-        e.preventDefault();
+      }else if(viewerState.dragging && e.touches.length === 1){
+        if(viewerState.scale <= 1) return; // не таскаем если не увеличено
         const x = e.touches[0].clientX;
         const y = e.touches[0].clientY;
-        viewerState.tx = viewerState.startTx + (x - viewerState.panStartX);
-        viewerState.ty = viewerState.startTy + (y - viewerState.panStartY);
+        viewerState.tx = viewerState.startTx + (x - viewerState.dragStartX);
+        viewerState.ty = viewerState.startTy + (y - viewerState.dragStartY);
         applyTransform();
       }
     }, {passive:false});
@@ -593,34 +642,53 @@
     wrap.addEventListener("touchend", (e)=>{
       if(!$("viewer").classList.contains("open")) return;
 
-      if(viewerState.scale === 1 && viewerState.swipeStartY !== null){
-        const endTouch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
-        if(endTouch){
-          const dy = endTouch.clientY - viewerState.swipeStartY;
-          const dx = endTouch.clientX - viewerState.swipeStartX;
-
-          if(dy > 90 && Math.abs(dx) < 80) closeViewer();
-          if(Math.abs(dx) > 45 && Math.abs(dy) < 60) nextPhoto(dx < 0 ? +1 : -1);
+      if(e.touches.length === 0){
+        viewerState.pinching = false;
+        viewerState.dragging = false;
+        if(viewerState.scale <= 1){
+          viewerState.tx = 0; viewerState.ty = 0;
+          applyTransform();
         }
+      }else if(e.touches.length === 1){
+        viewerState.pinching = false;
+        viewerState.dragging = true;
+        viewerState.dragStartX = e.touches[0].clientX;
+        viewerState.dragStartY = e.touches[0].clientY;
+        viewerState.startTx = viewerState.tx;
+        viewerState.startTy = viewerState.ty;
       }
+    });
 
-      viewerState.isPanning = false;
-      viewerState.pinchStartDist = 0;
-      viewerState.swipeStartY = null;
-      viewerState.swipeStartX = null;
-    }, {passive:true});
-
-    // double tap zoom
+    // dbl tap toggle zoom
     let lastTap = 0;
     wrap.addEventListener("click", ()=>{
+      if(!$("viewer").classList.contains("open")) return;
       const now = Date.now();
       if(now - lastTap < 280){
         viewerState.scale = (viewerState.scale === 1) ? 2 : 1;
-        viewerState.tx = 0;
-        viewerState.ty = 0;
+        viewerState.tx = 0; viewerState.ty = 0;
         applyTransform();
       }
       lastTap = now;
+    });
+
+    // keyboard
+    window.addEventListener("keydown", (e)=>{
+      if(!$("viewer").classList.contains("open")) return;
+      if(e.key === "Escape") closeViewer();
+      if(e.key === "ArrowRight") nextPhoto(+1);
+      if(e.key === "ArrowLeft") nextPhoto(-1);
+    });
+
+    // ✅ Close handlers (X + tap outside)
+    $("vClose").addEventListener("click", closeViewer);
+    $("vClose").addEventListener("touchend", (e)=>{ e.preventDefault(); closeViewer(); }, {passive:false});
+
+    $("vLeft").onclick = ()=>nextPhoto(-1);
+    $("vRight").onclick = ()=>nextPhoto(+1);
+
+    $("viewer").addEventListener("click", (e)=>{
+      if(e.target === $("viewer")) closeViewer();
     });
 
     // Buy links
@@ -633,15 +701,33 @@
       };
     }
 
+    function bestBrandFromCaption(caption){
+      // если brand пустой — попробуем взять первое слово (до пробела/эмодзи) из первой непустой строки
+      if(!caption) return "";
+      const first = caption.toString().split("\n").map(s=>s.trim()).find(Boolean);
+      if(!first) return "";
+      // часто бренд стоит первым словом
+      return first.split(/\s+/)[0].replace(/^#/, "").trim();
+    }
+
     function cardTemplate(p){
       const photos = (Array.isArray(p.file_ids) && p.file_ids.length)
         ? p.file_ids
-        : (p.file_id ? [p.file_id] : []);
+        : (Array.isArray(p.images) && p.images.length ? p.images : (p.file_id ? [p.file_id] : []));
 
       const count = photos.length || 0;
 
-      const brand = isUselessBrand(p.brand) ? "" : (p.brand || "").toString().trim();
-      const caption = cleanCaption(p.caption || "");
+      const rawCaption = (p.caption || "");
+      const price = extractFinalPrice(rawCaption);
+      const caption = cleanCaption(rawCaption);
+
+      // бренд: берём из p.brand, если пусто — пытаемся из caption
+      let brand = isUselessBrand(p.brand) ? "" : (p.brand || "").toString().trim();
+      if(!brand){
+        const guess = bestBrandFromCaption(rawCaption);
+        if(guess && !isUselessBrand(guess)) brand = guess;
+      }
+
       const {tg, wa} = buyLinks();
 
       const card = document.createElement("div");
@@ -672,11 +758,26 @@
       const body = document.createElement("div");
       body.className = "body";
 
-      if(brand){
-        const b = document.createElement("div");
-        b.className = "brand";
-        b.textContent = brand;
-        body.appendChild(b);
+      // title row
+      if(brand || price){
+        const row = document.createElement("div");
+        row.className = "titleRow";
+
+        if(brand){
+          const b = document.createElement("div");
+          b.className = "brand";
+          b.textContent = brand;
+          row.appendChild(b);
+        }
+
+        if(price){
+          const pr = document.createElement("div");
+          pr.className = "price";
+          pr.textContent = price;
+          row.appendChild(pr);
+        }
+
+        body.appendChild(row);
       }
 
       const cap = document.createElement("div");
@@ -734,19 +835,21 @@
       $("empty").style.display="none";
 
       const grid = $("grid");
-      grid.innerHTML = "";
-      for(let i=0;i<6;i++){
-        const sk = document.createElement("div");
-        sk.className = "card";
-        sk.innerHTML = `
-          <div class="media skeleton"></div>
-          <div class="body">
-            <div class="skeleton" style="height:22px;border-radius:12px"></div>
-            <div class="skeleton" style="height:96px;border-radius:12px"></div>
-            <div class="skeleton" style="height:46px;border-radius:18px;margin-top:auto"></div>
-          </div>
-        `;
-        grid.appendChild(sk);
+      if(!allProducts.length){
+        grid.innerHTML = "";
+        for(let i=0;i<6;i++){
+          const sk = document.createElement("div");
+          sk.className = "card";
+          sk.innerHTML = `
+            <div class="media skeleton"></div>
+            <div class="body">
+              <div class="skeleton" style="height:22px;border-radius:12px"></div>
+              <div class="skeleton" style="height:96px;border-radius:12px"></div>
+              <div class="skeleton" style="height:46px;border-radius:18px;margin-top:auto"></div>
+            </div>
+          `;
+          grid.appendChild(sk);
+        }
       }
 
       try{
@@ -764,11 +867,12 @@
     }
 
     function renderFiltered(){
-      const q = ($("q").value || "").trim().toLowerCase();
+      const q = norm($("q").value);
       const b = normBrand($("brand").value);
 
       let list = allProducts.slice();
 
+      // newest first
       list.sort((a,c)=>{
         const ta = Number(a.ts || 0);
         const tc = Number(c.ts || 0);
@@ -777,15 +881,16 @@
         return ic - ia;
       });
 
-      // ✅ FIX: бренд ищем не только в brand и #hashtag, но и просто по тексту caption
+      // ✅ бренд-фильтр: ищем и по brand, и по caption, и по #brand
       if(b){
         list = list.filter(p=>{
-          const pb = normBrand(p.brand);
-          const cap = (p.caption || "").toLowerCase();
-          return pb.includes(b) || cap.includes("#"+b) || cap.includes(b);
+          const brand = normBrand(p.brand || "");
+          const cap = norm((p.caption || "").replace(/â‚¬/g,"€"));
+          return brand.includes(b) || cap.includes(b) || cap.includes("#"+b);
         });
       }
 
+      // ✅ общий поиск: по brand+caption
       if(q){
         list = list.filter(p=>{
           const hay = `${p.brand||""}\n${p.caption||""}`.toLowerCase();
@@ -811,7 +916,12 @@
     $("q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
     $("brand").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
 
+    // ✅ авто-обновление, чтобы новые товары из Telegram появлялись сами
     fetchProducts();
+    setInterval(fetchProducts, 20000);
+    document.addEventListener("visibilitychange", ()=>{
+      if(!document.hidden) fetchProducts();
+    });
   </script>
 </body>
 </html>
