@@ -2,7 +2,7 @@ import os
 import requests
 
 from fastapi import FastAPI, Request
-from fastapi.responses import Response
+from fastapi.responses import Response, FileResponse
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
@@ -10,7 +10,7 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 from supabase import create_client
 
 
-# ---------- ENV ----------
+# ================= ENV =================
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -19,22 +19,16 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 TABLE = "products"
 
 
-# ---------- SUPABASE ----------
+# ================= INIT =================
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
-# ---------- FASTAPI ----------
-
 app = FastAPI()
-
-
-# ---------- TELEGRAM APP ----------
 
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 
-# ---------- SAVE PRODUCT ----------
+# ================= SAVE PRODUCT =================
 
 def save_product(msg):
 
@@ -45,16 +39,12 @@ def save_product(msg):
         photos.append(best.file_id)
 
     media_group = msg.media_group_id
-
     caption = msg.caption or ""
 
     brand = ""
 
     if "#" in caption:
-        try:
-            brand = caption.split("#")[1].split()[0]
-        except:
-            brand = ""
+        brand = caption.split("#")[1].split()[0]
 
     data = {
         "brand": brand,
@@ -67,7 +57,7 @@ def save_product(msg):
     supabase.table(TABLE).upsert(data).execute()
 
 
-# ---------- TELEGRAM HANDLER ----------
+# ================= TELEGRAM HANDLER =================
 
 async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -83,7 +73,7 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 telegram_app.add_handler(MessageHandler(filters.ALL, handler))
 
 
-# ---------- WEBHOOK ----------
+# ================= WEBHOOK =================
 
 @app.post("/webhook")
 async def webhook(req: Request):
@@ -97,12 +87,22 @@ async def webhook(req: Request):
     return {"ok": True}
 
 
-# ---------- TELEGRAM FILE PROXY (ОЧЕНЬ ВАЖНО) ----------
+# ================= PRODUCTS API =================
+
+@app.get("/api/products")
+def get_products():
+
+    res = supabase.table(TABLE).select("*").execute()
+
+    return res.data or []
+
+
+# ================= TELEGRAM FILE PROXY =================
 
 @app.get("/api/tgfile/{file_id}")
 def tgfile(file_id: str):
 
-    # 1. Получаем file_path у Telegram
+    # 1. Получаем путь файла
     r = requests.get(
         f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
         params={"file_id": file_id}
@@ -115,7 +115,7 @@ def tgfile(file_id: str):
 
     file_path = data["result"]["file_path"]
 
-    # 2. Скачиваем файл
+    # 2. Качаем файл
     file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
 
     file_resp = requests.get(file_url)
@@ -127,8 +127,12 @@ def tgfile(file_id: str):
         content=file_resp.content,
         media_type="image/jpeg"
     )
-from fastapi.responses import FileResponse
+
+
+# ================= ROOT (INDEX FIX) =================
 
 @app.get("/")
 def root():
-    return FileResponse("index.html")
+    return FileResponse(
+        os.path.join(os.path.dirname(__file__), "index.html")
+    )
