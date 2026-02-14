@@ -367,6 +367,75 @@
       font-weight:800;
     }
     .err{color:#b91c1c;font-weight:900;margin-top:10px;}
+
+    /* ========================= */
+    /* ✅ PRO UX: кнопка "Наверх" */
+    /* ========================= */
+    .toTop{
+      position:fixed;
+      right:14px;
+      bottom:16px;
+      z-index:998;
+      width:52px;
+      height:52px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 16px 35px rgba(0,0,0,.12);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      user-select:none;
+      -webkit-user-select:none;
+      opacity:0;
+      transform: translateY(12px);
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toTop.show{
+      opacity:1;
+      transform: translateY(0);
+      pointer-events:auto;
+    }
+    .toTop:active{transform: translateY(1px);}
+    .toTop svg{width:22px;height:22px;display:block}
+    @media (max-width: 390px){
+      .toTop{right:10px; bottom:12px; width:48px; height:48px;}
+    }
+
+    /* =============================== */
+    /* ✅ Пагинация / "как Instagram" */
+    /* =============================== */
+    .pager{
+      max-width:1100px;
+      margin:0 auto;
+      padding:0 14px 18px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:10px;
+    }
+    .moreBtn{
+      width:100%;
+      max-width:520px;
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      padding:14px 16px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.06);
+    }
+    .moreBtn:active{transform: translateY(1px);}
+    .moreMeta{
+      color:var(--muted);
+      font-weight:800;
+      font-size:12px;
+      text-align:center;
+      margin-top:8px;
+    }
   </style>
 </head>
 
@@ -401,6 +470,19 @@
   <div class="gridWrap">
     <div id="grid" class="grid"></div>
     <div id="empty" class="empty" style="display:none">Ничего не найдено.</div>
+  </div>
+
+  <!-- ✅ Пагинация / "Показать ещё" -->
+  <div class="pager" id="pager" style="display:none">
+    <button class="moreBtn" id="moreBtn">Показать ещё</button>
+  </div>
+  <div class="moreMeta" id="moreMeta" style="display:none"></div>
+
+  <!-- ✅ PRO UX: Наверх -->
+  <div class="toTop" id="toTop" aria-label="Наверх" title="Наверх">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 5l7 7-1.4 1.4L13 8.8V20h-2V8.8L6.4 13.4 5 12l7-7z" fill="#111"/>
+    </svg>
   </div>
 
   <!-- Viewer -->
@@ -769,6 +851,14 @@
     let allProducts = [];
     let currentSource = "all";
 
+    /* =============================== */
+    /* ✅ "Instagram" pagination logic */
+    /* =============================== */
+    const PAGE_SIZE = 18;         // сколько карточек за раз
+    let filteredCache = [];       // текущий filtered list
+    let visibleCount = PAGE_SIZE; // сколько показываем
+    let autoLoading = false;
+
     function setActiveTab(source){
       currentSource = source;
 
@@ -778,7 +868,10 @@
         b.classList.toggle("active", isActive);
       });
 
+      // при смене вкладки сбрасываем "инстаграм-ленту"
+      visibleCount = PAGE_SIZE;
       renderFiltered();
+      scrollToTopSoft();
     }
 
     async function fetchProducts(){
@@ -792,6 +885,7 @@
         if(!Array.isArray(data)) throw new Error("API вернул не массив");
 
         allProducts = data;
+        // не сбрасываем вкладку/поиск, но обновляем ленту
         renderFiltered();
       }catch(e){
         $("grid").innerHTML = "";
@@ -800,7 +894,7 @@
       }
     }
 
-    function renderFiltered(){
+    function buildFilteredList(){
       const q = norm($("q").value);
       const b = normBrand($("brand").value);
 
@@ -824,27 +918,95 @@
         });
       }
 
+      return list;
+    }
+
+    function renderFiltered(){
+      filteredCache = buildFilteredList();
+
       const grid = $("grid");
       grid.innerHTML = "";
 
-      if(!list.length){
+      if(!filteredCache.length){
         $("empty").style.display="block";
+        $("pager").style.display="none";
+        $("moreMeta").style.display="none";
         return;
       }
       $("empty").style.display="none";
 
-      list.forEach(p=> grid.appendChild(cardTemplate(p)));
+      // показываем только часть (как лента)
+      const slice = filteredCache.slice(0, visibleCount);
+      slice.forEach(p=> grid.appendChild(cardTemplate(p)));
+
+      // pager ui
+      const hasMore = visibleCount < filteredCache.length;
+      $("pager").style.display = hasMore ? "flex" : "none";
+      $("moreMeta").style.display = hasMore ? "block" : "none";
+      if(hasMore){
+        $("moreMeta").textContent = `Показано ${slice.length} из ${filteredCache.length}`;
+      } else {
+        $("moreMeta").textContent = "";
+      }
     }
 
-    $("find").onclick = renderFiltered;
-    $("q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
-    $("brand").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
+    function showMore(){
+      visibleCount = Math.min(visibleCount + PAGE_SIZE, filteredCache.length);
+      renderFiltered();
+    }
+
+    // автоподгрузка, когда почти долистали вниз
+    function onScrollAutoLoad(){
+      if(autoLoading) return;
+      if($("pager").style.display === "none") return;
+
+      const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 700);
+      if(nearBottom){
+        autoLoading = true;
+        showMore();
+        setTimeout(()=>{ autoLoading = false; }, 120);
+      }
+    }
+
+    /* ========================= */
+    /* ✅ PRO UX: scroll to top  */
+    /* ========================= */
+    function scrollToTopSoft(){
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function toggleToTop(){
+      const btn = $("toTop");
+      const show = window.scrollY > 650; // появляется после прокрутки
+      btn.classList.toggle("show", show);
+    }
+
+    $("toTop").addEventListener("click", scrollToTopSoft);
+
+    // ✅ Find
+    $("find").onclick = ()=>{
+      visibleCount = PAGE_SIZE; // сброс ленты при новом поиске
+      renderFiltered();
+      scrollToTopSoft();
+    };
+    $("q").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ visibleCount = PAGE_SIZE; renderFiltered(); scrollToTopSoft(); } });
+    $("brand").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ visibleCount = PAGE_SIZE; renderFiltered(); scrollToTopSoft(); } });
 
     // ✅ Tabs handlers
     $("tabAll").onclick = ()=>setActiveTab("all");
     $("tabBoutiques").onclick = ()=>setActiveTab("Boutiques");
     $("tabOutlets").onclick = ()=>setActiveTab("Outlets");
 
+    // ✅ Pager
+    $("moreBtn").onclick = showMore;
+
+    // ✅ Scroll listeners
+    window.addEventListener("scroll", ()=>{
+      toggleToTop();
+      onScrollAutoLoad();
+    }, {passive:true});
+
+    // initial
     fetchProducts();
     setInterval(fetchProducts, 10000);
     document.addEventListener("visibilitychange", ()=>{
