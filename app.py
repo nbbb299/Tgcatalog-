@@ -204,6 +204,7 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # 1) Фото -> сохраняем товар как обычно
     if msg.photo:
+        print("THREAD ID:", msg.message_thread_id)   # 👈 Я вставила сюда
         save_product(msg)
         return
 
