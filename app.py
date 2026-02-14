@@ -29,32 +29,6 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = FastAPI()
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-# ================= CHANNEL -> SOURCE =================
-# Твои каналы:
-# Boutiques: -1001158220106 (Title: usa.outlets.italy)
-# Outlets:   -1002303984060 (Title: Outlets from Italy, EU)
-
-BOUTIQUES_CHAT_ID = -1001158220106
-OUTLETS_CHAT_ID = -1002303984060
-
-def get_source_from_msg(msg) -> str:
-    """
-    Возвращает source для записи в каталоге.
-    Если придёт из неизвестного канала — пишем "Boutiques" по умолчанию,
-    чтобы ничего не ломалось.
-    """
-    try:
-        cid = int(getattr(getattr(msg, "chat", None), "id", 0) or 0)
-    except Exception:
-        cid = 0
-
-    if cid == OUTLETS_CHAT_ID:
-        return "Outlets"
-    if cid == BOUTIQUES_CHAT_ID:
-        return "Boutiques"
-    return "Boutiques"
-
-
 # ================= STARTUP / SHUTDOWN (ВАЖНО) =================
 # Без этого process_update() часто падает -> Telegram видит 500 -> новые фото не приходят
 
@@ -99,6 +73,21 @@ def is_empty_caption(val) -> bool:
     return val is None or str(val).strip() == ""
 
 
+def detect_source(msg) -> str:
+    """
+    Каналы:
+      Boutiques  id: -1001158220106   (usa.outlets.italy)
+      Outlets    id: -1002303984060   (Outlets from Italy, EU)
+    """
+    chat_id = getattr(msg.chat, "id", None)
+    if str(chat_id) == "-1002303984060":
+        return "Outlets"
+    if str(chat_id) == "-1001158220106":
+        return "Boutiques"
+    # по умолчанию пусть будет Boutiques (чтобы не ломать)
+    return "Boutiques"
+
+
 # ================= SAVE PRODUCT =================
 
 def save_product(msg):
@@ -106,7 +95,8 @@ def save_product(msg):
     brand = extract_brand_from_caption(caption)
     media_group_id = msg.media_group_id  # album id or None
     message_id = msg.message_id
-    source = get_source_from_msg(msg)
+
+    source = detect_source(msg)
 
     file_id = ""
     if msg.photo:
@@ -173,7 +163,7 @@ def save_product(msg):
 # ================= CAPTION FIX (УМНЫЙ) =================
 # Если фото пришло без caption, а текст ты написала отдельным сообщением —
 # мы в течение 120 секунд приклеим этот текст к последнему товару без caption.
-# ВАЖНО: приклеиваем только в рамках того же source (того же канала).
+# + стараемся приклеить к тому же source (каналу), чтобы не путать два канала.
 
 def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
     text = (msg.text or "").strip()
@@ -185,17 +175,15 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
         return False
 
     brand = extract_brand_from_caption(text)
-    source = get_source_from_msg(msg)
+    source = detect_source(msg)
 
     try:
-        # Берем последние записи за окно времени, сверху вниз, ТОЛЬКО из того же канала(source)
         res = (
             supabase.table(TABLE)
-            .select("id,caption,brand,ts,message_id,media_group_id,source")
-            .eq("source", source)
+            .select("id,caption,brand,ts,source")
             .gte("ts", ts - window_seconds)
             .order("ts", desc=True)
-            .limit(20)
+            .limit(30)
             .execute()
         )
 
@@ -203,12 +191,19 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
         if not rows:
             return False
 
-        # Ищем первую запись БЕЗ caption (пустая/NULL)
+        # 1) сначала ищем пустой caption в ТОМ ЖЕ source
         target = None
         for r in rows:
-            if is_empty_caption(r.get("caption")):
+            if (r.get("source") == source) and is_empty_caption(r.get("caption")):
                 target = r
                 break
+
+        # 2) если вдруг не нашли — fallback: любой пустой caption (как было)
+        if not target:
+            for r in rows:
+                if is_empty_caption(r.get("caption")):
+                    target = r
+                    break
 
         if not target:
             return False
@@ -220,7 +215,7 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
             upd["brand"] = brand
 
         supabase.table(TABLE).update(upd).eq("id", target["id"]).execute()
-        print(f"🧩 Caption FIX applied -> row id={target['id']} source={source}")
+        print(f"🧩 Caption FIX applied -> row id={target['id']}")
         return True
 
     except Exception as e:
@@ -238,13 +233,9 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # 1) Фото -> сохраняем товар как обычно
     if msg.photo:
-        # debug (можно оставить)
-        try:
-            print("CHANNEL:", msg.chat.id)
-            print("THREAD ID:", getattr(msg, "message_thread_id", None))
-        except Exception:
-            pass
-
+        # (эти принты можно оставить — они не ломают код)
+        print("CHANNEL:", getattr(msg.chat, "id", None))
+        print("THREAD ID:", getattr(msg, "message_thread_id", None))
         save_product(msg)
         return
 
