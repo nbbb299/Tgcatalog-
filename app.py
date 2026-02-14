@@ -29,6 +29,32 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = FastAPI()
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
+# ================= CHANNEL -> SOURCE =================
+# Твои каналы:
+# Boutiques: -1001158220106 (Title: usa.outlets.italy)
+# Outlets:   -1002303984060 (Title: Outlets from Italy, EU)
+
+BOUTIQUES_CHAT_ID = -1001158220106
+OUTLETS_CHAT_ID = -1002303984060
+
+def get_source_from_msg(msg) -> str:
+    """
+    Возвращает source для записи в каталоге.
+    Если придёт из неизвестного канала — пишем "Boutiques" по умолчанию,
+    чтобы ничего не ломалось.
+    """
+    try:
+        cid = int(getattr(getattr(msg, "chat", None), "id", 0) or 0)
+    except Exception:
+        cid = 0
+
+    if cid == OUTLETS_CHAT_ID:
+        return "Outlets"
+    if cid == BOUTIQUES_CHAT_ID:
+        return "Boutiques"
+    return "Boutiques"
+
+
 # ================= STARTUP / SHUTDOWN (ВАЖНО) =================
 # Без этого process_update() часто падает -> Telegram видит 500 -> новые фото не приходят
 
@@ -80,6 +106,7 @@ def save_product(msg):
     brand = extract_brand_from_caption(caption)
     media_group_id = msg.media_group_id  # album id or None
     message_id = msg.message_id
+    source = get_source_from_msg(msg)
 
     file_id = ""
     if msg.photo:
@@ -91,7 +118,7 @@ def save_product(msg):
     if media_group_id:
         existing = (
             supabase.table(TABLE)
-            .select("id,file_ids,file_id,caption,brand,ts,media_group_id,message_id")
+            .select("id,file_ids,file_id,caption,brand,ts,media_group_id,message_id,source")
             .eq("media_group_id", str(media_group_id))
             .limit(1)
             .execute()
@@ -106,6 +133,7 @@ def save_product(msg):
             new_brand = row.get("brand") or brand
             new_ts = row.get("ts") or ts
             new_file_id = row.get("file_id") or file_id  # первый кадр
+            new_source = row.get("source") or source
 
             supabase.table(TABLE).update({
                 "file_ids": new_file_ids,
@@ -113,6 +141,7 @@ def save_product(msg):
                 "caption": new_caption,
                 "brand": new_brand,
                 "ts": new_ts,
+                "source": new_source,
             }).eq("id", row["id"]).execute()
             return
 
@@ -124,7 +153,8 @@ def save_product(msg):
             "caption": caption,
             "file_id": file_id or None,
             "file_ids": [file_id] if file_id else [],
-            "ts": ts
+            "ts": ts,
+            "source": source,
         }).execute()
         return
 
@@ -135,13 +165,15 @@ def save_product(msg):
         "caption": caption,
         "file_id": file_id or None,
         "file_ids": [file_id] if file_id else [],
-        "ts": ts
+        "ts": ts,
+        "source": source,
     }, on_conflict="message_id").execute()
 
 
-# ================= CAPTION FIX (НОВОЕ) =================
+# ================= CAPTION FIX (УМНЫЙ) =================
 # Если фото пришло без caption, а текст ты написала отдельным сообщением —
 # мы в течение 120 секунд приклеим этот текст к последнему товару без caption.
+# ВАЖНО: приклеиваем только в рамках того же source (того же канала).
 
 def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
     text = (msg.text or "").strip()
@@ -153,15 +185,17 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
         return False
 
     brand = extract_brand_from_caption(text)
+    source = get_source_from_msg(msg)
 
     try:
-        # Берем последние записи за окно времени, сверху вниз
+        # Берем последние записи за окно времени, сверху вниз, ТОЛЬКО из того же канала(source)
         res = (
             supabase.table(TABLE)
-            .select("id,caption,brand,ts,message_id,media_group_id")
+            .select("id,caption,brand,ts,message_id,media_group_id,source")
+            .eq("source", source)
             .gte("ts", ts - window_seconds)
             .order("ts", desc=True)
-            .limit(15)
+            .limit(20)
             .execute()
         )
 
@@ -186,7 +220,7 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
             upd["brand"] = brand
 
         supabase.table(TABLE).update(upd).eq("id", target["id"]).execute()
-        print(f"🧩 Caption FIX applied -> row id={target['id']}")
+        print(f"🧩 Caption FIX applied -> row id={target['id']} source={source}")
         return True
 
     except Exception as e:
@@ -202,13 +236,17 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not msg:
         return
 
-   # 1) Фото -> сохраняем товар как обычно
-if msg.photo:
-    print("CHANNEL:", msg.chat.id)
-    print("THREAD ID:", msg.message_thread_id)
+    # 1) Фото -> сохраняем товар как обычно
+    if msg.photo:
+        # debug (можно оставить)
+        try:
+            print("CHANNEL:", msg.chat.id)
+            print("THREAD ID:", getattr(msg, "message_thread_id", None))
+        except Exception:
+            pass
 
-    save_product(msg)
-    return
+        save_product(msg)
+        return
 
     # 2) Текст без фото -> пытаемся приклеить как caption (120 секунд)
     if msg.text:
