@@ -202,11 +202,13 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not msg:
         return
 
-    # 1) Фото -> сохраняем товар как обычно
-    if msg.photo:
-        print("THREAD ID:", msg.message_thread_id)   # 👈 Я вставила сюда
-        save_product(msg)
-        return
+   # 1) Фото -> сохраняем товар как обычно
+if msg.photo:
+    print("CHANNEL:", msg.chat.id)
+    print("THREAD ID:", msg.message_thread_id)
+
+    save_product(msg)
+    return
 
     # 2) Текст без фото -> пытаемся приклеить как caption (120 секунд)
     if msg.text:
