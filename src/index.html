@@ -57,6 +57,44 @@
     button:active{transform: translateY(1px)}
     .hint{margin-top:6px; color:var(--muted); font-size:13px}
 
+    /* ✅ Source tabs */
+    .tabsWrap{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .tabs{
+      display:inline-flex;
+      background:#fff;
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow: 0 8px 18px rgba(0,0,0,.04);
+    }
+    .tabBtn{
+      padding:10px 12px;
+      font-weight:900;
+      font-size:13px;
+      background:transparent;
+      color:#111;
+      border:0;
+      cursor:pointer;
+      min-width:110px;
+    }
+    .tabBtn:not(.active){opacity:.55}
+    .tabBtn.active{
+      background:#111;
+      color:#fff;
+      opacity:1;
+    }
+    .tabHint{
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+    }
+
     .gridWrap{max-width:1100px; margin:0 auto; padding:14px;}
     .grid{
       display:grid;
@@ -130,6 +168,20 @@
       flex:1;
     }
 
+    .sourcePill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      font-weight:900;
+      color:#111;
+      background:#f2f4f9;
+      border:1px solid var(--stroke);
+      padding:6px 10px;
+      border-radius:999px;
+      width:fit-content;
+    }
+
     .brand{
       font-size:18px;
       font-weight:900;
@@ -192,6 +244,7 @@
 
     @media (max-width: 390px){
       .aBtn{font-size:12px; min-height:50px;}
+      .tabBtn{min-width:96px}
     }
 
     .skeleton{
@@ -328,7 +381,18 @@
           <input id="brand" placeholder="Бренд (например gucci)" autocomplete="off" />
           <button id="find">Найти</button>
         </div>
+
+        <!-- ✅ Boutiques / Outlets переключатель -->
+        <div class="tabsWrap">
+          <div class="tabs" role="tablist" aria-label="Source filter">
+            <button class="tabBtn active" id="tabAll" data-source="all" role="tab">Все</button>
+            <button class="tabBtn" id="tabBoutiques" data-source="Boutiques" role="tab">Boutiques</button>
+            <button class="tabBtn" id="tabOutlets" data-source="Outlets" role="tab">Outlets</button>
+          </div>
+          <div class="tabHint">Фильтр по источнику канала.</div>
+        </div>
       </div>
+
       <div class="hint">Совет: можно искать по бренду и по любому тексту из описания.</div>
       <div id="status" class="err" style="display:none"></div>
     </div>
@@ -367,7 +431,13 @@
       return norm(s).replace(/^#/, "");
     }
 
-    // ✅ Описание = как в Telegram, удаляем только "по вопросам ..." и "@mikab16"
+    function getSource(p){
+      // если старые записи без source — считаем Boutiques
+      const s = (p && p.source) ? String(p.source).trim() : "";
+      return s || "Boutiques";
+    }
+
+    // ✅ Описание = как в Telegram, удаляем только "по вопросам ..." и usernames
     function cleanCaption(text){
       if(!text) return "";
       const raw = text.toString();
@@ -377,6 +447,7 @@
         if(!s) return true;
         if(/по вопросам/i.test(s)) return false;
         if(/@mikab16/i.test(s)) return false;
+        if(/@yana_stgn/i.test(s)) return false;
         return true;
       });
       return filtered.join("\n").trim();
@@ -569,12 +640,24 @@
       if(e.target === $("viewer")) closeViewer();
     });
 
-    function buyLinks(){
-      const tgUser = "mikab16";
-      const wa = "393463203783";
+    function buyLinks(source){
+      // Boutiques (как было)
+      const boutiques = {
+        tgUser: "mikab16",
+        wa: "393463203783"
+      };
+
+      // Outlets (коллега)
+      const outlets = {
+        tgUser: "yana_stgn",
+        wa: "79155554259" // +7... -> wa.me без "+"
+      };
+
+      const cfg = (source === "Outlets") ? outlets : boutiques;
+
       return {
-        tg: `https://t.me/${encodeURIComponent(tgUser)}`,
-        wa: `https://wa.me/${encodeURIComponent(wa)}`
+        tg: `https://t.me/${encodeURIComponent(cfg.tgUser)}`,
+        wa: `https://wa.me/${encodeURIComponent(cfg.wa)}`
       };
     }
 
@@ -582,10 +665,11 @@
       const photos = (Array.isArray(p.file_ids) && p.file_ids.length) ? p.file_ids : (p.file_id ? [p.file_id] : []);
       const count = photos.length || 0;
 
+      const source = getSource(p);
       const brand = (p.brand || "").toString().trim();
       const caption = cleanCaption(p.caption || "");
 
-      const {tg, wa} = buyLinks();
+      const {tg, wa} = buyLinks(source);
 
       const card = document.createElement("div");
       card.className = "card";
@@ -597,7 +681,7 @@
       img.alt = brand || "Фото";
       media.appendChild(img);
 
-      /* ✅ ДАТА В КАРТОЧКЕ (НЕ ЛОМАЕТ КЛИКИ/ГРИД) */
+      /* ✅ ДАТА В КАРТОЧКЕ */
       const dateText = formatDateBadge(p.ts);
       if(dateText){
         const db = document.createElement("div");
@@ -622,6 +706,12 @@
 
       const body = document.createElement("div");
       body.className = "body";
+
+      // ✅ Pill: Boutiques / Outlets
+      const sp = document.createElement("div");
+      sp.className = "sourcePill";
+      sp.textContent = source;
+      body.appendChild(sp);
 
       if(brand){
         const b = document.createElement("div");
@@ -677,6 +767,19 @@
     }
 
     let allProducts = [];
+    let currentSource = "all";
+
+    function setActiveTab(source){
+      currentSource = source;
+
+      const btns = [ $("tabAll"), $("tabBoutiques"), $("tabOutlets") ];
+      btns.forEach(b=>{
+        const isActive = b.getAttribute("data-source") === source;
+        b.classList.toggle("active", isActive);
+      });
+
+      renderFiltered();
+    }
 
     async function fetchProducts(){
       $("status").style.display="none";
@@ -702,6 +805,11 @@
       const b = normBrand($("brand").value);
 
       let list = allProducts.slice();
+
+      // ✅ filter by source
+      if(currentSource !== "all"){
+        list = list.filter(p => getSource(p) === currentSource);
+      }
 
       if(b){
         list = list.filter(p=>{
@@ -731,6 +839,11 @@
     $("find").onclick = renderFiltered;
     $("q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
     $("brand").addEventListener("keydown", (e)=>{ if(e.key==="Enter") renderFiltered(); });
+
+    // ✅ Tabs handlers
+    $("tabAll").onclick = ()=>setActiveTab("all");
+    $("tabBoutiques").onclick = ()=>setActiveTab("Boutiques");
+    $("tabOutlets").onclick = ()=>setActiveTab("Outlets");
 
     fetchProducts();
     setInterval(fetchProducts, 10000);
