@@ -1,1149 +1,428 @@
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TG Catalog — Luxury</title>
-
-  <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#fff;
-      --text:#0f172a;
-      --muted:#6b7280;
-      --stroke:#e6e8ee;
-      --shadow:0 10px 30px rgba(0,0,0,.06);
-      --r:22px;
-      --btnR:18px;
-      --black:#111;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      color:var(--text);
-      background:var(--bg);
-    }
-
-    .top{
-      position:sticky; top:0; z-index:10;
-      background: rgba(246,247,251,.92);
-      backdrop-filter: blur(10px);
-      border-bottom:1px solid var(--stroke);
-    }
-    .wrap{max-width:1100px; margin:0 auto; padding:14px;}
-    .inputs{display:grid; gap:10px;}
-    .row1{display:grid; grid-template-columns: 1fr; gap:10px;}
-    .row2{display:grid; grid-template-columns: 1fr 110px; gap:10px;}
-    input{
-      width:100%;
-      padding:14px 16px;
-      border-radius:18px;
-      border:1px solid var(--stroke);
-      background:#fff;
-      font-size:16px;
-      outline:none;
-    }
-    input:focus{border-color:#cfd5e3; box-shadow:0 0 0 4px rgba(59,130,246,.12)}
-    button{
-      border:0;
-      border-radius:18px;
-      background:#e9eefc;
-      color:#1f2a44;
-      font-weight:800;
-      font-size:16px;
-      cursor:pointer;
-    }
-    button:active{transform: translateY(1px)}
-    .hint{margin-top:6px; color:var(--muted); font-size:13px}
-
-    /* ✅ Source tabs */
-    .tabsWrap{
-      margin-top:10px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .tabs{
-      display:inline-flex;
-      background:#fff;
-      border:1px solid var(--stroke);
-      border-radius:16px;
-      overflow:hidden;
-      box-shadow: 0 8px 18px rgba(0,0,0,.04);
-    }
-    .tabBtn{
-      padding:10px 12px;
-      font-weight:900;
-      font-size:13px;
-      background:transparent;
-      color:#111;
-      border:0;
-      cursor:pointer;
-      min-width:110px;
-    }
-    .tabBtn:not(.active){opacity:.55}
-    .tabBtn.active{
-      background:#111;
-      color:#fff;
-      opacity:1;
-    }
-    .tabHint{
-      color:var(--muted);
-      font-size:12px;
-      font-weight:800;
-    }
-
-    .gridWrap{max-width:1100px; margin:0 auto; padding:14px;}
-    .grid{
-      display:grid;
-      gap:14px;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-    }
-    @media (min-width: 900px){
-      .grid{grid-template-columns: repeat(3, minmax(0,1fr));}
-      .row2{grid-template-columns: 1fr 140px;}
-    }
-
-    .card{
-      background:var(--card);
-      border:1px solid var(--stroke);
-      border-radius: var(--r);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-      min-height: 520px;
-      position:relative; /* ✅ для admin badge */
-    }
-
-    .media{
-      position:relative;
-      background:#f0f2f7;
-      width:100%;
-      aspect-ratio: 1 / 1;
-      overflow:hidden;
-      cursor:pointer;
-    }
-    .media img{
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      display:block;
-      transform: translateZ(0);
-    }
-
-    .badge{
-      position:absolute;
-      right:10px; top:10px;
-      background: rgba(17,17,17,.72);
-      color:#fff;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      z-index:3;
-    }
-
-    /* ✅ ДАТА (слева сверху) */
-    .dateBadge{
-      position:absolute;
-      left:10px; top:10px;
-      background: rgba(255,255,255,.92);
-      backdrop-filter: blur(6px);
-      border-radius:999px;
-      padding:6px 10px;
-      font-size:11px;
-      font-weight:900;
-      letter-spacing:.5px;
-      border:1px solid rgba(0,0,0,.06);
-      z-index:3;
-    }
-
-    .body{
-      padding:14px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      flex:1;
-    }
-
-    .sourcePill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      font-size:12px;
-      font-weight:900;
-      color:#111;
-      background:#f2f4f9;
-      border:1px solid var(--stroke);
-      padding:6px 10px;
-      border-radius:999px;
-      width:fit-content;
-    }
-
-    .brand{
-      font-size:18px;
-      font-weight:900;
-      letter-spacing:.3px;
-      line-height:1.1;
-    }
-
-    .caption{
-      color:#111;
-      font-size:14px;
-      line-height:1.35;
-      white-space:pre-wrap;
-      overflow:hidden;
-      display:-webkit-box;
-      -webkit-line-clamp: 6;
-      -webkit-box-orient: vertical;
-      min-height: 96px;
-    }
-    .caption.expanded{
-      -webkit-line-clamp: unset;
-      max-height:none;
-    }
-
-    .more{
-      color:#111;
-      font-weight:900;
-      font-size:13px;
-      cursor:pointer;
-      user-select:none;
-    }
-
-    /* ✅ КНОПКИ: всегда влезают (2 строки в тексте) */
-    .actions{
-      margin-top:auto;
-      display:grid;
-      gap:10px;
-      grid-template-columns: 1fr 1fr;
-    }
-    .aBtn{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:10px 8px;
-      border-radius: var(--btnR);
-      font-weight:900;
-      text-decoration:none;
-      font-size:13px;
-      border:2px solid var(--black);
-      min-height:52px;
-      min-width:0;
-
-      white-space:normal;
-      text-align:center;
-      line-height:1.05;
-      word-break:break-word;
-    }
-    .aBtn .btnText{display:block}
-    .aBtn.tg{background:var(--black); color:#fff;}
-    .aBtn.wa{background:#fff; color:#111;}
-
-    @media (max-width: 390px){
-      .aBtn{font-size:12px; min-height:50px;}
-      .tabBtn{min-width:96px}
-    }
-
-    .skeleton{
-      background: linear-gradient(90deg,#eef0f6 0%, #f6f7fb 40%, #eef0f6 80%);
-      background-size: 200% 100%;
-      animation: sk 1.2s infinite;
-    }
-    @keyframes sk{0%{background-position:0% 0}100%{background-position:-200% 0}}
-
-    /* Viewer */
-    .viewer{
-      position:fixed;
-      inset:0;
-      background: rgba(0,0,0,.92);
-      display:none;
-      z-index:999;
-      touch-action:none; /* важно для pinch */
-    }
-    .viewer.open{display:block}
-    .vTop{
-      position:absolute;
-      top:12px; left:12px; right:12px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      z-index:10;
-    }
-    .vClose, .vCount{
-      background: rgba(255,255,255,.12);
-      border:1px solid rgba(255,255,255,.18);
-      color:#fff;
-      border-radius: 14px;
-      padding:10px 12px;
-      font-weight:900;
-      backdrop-filter: blur(8px);
-      user-select:none;
-      -webkit-user-select:none;
-    }
-    .vClose{cursor:pointer}
-
-    .vMain{
-      position:absolute; inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:70px 16px 110px;
-    }
-    .vImgWrap{
-      width:min(92vw, 920px);
-      height:min(70vh, 920px);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-      border-radius: 18px;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.12);
-      position:relative;
-      touch-action:none; /* важно для pinch */
-    }
-    .vImg{
-      max-width:100%;
-      max-height:100%;
-      user-select:none;
-      -webkit-user-drag:none;
-      transform-origin:center center;
-      will-change:transform;
-    }
-    .vArrow{
-      position:absolute;
-      top:50%;
-      transform: translateY(-50%);
-      width:54px; height:54px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.2);
-      background: rgba(255,255,255,.10);
-      color:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:26px;
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-      backdrop-filter: blur(8px);
-      z-index:5;
-    }
-    .vArrow.left{left:14px}
-    .vArrow.right{right:14px}
-
-    .vThumbs{
-      position:absolute;
-      left:0; right:0; bottom:0;
-      padding:14px 14px 18px;
-      display:flex;
-      gap:10px;
-      overflow:auto;
-      justify-content:center;
-      z-index:6;
-    }
-    .thumb{
-      width:54px; height:54px;
-      border-radius:14px;
-      overflow:hidden;
-      border:2px solid rgba(255,255,255,.18);
-      opacity:.7;
-      cursor:pointer;
-      flex:0 0 auto;
-      background: rgba(255,255,255,.06);
-    }
-    .thumb.active{opacity:1;border-color:#fff;}
-    .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
-
-    .empty{
-      max-width:1100px;
-      margin:20px auto;
-      padding:0 14px;
-      color:var(--muted);
-      font-weight:800;
-    }
-    .err{color:#b91c1c;font-weight:900;margin-top:10px;}
-
-    /* ========================= */
-    /* ✅ PRO UX: кнопка "Наверх" */
-    /* ========================= */
-    .toTop{
-      position:fixed;
-      right:14px;
-      bottom:16px;
-      z-index:998;
-      width:52px;
-      height:52px;
-      border-radius:999px;
-      border:1px solid rgba(0,0,0,.10);
-      background: rgba(255,255,255,.85);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 16px 35px rgba(0,0,0,.12);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      user-select:none;
-      -webkit-user-select:none;
-      opacity:0;
-      transform: translateY(12px);
-      pointer-events:none;
-      transition: opacity .18s ease, transform .18s ease;
-    }
-    .toTop.show{
-      opacity:1;
-      transform: translateY(0);
-      pointer-events:auto;
-    }
-    .toTop:active{transform: translateY(1px);}
-    .toTop svg{width:22px;height:22px;display:block}
-    @media (max-width: 390px){
-      .toTop{right:10px; bottom:12px; width:48px; height:48px;}
-    }
-
-    /* =============================== */
-    /* ✅ Пагинация / "как Instagram" */
-    /* =============================== */
-    .pager{
-      max-width:1100px;
-      margin:0 auto;
-      padding:0 14px 18px;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      gap:10px;
-    }
-    .moreBtn{
-      width:100%;
-      max-width:520px;
-      border-radius:18px;
-      border:1px solid var(--stroke);
-      background:#fff;
-      padding:14px 16px;
-      font-weight:900;
-      cursor:pointer;
-      box-shadow: 0 10px 24px rgba(0,0,0,.06);
-    }
-    .moreBtn:active{transform: translateY(1px);}
-    .moreMeta{
-      color:var(--muted);
-      font-weight:800;
-      font-size:12px;
-      text-align:center;
-      margin-top:8px;
-      padding-bottom: 18px;
-    }
-
-    /* ===================================== */
-    /* ✅ ADMIN UX: кнопка удалить на карточке */
-    /* ===================================== */
-    .adminRow{
-      display:none; /* включаем только в admin mode */
-      margin-top:6px;
-    }
-    .adminRow.show{display:block;}
-    .adminDelete{
-      width:100%;
-      border-radius:18px;
-      border:1px solid rgba(185, 28, 28, .35);
-      background: rgba(185, 28, 28, .08);
-      color:#b91c1c;
-      padding:12px 14px;
-      font-weight:900;
-      cursor:pointer;
-    }
-    .adminDelete:active{transform: translateY(1px);}
-    .adminBadge{
-      position:absolute;
-      right:12px;
-      bottom:12px;
-      background: rgba(185,28,28,.92);
-      color:#fff;
-      font-weight:900;
-      font-size:11px;
-      padding:6px 10px;
-      border-radius:999px;
-      display:none; /* только admin */
-      z-index:4;
-      box-shadow: 0 12px 26px rgba(0,0,0,.18);
-    }
-    .adminBadge.show{display:inline-flex;}
-  </style>
-</head>
-
-<body>
-  <div class="top">
-    <div class="wrap">
-      <div class="inputs">
-        <div class="row1">
-          <input id="q" placeholder="Поиск (текст/описание)" autocomplete="off" />
-        </div>
-        <div class="row2">
-          <input id="brand" placeholder="Бренд (например gucci)" autocomplete="off" />
-          <button id="find">Найти</button>
-        </div>
-
-        <!-- ✅ Boutiques / Outlets переключатель -->
-        <div class="tabsWrap">
-          <div class="tabs" role="tablist" aria-label="Source filter">
-            <button class="tabBtn active" id="tabAll" data-source="all" role="tab">Все</button>
-            <button class="tabBtn" id="tabBoutiques" data-source="Boutiques" role="tab">Boutiques</button>
-            <button class="tabBtn" id="tabOutlets" data-source="Outlets" role="tab">Outlets</button>
-          </div>
-          <div class="tabHint">Фильтр по источнику канала.</div>
-        </div>
-      </div>
-
-      <div class="hint">Совет: можно искать по бренду и по любому тексту из описания.</div>
-      <div id="status" class="err" style="display:none"></div>
-    </div>
-  </div>
-
-  <div class="gridWrap">
-    <div id="grid" class="grid"></div>
-    <div id="empty" class="empty" style="display:none">Ничего не найдено.</div>
-  </div>
-
-  <!-- ✅ Пагинация / "Показать ещё" -->
-  <div class="pager" id="pager" style="display:none">
-    <button class="moreBtn" id="moreBtn">Показать ещё</button>
-  </div>
-  <div class="moreMeta" id="moreMeta" style="display:none"></div>
-
-  <!-- ✅ PRO UX: Наверх -->
-  <div class="toTop" id="toTop" aria-label="Наверх" title="Наверх">
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 5l7 7-1.4 1.4L13 8.8V20h-2V8.8L6.4 13.4 5 12l7-7z" fill="#111"/>
-    </svg>
-  </div>
-
-  <!-- Viewer -->
-  <div id="viewer" class="viewer" aria-hidden="true">
-    <div class="vTop">
-      <div id="vClose" class="vClose" role="button" aria-label="Close">✕</div>
-      <div id="vCount" class="vCount">1/1</div>
-    </div>
-
-    <div class="vMain">
-      <div class="vImgWrap" id="vImgWrap">
-        <div class="vArrow left" id="vLeft">‹</div>
-        <img id="vImg" class="vImg" alt="photo" />
-        <div class="vArrow right" id="vRight">›</div>
-      </div>
-    </div>
-
-    <div id="vThumbs" class="vThumbs"></div>
-  </div>
-
-  <script>
-    const $ = (id)=>document.getElementById(id);
-
-    function norm(s){
-      return (s || "").toString().trim().toLowerCase();
-    }
-    function normBrand(s){
-      return norm(s).replace(/^#/, "");
-    }
-
-    function getSource(p){
-      // если старые записи без source — считаем Boutiques
-      const s = (p && p.source) ? String(p.source).trim() : "";
-      return s || "Boutiques";
-    }
-
-    // ✅ ADMIN MODE:
-    // Открываешь сайт так:
-    // https://твой-домен/?admin=ТВОЙ_ADMIN_DELETE_TOKEN
-    const ADMIN_TOKEN = new URLSearchParams(location.search).get("admin") || "";
-    const IS_ADMIN = !!ADMIN_TOKEN;
-
-    // ✅ Описание = как в Telegram, удаляем только "по вопросам ..." и usernames
-    function cleanCaption(text){
-      if(!text) return "";
-      const raw = text.toString();
-      const lines = raw.split("\n");
-      const filtered = lines.filter(line=>{
-        const s = line.trim();
-        if(!s) return true;
-        if(/по вопросам/i.test(s)) return false;
-        if(/@mikab16/i.test(s)) return false;
-        if(/@yana_stgn/i.test(s)) return false;
-        return true;
-      });
-      return filtered.join("\n").trim();
-    }
-
-    function imgUrl(fileIdOrUrl){
-      if(!fileIdOrUrl) return "";
-      const v = String(fileIdOrUrl);
-      if(v.startsWith("http")) return v;
-      return `/api/tgfile/${encodeURIComponent(v)}`;
-    }
-
-    function preload(url){
-      if(!url) return;
-      const im = new Image();
-      im.decoding = "async";
-      im.loading = "eager";
-      im.src = url;
-    }
-
-    function loadImage(imgEl, fileIdOrUrl){
-      const url = imgUrl(fileIdOrUrl);
-      if(!url){
-        imgEl.classList.add("skeleton");
-        imgEl.alt = "no image";
-        return;
-      }
-      imgEl.classList.add("skeleton");
-      imgEl.decoding = "async";
-      imgEl.loading = "lazy";
-      imgEl.src = url;
-      imgEl.onload = ()=>imgEl.classList.remove("skeleton");
-      imgEl.onerror = ()=>{ imgEl.classList.remove("skeleton"); imgEl.alt="image not available"; };
-    }
-
-    /* ✅ формат даты: NEW • 13 FEB */
-    function formatDateBadge(ts){
-      if(!ts) return "";
-      const d = new Date(Number(ts) * 1000);
-      if(isNaN(d.getTime())) return "";
-
-      const dd = String(d.getDate()).padStart(2, "0");
-      const mon = d.toLocaleString("en", { month: "short" }).toUpperCase();
-
-      const now = new Date();
-      const isToday = now.toDateString() === d.toDateString();
-
-      return (isToday ? "NEW • " : "") + dd + " " + mon;
-    }
-
-    // ===== Viewer state + pinch zoom =====
-    let viewerState = {
-      photos: [],
-      idx: 0,
-      scale: 1,
-      startDist: 0,
-      startScale: 1,
-      swipeX: null
-    };
-
-    function applyScale(){
-      $("vImg").style.transform = `scale(${viewerState.scale})`;
-    }
-
-    function openViewer(photos, startIdx=0){
-      viewerState.photos = photos || [];
-      viewerState.idx = Math.max(0, Math.min(startIdx, viewerState.photos.length-1));
-      viewerState.scale = 1;
-      applyScale();
-      $("viewer").classList.add("open");
-      $("viewer").setAttribute("aria-hidden","false");
-      renderViewer(true);
-    }
-
-    function closeViewer(){
-      $("viewer").classList.remove("open");
-      $("viewer").setAttribute("aria-hidden","true");
-      viewerState.scale = 1;
-      applyScale();
-    }
-
-    function renderViewer(preloadNeighbors=false){
-      const total = viewerState.photos.length || 1;
-      const i = viewerState.idx;
-      $("vCount").textContent = `${i+1}/${total}`;
-
-      const main = $("vImg");
-      const url = imgUrl(viewerState.photos[i]);
-      main.decoding = "async";
-      main.loading = "eager";
-      main.src = url;
-
-      if(preloadNeighbors && total > 1){
-        preload(imgUrl(viewerState.photos[(i - 1 + total) % total]));
-        preload(imgUrl(viewerState.photos[(i + 1) % total]));
-      }
-
-      const thumbs = $("vThumbs");
-      thumbs.innerHTML = "";
-      viewerState.photos.forEach((pid, idx)=>{
-        const d = document.createElement("div");
-        d.className = "thumb" + (idx===i ? " active" : "");
-        const im = document.createElement("img");
-        im.decoding = "async";
-        im.loading = "lazy";
-        im.src = imgUrl(pid);
-        d.appendChild(im);
-        d.onclick = ()=>{
-          viewerState.idx = idx;
-          viewerState.scale = 1;
-          applyScale();
-          renderViewer(true);
-        };
-        thumbs.appendChild(d);
-      });
-    }
-
-    function nextPhoto(delta){
-      const n = viewerState.photos.length;
-      if(n<=1) return;
-      viewerState.idx = (viewerState.idx + delta + n) % n;
-      viewerState.scale = 1;
-      applyScale();
-      renderViewer(true);
-    }
-
-    function dist(t1, t2){
-      const dx = t2.clientX - t1.clientX;
-      const dy = t2.clientY - t1.clientY;
-      return Math.sqrt(dx*dx + dy*dy);
-    }
-
-    const wrap = $("vImgWrap");
-
-    wrap.addEventListener("touchstart", (e)=>{
-      if(!$("viewer").classList.contains("open")) return;
-
-      if(e.touches.length === 2){
-        viewerState.startDist = dist(e.touches[0], e.touches[1]);
-        viewerState.startScale = viewerState.scale;
-      } else if(e.touches.length === 1){
-        viewerState.swipeX = e.touches[0].clientX;
-      }
-    }, {passive:false});
-
-    wrap.addEventListener("touchmove", (e)=>{
-      if(!$("viewer").classList.contains("open")) return;
-
-      if(e.touches.length === 2){
-        e.preventDefault();
-        const d0 = viewerState.startDist || 1;
-        const d1 = dist(e.touches[0], e.touches[1]);
-        let next = viewerState.startScale * (d1 / d0);
-        next = Math.max(1, Math.min(4, next));
-        viewerState.scale = next;
-        applyScale();
-      }
-    }, {passive:false});
-
-    wrap.addEventListener("touchend", (e)=>{
-      if(viewerState.swipeX === null) return;
-
-      if(viewerState.scale > 1.02){
-        viewerState.swipeX = null;
-        return;
-      }
-
-      const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : viewerState.swipeX;
-      const dx = endX - viewerState.swipeX;
-      viewerState.swipeX = null;
-
-      if(Math.abs(dx) > 45){
-        nextPhoto(dx < 0 ? +1 : -1);
-      }
-    }, {passive:true});
-
-    let lastTap = 0;
-    wrap.addEventListener("click", ()=>{
-      if(!$("viewer").classList.contains("open")) return;
-      const now = Date.now();
-      if(now - lastTap < 280){
-        viewerState.scale = (viewerState.scale === 1) ? 2 : 1;
-        applyScale();
-      }
-      lastTap = now;
-    });
-
-    $("vClose").addEventListener("click", closeViewer);
-    $("vLeft").onclick = ()=>nextPhoto(-1);
-    $("vRight").onclick = ()=>nextPhoto(+1);
-    $("viewer").addEventListener("click", (e)=>{
-      if(e.target === $("viewer")) closeViewer();
-    });
-
-    function buyLinks(source){
-      // Boutiques (как было)
-      const boutiques = {
-        tgUser: "mikab16",
-        wa: "393463203783"
-      };
-
-      // Outlets (коллега)
-      const outlets = {
-        tgUser: "yana_stgn",
-        wa: "79155554259" // +7... -> wa.me без "+"
-      };
-
-      const cfg = (source === "Outlets") ? outlets : boutiques;
-
-      return {
-        tg: `https://t.me/${encodeURIComponent(cfg.tgUser)}`,
-        wa: `https://wa.me/${encodeURIComponent(cfg.wa)}`
-      };
-    }
-
-    // ✅ ADMIN: delete row
-    async function adminDeleteRow(rowId){
-      if(!IS_ADMIN) return;
-
-      const ok = confirm("Удалить этот товар из каталога? Это нельзя отменить.");
-      if(!ok) return;
-
-      try{
-        const resp = await fetch(`/api/delete/${encodeURIComponent(rowId)}`, {
-          method: "DELETE",
-          headers: {
-            "X-ADMIN-TOKEN": ADMIN_TOKEN
-          }
-        });
-
-        if(!resp.ok){
-          let msg = "delete failed";
-          try{
-            const j = await resp.json();
-            msg = j.error || j.detail || msg;
-          }catch(_){}
-          alert("Ошибка удаления: " + msg);
-          return;
+import os
+import asyncio
+import traceback
+import requests
+from pathlib import Path
+from typing import List, Optional, Tuple, Dict
+
+from fastapi import FastAPI, Request
+from fastapi.responses import Response, FileResponse, JSONResponse
+
+from telegram import Update
+from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
+
+from supabase import create_client
+
+# ================= ENV =================
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+TABLE = os.getenv("SUPABASE_TABLE", "products")
+
+# ✅ ADMIN DELETE TOKEN
+ADMIN_DELETE_TOKEN = os.getenv("ADMIN_DELETE_TOKEN", "")
+
+if not BOT_TOKEN or not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("Missing env: BOT_TOKEN / SUPABASE_URL / SUPABASE_KEY")
+
+# ================= INIT =================
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+app = FastAPI()
+telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+# ================= SOURCE MAP =================
+
+CHAT_SOURCE = {
+    -1001158220106: "Boutiques",
+    -1002303984060: "Outlets",
+}
+
+def detect_source(chat_id: int) -> str:
+    return CHAT_SOURCE.get(int(chat_id), "Boutiques")
+
+# ================= TOPIC CACHE =================
+
+TopicKey = Tuple[int, int]  # (chat_id, thread_id)
+topic_title_cache: Dict[TopicKey, str] = {}
+
+# ================= STARTUP / SHUTDOWN =================
+
+@app.on_event("startup")
+async def on_startup():
+    await telegram_app.initialize()
+    await telegram_app.start()
+    print("✅ telegram_app started")
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    try:
+        await telegram_app.stop()
+    finally:
+        await telegram_app.shutdown()
+    print("🛑 telegram_app stopped")
+
+# ================= HELPERS =================
+
+def extract_brand_from_caption(caption: str) -> str:
+    if "#" in caption:
+        try:
+            return caption.split("#", 1)[1].split()[0].strip()
+        except Exception:
+            return ""
+    return ""
+
+def msg_ts(msg) -> int:
+    try:
+        return int(msg.date.timestamp())
+    except Exception:
+        return 0
+
+def safe_append_file_id(existing: Optional[List[str]], file_id: str) -> List[str]:
+    arr = existing if isinstance(existing, list) else []
+    if file_id and file_id not in arr:
+        arr.append(file_id)
+    return arr
+
+def is_empty_caption(val) -> bool:
+    return val is None or str(val).strip() == ""
+
+def get_topic_title_from_service(msg) -> Optional[str]:
+    try:
+        if getattr(msg, "forum_topic_created", None):
+            return msg.forum_topic_created.name
+        if getattr(msg, "forum_topic_edited", None):
+            return msg.forum_topic_edited.name
+    except Exception:
+        pass
+    return None
+
+def remember_topic_title(msg):
+    try:
+        chat_id = int(msg.chat.id)
+        thread_id = getattr(msg, "message_thread_id", None)
+        title = get_topic_title_from_service(msg)
+
+        if thread_id and title:
+            topic_title_cache[(chat_id, int(thread_id))] = str(title).strip()
+            print(f"🧠 Topic remembered: chat={chat_id} thread={thread_id} title='{title}'")
+    except Exception as e:
+        print("remember_topic_title error:", repr(e))
+
+def brand_from_topic_if_known(msg) -> str:
+    try:
+        chat_id = int(msg.chat.id)
+        thread_id = getattr(msg, "message_thread_id", None)
+        if not thread_id:
+            return ""
+
+        title = topic_title_cache.get((chat_id, int(thread_id)))
+        if not title:
+            rt = getattr(msg, "reply_to_message", None)
+            if rt:
+                t2 = get_topic_title_from_service(rt)
+                if t2:
+                    topic_title_cache[(chat_id, int(thread_id))] = str(t2).strip()
+                    title = str(t2).strip()
+
+        return (title or "").strip()
+    except Exception:
+        return ""
+
+def pick_brand(msg, fallback_text: str) -> str:
+    b = brand_from_topic_if_known(msg)
+    if b:
+        return b
+    return extract_brand_from_caption(fallback_text or "")
+
+# ================= SAVE PRODUCT =================
+
+def save_product(msg):
+    caption = msg.caption or ""
+    source = detect_source(int(msg.chat.id))
+    brand = pick_brand(msg, caption)
+
+    media_group_id = msg.media_group_id
+    message_id = msg.message_id
+
+    file_id = ""
+    if msg.photo:
+        file_id = msg.photo[-1].file_id
+
+    ts = msg_ts(msg)
+
+    if media_group_id:
+        existing = (
+            supabase.table(TABLE)
+            .select("id,file_ids,file_id,caption,brand,ts,media_group_id,message_id,source")
+            .eq("media_group_id", str(media_group_id))
+            .eq("source", source)
+            .limit(1)
+            .execute()
+        )
+
+        if existing.data:
+            row = existing.data[0]
+            new_file_ids = safe_append_file_id(row.get("file_ids"), file_id)
+
+            new_caption = row.get("caption") or caption
+            new_brand = row.get("brand") or brand
+            new_ts = row.get("ts") or ts
+            new_file_id = row.get("file_id") or file_id
+
+            supabase.table(TABLE).update({
+                "file_ids": new_file_ids,
+                "file_id": new_file_id,
+                "caption": new_caption,
+                "brand": new_brand,
+                "ts": new_ts,
+                "source": source,
+            }).eq("id", row["id"]).execute()
+            return
+
+        supabase.table(TABLE).insert({
+            "media_group_id": str(media_group_id),
+            "message_id": message_id,
+            "brand": brand,
+            "caption": caption,
+            "file_id": file_id or None,
+            "file_ids": [file_id] if file_id else [],
+            "ts": ts,
+            "source": source,
+        }).execute()
+        return
+
+    supabase.table(TABLE).upsert({
+        "message_id": message_id,
+        "brand": brand,
+        "caption": caption,
+        "file_id": file_id or None,
+        "file_ids": [file_id] if file_id else [],
+        "ts": ts,
+        "source": source,
+    }, on_conflict="message_id").execute()
+
+# ================= CAPTION FIX =================
+
+def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
+    text = (msg.text or "").strip()
+    if not text:
+        return False
+
+    ts = msg_ts(msg)
+    if not ts:
+        return False
+
+    source = detect_source(int(msg.chat.id))
+    brand = pick_brand(msg, text)
+
+    try:
+        res = (
+            supabase.table(TABLE)
+            .select("id,caption,brand,ts,source")
+            .eq("source", source)
+            .gte("ts", ts - window_seconds)
+            .order("ts", desc=True)
+            .limit(20)
+            .execute()
+        )
+
+        rows = res.data or []
+        if not rows:
+            return False
+
+        target = None
+        for r in rows:
+            if is_empty_caption(r.get("caption")):
+                target = r
+                break
+
+        if not target:
+            return False
+
+        upd = {"caption": text}
+        if (not (target.get("brand") or "").strip()) and brand:
+            upd["brand"] = brand
+
+        supabase.table(TABLE).update(upd).eq("id", target["id"]).execute()
+        print(f"🧩 Caption FIX applied -> row id={target['id']} source={source}")
+        return True
+
+    except Exception as e:
+        print("Caption FIX ERROR ❌", repr(e))
+        traceback.print_exc()
+        return False
+
+# ================= TELEGRAM HANDLER =================
+
+async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = update.effective_message
+    if not msg:
+        return
+
+    if getattr(msg, "forum_topic_created", None) or getattr(msg, "forum_topic_edited", None):
+        remember_topic_title(msg)
+        return
+
+    if msg.photo:
+        save_product(msg)
+        return
+
+    if msg.text:
+        attach_text_caption_to_recent_item(msg, window_seconds=120)
+        return
+
+telegram_app.add_handler(MessageHandler(filters.ALL, handler))
+
+# ================= WEBHOOK =================
+
+@app.post("/webhook")
+async def webhook(req: Request):
+    try:
+        data = await req.json()
+        upd_id = data.get("update_id", "no_update_id")
+        print("WEBHOOK HIT ✅ update_id:", upd_id)
+
+        update = Update.de_json(data, telegram_app.bot)
+        asyncio.create_task(telegram_app.process_update(update))
+        return {"ok": True}
+
+    except Exception as e:
+        print("WEBHOOK ERROR ❌", repr(e))
+        traceback.print_exc()
+        return {"ok": True}
+
+# ================= PRODUCTS API (SERVER PAGINATION) =================
+
+@app.get("/api/products")
+def get_products(
+    offset: int = 0,
+    limit: int = 24,
+    source: str = "",
+    brand: str = "",
+    q: str = "",
+):
+    """
+    ✅ ВАЖНО: серверная пагинация + фильтры.
+    Теперь фронт НЕ грузит все 10 000 строк сразу.
+    """
+    try:
+        # нормальные границы
+        offset = max(0, int(offset))
+        limit = max(1, min(200, int(limit)))  # защита, чтобы не убить сервер
+
+        query = supabase.table(TABLE).select("*", count="exact").order("ts", desc=True)
+
+        s = (source or "").strip()
+        if s:
+            query = query.eq("source", s)
+
+        b = (brand or "").strip()
+        if b:
+            # бренд ищем и в brand, и в caption (на случай старых постов с #)
+            safe = b.replace("%", "").replace(",", " ")
+            query = query.or_(f"brand.ilike.%{safe}%,caption.ilike.%{safe}%")
+
+        qq = (q or "").strip()
+        if qq:
+            safeq = qq.replace("%", "").replace(",", " ")
+            query = query.or_(f"brand.ilike.%{safeq}%,caption.ilike.%{safeq}%")
+
+        query = query.range(offset, offset + limit - 1)
+        res = query.execute()
+
+        items = res.data or []
+        total = getattr(res, "count", None)
+
+        if total is None:
+            has_more = len(items) == limit
+        else:
+            has_more = (offset + len(items)) < int(total)
+
+        return {
+            "items": items,
+            "offset": offset,
+            "limit": limit,
+            "total": total,
+            "has_more": has_more,
         }
 
-        // ✅ быстрый UX: удаляем из локального массива и перерисовываем без лишнего дерганья
-        allProducts = allProducts.filter(x => String(x.id) !== String(rowId));
-        lastSnapshotKey = ""; // чтобы следующий fetch точно обновил
-        renderFiltered();
+    except Exception as e:
+        print("PRODUCTS API ERROR ❌", repr(e))
+        traceback.print_exc()
+        return JSONResponse({"detail": "products_fetch_failed"}, status_code=500)
 
-      }catch(e){
-        alert("Ошибка удаления: " + (e && e.message ? e.message : e));
-      }
+# ================= DELETE PRODUCT (ADMIN) =================
+
+@app.delete("/api/delete/{row_id}")
+def delete_product(row_id: int, request: Request):
+    try:
+        if not ADMIN_DELETE_TOKEN:
+            return JSONResponse({"error": "admin_delete_token_not_set"}, status_code=500)
+
+        token = request.headers.get("X-ADMIN-TOKEN", "")
+        if token != ADMIN_DELETE_TOKEN:
+            return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+        resp = supabase.table(TABLE).delete().eq("id", int(row_id)).execute()
+
+        # если supabase вернул ошибку — покажем её
+        err = getattr(resp, "error", None)
+        if err:
+            return JSONResponse({"error": "delete_failed", "detail": str(err)}, status_code=500)
+
+        return {"ok": True}
+
+    except Exception as e:
+        print("DELETE ERROR ❌", repr(e))
+        traceback.print_exc()
+        return JSONResponse({"error": "delete_failed"}, status_code=500)
+
+# ================= TELEGRAM FILE PROXY =================
+
+@app.get("/api/tgfile/{file_id}")
+def tgfile(file_id: str, request: Request):
+    etag = f'W/"{file_id}"'
+    inm = request.headers.get("if-none-match")
+    if inm and inm.strip() == etag:
+        return Response(
+            status_code=304,
+            headers={
+                "Cache-Control": "public, max-age=604800, immutable",
+                "ETag": etag,
+            },
+        )
+
+    r = requests.get(
+        f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
+        params={"file_id": file_id},
+        timeout=20
+    )
+    data = r.json()
+    if not data.get("ok"):
+        return JSONResponse({"detail": "Telegram get_file failed"}, status_code=400)
+
+    file_path = data["result"]["file_path"]
+    file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+
+    file_resp = requests.get(file_url, timeout=40)
+    if file_resp.status_code != 200:
+        return JSONResponse({"detail": "Telegram file fetch failed"}, status_code=404)
+
+    content_type = file_resp.headers.get("content-type", "image/jpeg")
+
+    headers = {
+        "Cache-Control": "public, max-age=604800, immutable",
+        "ETag": etag,
     }
+    return Response(content=file_resp.content, media_type=content_type, headers=headers)
 
-    function cardTemplate(p){
-      const photos = (Array.isArray(p.file_ids) && p.file_ids.length) ? p.file_ids : (p.file_id ? [p.file_id] : []);
-      const count = photos.length || 0;
+# ================= ROOT =================
 
-      const source = getSource(p);
-      const brand = (p.brand || "").toString().trim();
-      const caption = cleanCaption(p.caption || "");
-
-      const {tg, wa} = buyLinks(source);
-
-      const card = document.createElement("div");
-      card.className = "card";
-
-      // ✅ Admin badge (только в admin mode)
-      if(IS_ADMIN){
-        const ab = document.createElement("div");
-        ab.className = "adminBadge show";
-        ab.textContent = `ID ${p.id}`;
-        card.appendChild(ab);
-      }
-
-      const media = document.createElement("div");
-      media.className = "media";
-
-      const img = document.createElement("img");
-      img.alt = brand || "Фото";
-      media.appendChild(img);
-
-      /* ✅ ДАТА В КАРТОЧКЕ */
-      const dateText = formatDateBadge(p.ts);
-      if(dateText){
-        const db = document.createElement("div");
-        db.className = "dateBadge";
-        db.textContent = dateText;
-        media.appendChild(db);
-      }
-
-      if(count > 1){
-        const badge = document.createElement("div");
-        badge.className = "badge";
-        badge.textContent = `${count} фото`;
-        media.appendChild(badge);
-      }
-
-      media.onclick = ()=>{
-        if(!photos.length) return;
-        openViewer(photos, 0);
-      };
-
-      loadImage(img, photos[0]);
-
-      const body = document.createElement("div");
-      body.className = "body";
-
-      // ✅ Pill: Boutiques / Outlets
-      const sp = document.createElement("div");
-      sp.className = "sourcePill";
-      sp.textContent = source;
-      body.appendChild(sp);
-
-      if(brand){
-        const b = document.createElement("div");
-        b.className = "brand";
-        b.textContent = brand;
-        body.appendChild(b);
-      }
-
-      const cap = document.createElement("div");
-      cap.className = "caption";
-      cap.textContent = caption;
-      body.appendChild(cap);
-
-      if(caption.length > 160){
-        const more = document.createElement("div");
-        more.className = "more";
-        more.textContent = "Показать полностью";
-        more.onclick = ()=>{
-          const exp = cap.classList.toggle("expanded");
-          more.textContent = exp ? "Свернуть" : "Показать полностью";
-        };
-        body.appendChild(more);
-      } else {
-        const spacer = document.createElement("div");
-        spacer.style.height = "18px";
-        body.appendChild(spacer);
-      }
-
-      const actions = document.createElement("div");
-      actions.className = "actions";
-
-      const tgBtn = document.createElement("a");
-      tgBtn.className = "aBtn tg";
-      tgBtn.href = tg;
-      tgBtn.target = "_blank";
-      tgBtn.rel = "noopener";
-      tgBtn.innerHTML = `<span class="btnText">Купить в<br>Telegram</span>`;
-
-      const waBtn = document.createElement("a");
-      waBtn.className = "aBtn wa";
-      waBtn.href = wa;
-      waBtn.target = "_blank";
-      waBtn.rel = "noopener";
-      waBtn.innerHTML = `<span class="btnText">Купить в<br>WhatsApp</span>`;
-
-      actions.appendChild(tgBtn);
-      actions.appendChild(waBtn);
-      body.appendChild(actions);
-
-      // ✅ Admin delete button (только в admin mode)
-      const adminRow = document.createElement("div");
-      adminRow.className = "adminRow" + (IS_ADMIN ? " show" : "");
-      if(IS_ADMIN){
-        const del = document.createElement("button");
-        del.className = "adminDelete";
-        del.type = "button";
-        del.textContent = "Удалить товар";
-        del.onclick = (e)=>{
-          e.preventDefault();
-          e.stopPropagation();
-          adminDeleteRow(p.id);
-        };
-        adminRow.appendChild(del);
-      }
-      body.appendChild(adminRow);
-
-      card.appendChild(media);
-      card.appendChild(body);
-      return card;
-    }
-
-    let allProducts = [];
-    let currentSource = "all";
-
-    /* =============================== */
-    /* ✅ FIX: убрать двойную загрузку */
-    /* =============================== */
-    let isLoadingProducts = false;
-    let lastSnapshotKey = ""; // чтобы не перерисовывать одинаковое
-
-    /* =============================== */
-    /* ✅ "Instagram" pagination logic */
-    /* =============================== */
-    const PAGE_SIZE = 18;         // сколько карточек за раз
-    let filteredCache = [];       // текущий filtered list
-    let visibleCount = PAGE_SIZE; // сколько показываем
-    let autoLoading = false;
-
-    function setActiveTab(source){
-      currentSource = source;
-
-      const btns = [ $("tabAll"), $("tabBoutiques"), $("tabOutlets") ];
-      btns.forEach(b=>{
-        const isActive = b.getAttribute("data-source") === source;
-        b.classList.toggle("active", isActive);
-      });
-
-      // при смене вкладки сбрасываем "инстаграм-ленту"
-      visibleCount = PAGE_SIZE;
-      renderFiltered();
-      scrollToTopSoft();
-    }
-
-    async function fetchProducts(){
-      // ✅ не запускаем второй fetch пока идет первый
-      if(isLoadingProducts) return;
-
-      // ✅ не грузим, если вкладка скрыта (экономия и меньше дерганья)
-      if(document.hidden) return;
-
-      isLoadingProducts = true;
-
-      $("status").style.display="none";
-      $("empty").style.display="none";
-
-      try{
-        const r = await fetch("/api/products", {cache:"no-store"});
-        if(!r.ok) throw new Error("API /api/products вернул " + r.status);
-        const data = await r.json();
-        if(!Array.isArray(data)) throw new Error("API вернул не массив");
-
-        // ✅ snapshot: если список не изменился — НЕ ререндерим
-        const first = data[0] || {};
-        const key = `${data.length}|${first.id ?? ""}|${first.message_id ?? ""}|${first.ts ?? ""}`;
-        if(key === lastSnapshotKey){
-          return;
-        }
-        lastSnapshotKey = key;
-
-        allProducts = data;
-        renderFiltered();
-
-      }catch(e){
-        $("grid").innerHTML = "";
-        $("status").style.display="block";
-        $("status").textContent = "Не удалось загрузить товары. " + e.message;
-      } finally {
-        isLoadingProducts = false;
-      }
-    }
-
-    function buildFilteredList(){
-      const q = norm($("q").value);
-      const b = normBrand($("brand").value);
-
-      let list = allProducts.slice();
-
-      // ✅ filter by source
-      if(currentSource !== "all"){
-        list = list.filter(p => getSource(p) === currentSource);
-      }
-
-      if(b){
-        list = list.filter(p=>{
-          const hay = `${p.brand||""}\n${p.caption||""}`.toLowerCase();
-          return hay.includes(b) || hay.includes("#"+b);
-        });
-      }
-      if(q){
-        list = list.filter(p=>{
-          const hay = `${p.brand||""}\n${p.caption||""}`.toLowerCase();
-          return hay.includes(q);
-        });
-      }
-
-      return list;
-    }
-
-    function renderFiltered(){
-      filteredCache = buildFilteredList();
-
-      const grid = $("grid");
-      grid.innerHTML = "";
-
-      if(!filteredCache.length){
-        $("empty").style.display="block";
-        $("pager").style.display="none";
-        $("moreMeta").style.display="none";
-        return;
-      }
-      $("empty").style.display="none";
-
-      // показываем только часть (как лента)
-      const slice = filteredCache.slice(0, visibleCount);
-      slice.forEach(p=> grid.appendChild(cardTemplate(p)));
-
-      // pager ui
-      const hasMore = visibleCount < filteredCache.length;
-      $("pager").style.display = hasMore ? "flex" : "none";
-      $("moreMeta").style.display = hasMore ? "block" : "none";
-      if(hasMore){
-        $("moreMeta").textContent = `Показано ${slice.length} из ${filteredCache.length}`;
-      } else {
-        $("moreMeta").textContent = "";
-      }
-    }
-
-    function showMore(){
-      visibleCount = Math.min(visibleCount + PAGE_SIZE, filteredCache.length);
-      renderFiltered();
-    }
-
-    // автоподгрузка, когда почти долистали вниз
-    function onScrollAutoLoad(){
-      if(autoLoading) return;
-      if($("pager").style.display === "none") return;
-
-      const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 700);
-      if(nearBottom){
-        autoLoading = true;
-        showMore();
-        setTimeout(()=>{ autoLoading = false; }, 120);
-      }
-    }
-
-    /* ========================= */
-    /* ✅ PRO UX: scroll to top  */
-    /* ========================= */
-    function scrollToTopSoft(){
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    function toggleToTop(){
-      const btn = $("toTop");
-      const show = window.scrollY > 650;
-      btn.classList.toggle("show", show);
-    }
-
-    $("toTop").addEventListener("click", scrollToTopSoft);
-
-    // ✅ Find
-    $("find").onclick = ()=>{
-      visibleCount = PAGE_SIZE;
-      renderFiltered();
-      scrollToTopSoft();
-    };
-    $("q").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ visibleCount = PAGE_SIZE; renderFiltered(); scrollToTopSoft(); } });
-    $("brand").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ visibleCount = PAGE_SIZE; renderFiltered(); scrollToTopSoft(); } });
-
-    // ✅ Tabs handlers
-    $("tabAll").onclick = ()=>setActiveTab("all");
-    $("tabBoutiques").onclick = ()=>setActiveTab("Boutiques");
-    $("tabOutlets").onclick = ()=>setActiveTab("Outlets");
-
-    // ✅ Pager
-    $("moreBtn").onclick = showMore;
-
-    // ✅ Scroll listeners
-    window.addEventListener("scroll", ()=>{
-      toggleToTop();
-      onScrollAutoLoad();
-    }, {passive:true});
-
-    // initial
-    fetchProducts();
-
-    // ✅ интервал обновления = 30 секунд (как просила)
-    setInterval(fetchProducts, 30000);
-
-    document.addEventListener("visibilitychange", ()=>{
-      if(!document.hidden) fetchProducts();
-    });
-  </script>
-</body>
-</html>
+@app.get("/")
+def root():
+    p = Path(__file__).resolve().parent / "src" / "index.html"
+    if not p.exists():
+        return JSONResponse({"detail": f"index.html not found at {p}"}, status_code=404)
+    return FileResponse(str(p))
