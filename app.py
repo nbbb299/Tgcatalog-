@@ -20,9 +20,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 TABLE = os.getenv("SUPABASE_TABLE", "products")
 
-# ✅ ADMIN DELETE TOKEN (добавили)
-# Установи в Render -> Environment:
-# ADMIN_DELETE_TOKEN = любое сложное слово/строка
+# ✅ ADMIN DELETE TOKEN
 ADMIN_DELETE_TOKEN = os.getenv("ADMIN_DELETE_TOKEN", "")
 
 if not BOT_TOKEN or not SUPABASE_URL or not SUPABASE_KEY:
@@ -34,10 +32,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = FastAPI()
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-# ================= SOURCE MAP (ВАЖНО) =================
-# твои chat.id:
-# Boutiques (usa.outlets.italy): -1001158220106
-# Outlets  (Outlets from Italy, EU): -1002303984060
+# ================= SOURCE MAP =================
 
 CHAT_SOURCE = {
     -1001158220106: "Boutiques",
@@ -48,9 +43,7 @@ def detect_source(chat_id: int) -> str:
     return CHAT_SOURCE.get(int(chat_id), "Boutiques")
 
 # ================= TOPIC CACHE =================
-# Telegram не присылает название топика в каждом сообщении.
-# Поэтому мы запоминаем название, когда приходят service-сообщения:
-# forum_topic_created / forum_topic_edited
+
 TopicKey = Tuple[int, int]  # (chat_id, thread_id)
 topic_title_cache: Dict[TopicKey, str] = {}
 
@@ -73,7 +66,6 @@ async def on_shutdown():
 # ================= HELPERS =================
 
 def extract_brand_from_caption(caption: str) -> str:
-    # старый способ: #brand
     if "#" in caption:
         try:
             return caption.split("#", 1)[1].split()[0].strip()
@@ -97,10 +89,6 @@ def is_empty_caption(val) -> bool:
     return val is None or str(val).strip() == ""
 
 def get_topic_title_from_service(msg) -> Optional[str]:
-    """
-    service message: forum_topic_created / forum_topic_edited
-    python-telegram-bot: msg.forum_topic_created.name / msg.forum_topic_edited.name
-    """
     try:
         if getattr(msg, "forum_topic_created", None):
             return msg.forum_topic_created.name
@@ -111,9 +99,6 @@ def get_topic_title_from_service(msg) -> Optional[str]:
     return None
 
 def remember_topic_title(msg):
-    """
-    Запоминаем (chat_id, thread_id) -> title
-    """
     try:
         chat_id = int(msg.chat.id)
         thread_id = getattr(msg, "message_thread_id", None)
@@ -126,10 +111,6 @@ def remember_topic_title(msg):
         print("remember_topic_title error:", repr(e))
 
 def brand_from_topic_if_known(msg) -> str:
-    """
-    Если сообщение в топике и мы знаем название топика -> бренд = название топика.
-    Иначе пусто.
-    """
     try:
         chat_id = int(msg.chat.id)
         thread_id = getattr(msg, "message_thread_id", None)
@@ -138,7 +119,6 @@ def brand_from_topic_if_known(msg) -> str:
 
         title = topic_title_cache.get((chat_id, int(thread_id)))
         if not title:
-            # иногда title может прийти в reply_to_message (редко), попробуем
             rt = getattr(msg, "reply_to_message", None)
             if rt:
                 t2 = get_topic_title_from_service(rt)
@@ -151,11 +131,6 @@ def brand_from_topic_if_known(msg) -> str:
         return ""
 
 def pick_brand(msg, fallback_text: str) -> str:
-    """
-    Приоритет:
-    1) бренд из названия топика (если известен)
-    2) бренд из #brand (как раньше)
-    """
     b = brand_from_topic_if_known(msg)
     if b:
         return b
@@ -166,19 +141,17 @@ def pick_brand(msg, fallback_text: str) -> str:
 def save_product(msg):
     caption = msg.caption or ""
     source = detect_source(int(msg.chat.id))
-
     brand = pick_brand(msg, caption)
 
-    media_group_id = msg.media_group_id  # album id or None
+    media_group_id = msg.media_group_id
     message_id = msg.message_id
 
     file_id = ""
     if msg.photo:
-        file_id = msg.photo[-1].file_id  # best size
+        file_id = msg.photo[-1].file_id
 
     ts = msg_ts(msg)
 
-    # -------- ALBUM --------
     if media_group_id:
         existing = (
             supabase.table(TABLE)
@@ -220,8 +193,6 @@ def save_product(msg):
         }).execute()
         return
 
-    # -------- SINGLE POST --------
-    # on_conflict=message_id (как было)
     supabase.table(TABLE).upsert({
         "message_id": message_id,
         "brand": brand,
@@ -232,8 +203,7 @@ def save_product(msg):
         "source": source,
     }, on_conflict="message_id").execute()
 
-# ================= CAPTION FIX (120 sec) =================
-# Теперь фикс привязан к SOURCE, чтобы текст из Outlets не приклеивался к Boutiques и наоборот.
+# ================= CAPTION FIX =================
 
 def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
     text = (msg.text or "").strip()
@@ -272,7 +242,6 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
             return False
 
         upd = {"caption": text}
-
         if (not (target.get("brand") or "").strip()) and brand:
             upd["brand"] = brand
 
@@ -288,23 +257,18 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
 # ================= TELEGRAM HANDLER =================
 
 async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # ✅ работает и для channels, и для groups/forums
     msg = update.effective_message
     if not msg:
         return
 
-    # 0) если это сервисное событие топика — запоминаем title
-    # (приходит отдельным сообщением)
     if getattr(msg, "forum_topic_created", None) or getattr(msg, "forum_topic_edited", None):
         remember_topic_title(msg)
         return
 
-    # 1) Фото -> сохраняем товар
     if msg.photo:
         save_product(msg)
         return
 
-    # 2) Текст без фото -> caption fix (120 sec)
     if msg.text:
         attach_text_caption_to_recent_item(msg, window_seconds=120)
         return
@@ -321,7 +285,6 @@ async def webhook(req: Request):
         print("WEBHOOK HIT ✅ update_id:", upd_id)
 
         update = Update.de_json(data, telegram_app.bot)
-
         asyncio.create_task(telegram_app.process_update(update))
         return {"ok": True}
 
@@ -330,23 +293,67 @@ async def webhook(req: Request):
         traceback.print_exc()
         return {"ok": True}
 
-# ================= PRODUCTS API =================
+# ================= PRODUCTS API (SERVER PAGINATION) =================
 
 @app.get("/api/products")
-def get_products():
-    # ✅ чуть увеличили лимит, чтобы на фронте не было "пустых" страниц
-    res = (
-        supabase.table(TABLE)
-        .select("*")
-        .order("ts", desc=True)
-        .limit(300)
-        .execute()
-    )
-    return res.data or []
+def get_products(
+    offset: int = 0,
+    limit: int = 24,
+    source: str = "",
+    brand: str = "",
+    q: str = "",
+):
+    """
+    ✅ ВАЖНО: серверная пагинация + фильтры.
+    Теперь фронт НЕ грузит все 10 000 строк сразу.
+    """
+    try:
+        # нормальные границы
+        offset = max(0, int(offset))
+        limit = max(1, min(200, int(limit)))  # защита, чтобы не убить сервер
+
+        query = supabase.table(TABLE).select("*", count="exact").order("ts", desc=True)
+
+        s = (source or "").strip()
+        if s:
+            query = query.eq("source", s)
+
+        b = (brand or "").strip()
+        if b:
+            # бренд ищем и в brand, и в caption (на случай старых постов с #)
+            safe = b.replace("%", "").replace(",", " ")
+            query = query.or_(f"brand.ilike.%{safe}%,caption.ilike.%{safe}%")
+
+        qq = (q or "").strip()
+        if qq:
+            safeq = qq.replace("%", "").replace(",", " ")
+            query = query.or_(f"brand.ilike.%{safeq}%,caption.ilike.%{safeq}%")
+
+        query = query.range(offset, offset + limit - 1)
+        res = query.execute()
+
+        items = res.data or []
+        total = getattr(res, "count", None)
+
+        if total is None:
+            has_more = len(items) == limit
+        else:
+            has_more = (offset + len(items)) < int(total)
+
+        return {
+            "items": items,
+            "offset": offset,
+            "limit": limit,
+            "total": total,
+            "has_more": has_more,
+        }
+
+    except Exception as e:
+        print("PRODUCTS API ERROR ❌", repr(e))
+        traceback.print_exc()
+        return JSONResponse({"detail": "products_fetch_failed"}, status_code=500)
 
 # ================= DELETE PRODUCT (ADMIN) =================
-# ✅ PRO admin delete (удаление строки из каталога по id)
-# Защита: Header "X-ADMIN-TOKEN" должен совпадать с ADMIN_DELETE_TOKEN
 
 @app.delete("/api/delete/{row_id}")
 def delete_product(row_id: int, request: Request):
@@ -358,7 +365,13 @@ def delete_product(row_id: int, request: Request):
         if token != ADMIN_DELETE_TOKEN:
             return JSONResponse({"error": "unauthorized"}, status_code=401)
 
-        supabase.table(TABLE).delete().eq("id", row_id).execute()
+        resp = supabase.table(TABLE).delete().eq("id", int(row_id)).execute()
+
+        # если supabase вернул ошибку — покажем её
+        err = getattr(resp, "error", None)
+        if err:
+            return JSONResponse({"error": "delete_failed", "detail": str(err)}, status_code=500)
+
         return {"ok": True}
 
     except Exception as e:
@@ -367,14 +380,10 @@ def delete_product(row_id: int, request: Request):
         return JSONResponse({"error": "delete_failed"}, status_code=500)
 
 # ================= TELEGRAM FILE PROXY =================
-# ✅ FIX: добавили Cache-Control + ETag (+304), чтобы Safari/мобилки не грузили одно и то же по 2-3 раза
 
 @app.get("/api/tgfile/{file_id}")
 def tgfile(file_id: str, request: Request):
-    # ETag на основе file_id (для Telegram file_id обычно immutable)
     etag = f'W/"{file_id}"'
-
-    # Если браузер уже кешировал — отдаем 304 (экономит время/трафик)
     inm = request.headers.get("if-none-match")
     if inm and inm.strip() == etag:
         return Response(
