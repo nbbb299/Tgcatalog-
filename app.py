@@ -338,9 +338,24 @@ def get_products():
     return res.data or []
 
 # ================= TELEGRAM FILE PROXY =================
+# ✅ FIX: добавили Cache-Control + ETag (+304), чтобы Safari/мобилки не грузили одно и то же по 2-3 раза
 
 @app.get("/api/tgfile/{file_id}")
-def tgfile(file_id: str):
+def tgfile(file_id: str, request: Request):
+    # ETag на основе file_id (для Telegram file_id обычно immutable)
+    etag = f'W/"{file_id}"'
+
+    # Если браузер уже кешировал — отдаем 304 (экономит время/трафик)
+    inm = request.headers.get("if-none-match")
+    if inm and inm.strip() == etag:
+        return Response(
+            status_code=304,
+            headers={
+                "Cache-Control": "public, max-age=604800, immutable",
+                "ETag": etag,
+            },
+        )
+
     r = requests.get(
         f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
         params={"file_id": file_id},
@@ -358,7 +373,12 @@ def tgfile(file_id: str):
         return JSONResponse({"detail": "Telegram file fetch failed"}, status_code=404)
 
     content_type = file_resp.headers.get("content-type", "image/jpeg")
-    return Response(content=file_resp.content, media_type=content_type)
+
+    headers = {
+        "Cache-Control": "public, max-age=604800, immutable",
+        "ETag": etag,
+    }
+    return Response(content=file_resp.content, media_type=content_type, headers=headers)
 
 # ================= ROOT =================
 
