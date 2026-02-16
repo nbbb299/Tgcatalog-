@@ -435,6 +435,7 @@
       font-size:12px;
       text-align:center;
       margin-top:8px;
+      padding-bottom: 18px;
     }
   </style>
 </head>
@@ -633,6 +634,8 @@
         const d = document.createElement("div");
         d.className = "thumb" + (idx===i ? " active" : "");
         const im = document.createElement("img");
+        im.decoding = "async";
+        im.loading = "lazy";
         im.src = imgUrl(pid);
         d.appendChild(im);
         d.onclick = ()=>{
@@ -852,6 +855,12 @@
     let currentSource = "all";
 
     /* =============================== */
+    /* ✅ FIX: убрать двойную загрузку */
+    /* =============================== */
+    let isLoadingProducts = false;
+    let lastSnapshotKey = ""; // чтобы не перерисовывать одинаковое
+
+    /* =============================== */
     /* ✅ "Instagram" pagination logic */
     /* =============================== */
     const PAGE_SIZE = 18;         // сколько карточек за раз
@@ -875,6 +884,14 @@
     }
 
     async function fetchProducts(){
+      // ✅ не запускаем второй fetch пока идет первый
+      if(isLoadingProducts) return;
+
+      // ✅ не грузим, если вкладка скрыта (экономия и меньше дерганья)
+      if(document.hidden) return;
+
+      isLoadingProducts = true;
+
       $("status").style.display="none";
       $("empty").style.display="none";
 
@@ -884,13 +901,23 @@
         const data = await r.json();
         if(!Array.isArray(data)) throw new Error("API вернул не массив");
 
+        // ✅ snapshot: если список не изменился — НЕ ререндерим (убирает “2-3 раза грузит”)
+        const first = data[0] || {};
+        const key = `${data.length}|${first.id ?? ""}|${first.message_id ?? ""}|${first.ts ?? ""}`;
+        if(key === lastSnapshotKey){
+          return;
+        }
+        lastSnapshotKey = key;
+
         allProducts = data;
-        // не сбрасываем вкладку/поиск, но обновляем ленту
         renderFiltered();
+
       }catch(e){
         $("grid").innerHTML = "";
         $("status").style.display="block";
         $("status").textContent = "Не удалось загрузить товары. " + e.message;
+      } finally {
+        isLoadingProducts = false;
       }
     }
 
@@ -1008,7 +1035,10 @@
 
     // initial
     fetchProducts();
-    setInterval(fetchProducts, 10000);
+
+    // ✅ меньше дергаем сеть + не грузим в фоне
+    setInterval(fetchProducts, 15000);
+
     document.addEventListener("visibilitychange", ()=>{
       if(!document.hidden) fetchProducts();
     });
