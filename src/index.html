@@ -115,6 +115,7 @@
       display:flex;
       flex-direction:column;
       min-height: 520px;
+      position:relative; /* ✅ для admin badge */
     }
 
     .media{
@@ -437,6 +438,41 @@
       margin-top:8px;
       padding-bottom: 18px;
     }
+
+    /* ===================================== */
+    /* ✅ ADMIN UX: кнопка удалить на карточке */
+    /* ===================================== */
+    .adminRow{
+      display:none; /* включаем только в admin mode */
+      margin-top:6px;
+    }
+    .adminRow.show{display:block;}
+    .adminDelete{
+      width:100%;
+      border-radius:18px;
+      border:1px solid rgba(185, 28, 28, .35);
+      background: rgba(185, 28, 28, .08);
+      color:#b91c1c;
+      padding:12px 14px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .adminDelete:active{transform: translateY(1px);}
+    .adminBadge{
+      position:absolute;
+      right:12px;
+      bottom:12px;
+      background: rgba(185,28,28,.92);
+      color:#fff;
+      font-weight:900;
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      display:none; /* только admin */
+      z-index:4;
+      box-shadow: 0 12px 26px rgba(0,0,0,.18);
+    }
+    .adminBadge.show{display:inline-flex;}
   </style>
 </head>
 
@@ -519,6 +555,12 @@
       const s = (p && p.source) ? String(p.source).trim() : "";
       return s || "Boutiques";
     }
+
+    // ✅ ADMIN MODE:
+    // Открываешь сайт так:
+    // https://твой-домен/?admin=ТВОЙ_ADMIN_DELETE_TOKEN
+    const ADMIN_TOKEN = new URLSearchParams(location.search).get("admin") || "";
+    const IS_ADMIN = !!ADMIN_TOKEN;
 
     // ✅ Описание = как в Telegram, удаляем только "по вопросам ..." и usernames
     function cleanCaption(text){
@@ -746,6 +788,41 @@
       };
     }
 
+    // ✅ ADMIN: delete row
+    async function adminDeleteRow(rowId){
+      if(!IS_ADMIN) return;
+
+      const ok = confirm("Удалить этот товар из каталога? Это нельзя отменить.");
+      if(!ok) return;
+
+      try{
+        const resp = await fetch(`/api/delete/${encodeURIComponent(rowId)}`, {
+          method: "DELETE",
+          headers: {
+            "X-ADMIN-TOKEN": ADMIN_TOKEN
+          }
+        });
+
+        if(!resp.ok){
+          let msg = "delete failed";
+          try{
+            const j = await resp.json();
+            msg = j.error || j.detail || msg;
+          }catch(_){}
+          alert("Ошибка удаления: " + msg);
+          return;
+        }
+
+        // ✅ быстрый UX: удаляем из локального массива и перерисовываем без лишнего дерганья
+        allProducts = allProducts.filter(x => String(x.id) !== String(rowId));
+        lastSnapshotKey = ""; // чтобы следующий fetch точно обновил
+        renderFiltered();
+
+      }catch(e){
+        alert("Ошибка удаления: " + (e && e.message ? e.message : e));
+      }
+    }
+
     function cardTemplate(p){
       const photos = (Array.isArray(p.file_ids) && p.file_ids.length) ? p.file_ids : (p.file_id ? [p.file_id] : []);
       const count = photos.length || 0;
@@ -758,6 +835,14 @@
 
       const card = document.createElement("div");
       card.className = "card";
+
+      // ✅ Admin badge (только в admin mode)
+      if(IS_ADMIN){
+        const ab = document.createElement("div");
+        ab.className = "adminBadge show";
+        ab.textContent = `ID ${p.id}`;
+        card.appendChild(ab);
+      }
 
       const media = document.createElement("div");
       media.className = "media";
@@ -846,6 +931,23 @@
       actions.appendChild(waBtn);
       body.appendChild(actions);
 
+      // ✅ Admin delete button (только в admin mode)
+      const adminRow = document.createElement("div");
+      adminRow.className = "adminRow" + (IS_ADMIN ? " show" : "");
+      if(IS_ADMIN){
+        const del = document.createElement("button");
+        del.className = "adminDelete";
+        del.type = "button";
+        del.textContent = "Удалить товар";
+        del.onclick = (e)=>{
+          e.preventDefault();
+          e.stopPropagation();
+          adminDeleteRow(p.id);
+        };
+        adminRow.appendChild(del);
+      }
+      body.appendChild(adminRow);
+
       card.appendChild(media);
       card.appendChild(body);
       return card;
@@ -901,7 +1003,7 @@
         const data = await r.json();
         if(!Array.isArray(data)) throw new Error("API вернул не массив");
 
-        // ✅ snapshot: если список не изменился — НЕ ререндерим (убирает “2-3 раза грузит”)
+        // ✅ snapshot: если список не изменился — НЕ ререндерим
         const first = data[0] || {};
         const key = `${data.length}|${first.id ?? ""}|${first.message_id ?? ""}|${first.ts ?? ""}`;
         if(key === lastSnapshotKey){
@@ -1004,7 +1106,7 @@
 
     function toggleToTop(){
       const btn = $("toTop");
-      const show = window.scrollY > 650; // появляется после прокрутки
+      const show = window.scrollY > 650;
       btn.classList.toggle("show", show);
     }
 
@@ -1012,7 +1114,7 @@
 
     // ✅ Find
     $("find").onclick = ()=>{
-      visibleCount = PAGE_SIZE; // сброс ленты при новом поиске
+      visibleCount = PAGE_SIZE;
       renderFiltered();
       scrollToTopSoft();
     };
@@ -1036,8 +1138,8 @@
     // initial
     fetchProducts();
 
-    // ✅ меньше дергаем сеть + не грузим в фоне
-    setInterval(fetchProducts, 15000);
+    // ✅ интервал обновления = 30 секунд (как просила)
+    setInterval(fetchProducts, 30000);
 
     document.addEventListener("visibilitychange", ()=>{
       if(!document.hidden) fetchProducts();
