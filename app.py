@@ -336,7 +336,26 @@ def get_products():
         .execute()
     )
     return res.data or []
+# ================= DELETE PRODUCT (ADMIN) =================
 
+ADMIN_DELETE_TOKEN = os.getenv("ADMIN_DELETE_TOKEN", "secret_delete_key")
+
+@app.delete("/api/delete/{row_id}")
+def delete_product(row_id: int, request: Request):
+    try:
+        token = request.headers.get("X-ADMIN-TOKEN")
+
+        # защита — удалять может только админ
+        if token != ADMIN_DELETE_TOKEN:
+            return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+        supabase.table(TABLE).delete().eq("id", row_id).execute()
+
+        return {"ok": True}
+
+    except Exception as e:
+        print("DELETE ERROR ❌", repr(e))
+        return JSONResponse({"error": "delete_failed"}, status_code=500)
 # ================= TELEGRAM FILE PROXY =================
 # ✅ FIX: добавили Cache-Control + ETag (+304), чтобы Safari/мобилки не грузили одно и то же по 2-3 раза
 
