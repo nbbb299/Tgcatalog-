@@ -505,7 +505,8 @@
 
   <div class="gridWrap">
     <div id="grid" class="grid"></div>
-    <div id="empty" class="empty" style="display:none">Ничего не найдено.</div>
+    <!-- ✅ было "Ничего не найдено" — теперь по умолчанию "Загрузка…" -->
+    <div id="empty" class="empty" style="display:none">Загрузка…</div>
   </div>
 
   <div class="pager" id="pager" style="display:none">
@@ -586,7 +587,7 @@
       im.src = url;
     }
 
-    // ✅ loading="eager" добавили (умно): первые 6 карточек eager, дальше lazy
+    // ✅ loading="eager" добавили: первые 6 карточек eager, дальше lazy
     function loadImage(imgEl, fileIdOrUrl, eager=false){
       const url = imgUrl(fileIdOrUrl);
       if(!url){
@@ -743,6 +744,25 @@
     }
 
     // =========================
+    // ✅ LOADING / EMPTY STATE
+    // =========================
+    let isInitialLoading = true;
+
+    function setEmptyState(mode){
+      // mode: "loading" | "empty" | "hide"
+      const el = $("empty");
+      if(mode === "loading"){
+        el.textContent = "Загрузка…";
+        el.style.display = "block";
+      } else if(mode === "empty"){
+        el.textContent = "Ничего не найдено.";
+        el.style.display = "block";
+      } else {
+        el.style.display = "none";
+      }
+    }
+
+    // =========================
     // ✅ SERVER PAGINATION STATE
     // =========================
     const PAGE_SIZE = 24;
@@ -776,13 +796,19 @@
       grid.innerHTML = "";
 
       if(!loaded.length){
-        $("empty").style.display = "block";
         $("pager").style.display = "none";
         $("moreMeta").style.display = "none";
+
+        // ✅ главное: на старте показываем "Загрузка…", а не "Ничего не найдено"
+        if(isInitialLoading){
+          setEmptyState("loading");
+        } else {
+          setEmptyState("empty");
+        }
         return;
       }
 
-      $("empty").style.display = "none";
+      setEmptyState("hide");
 
       const frag = document.createDocumentFragment();
       loaded.forEach((p, idx)=>{
@@ -791,8 +817,8 @@
       grid.appendChild(frag);
 
       $("pager").style.display = hasMore ? "flex" : "none";
-      $("moreMeta").style.display = hasMore ? "block" : (loaded.length ? "block" : "none");
-      $("moreMeta").textContent = hasMore ? `Показано ${loaded.length}` : `Показано ${loaded.length}`;
+      $("moreMeta").style.display = "block";
+      $("moreMeta").textContent = `Показано ${loaded.length}`;
     }
 
     async function fetchPage({reset=false}={}){
@@ -806,10 +832,13 @@
         const f = currentFilters();
 
         if(reset){
+          // ✅ при reset показываем загрузку (вместо "ничего не найдено")
+          isInitialLoading = true;
           loaded = [];
           offset = 0;
           hasMore = true;
           lastTopKey = "";
+          setEmptyState("loading");
           render();
         }
 
@@ -823,12 +852,13 @@
         const items = Array.isArray(payload.items) ? payload.items : [];
         const more = !!payload.has_more;
 
-        // анти-дерганье: если это верхняя страница и не изменилась — не перерисовываем
+        // ✅ анти-дерганье: если верх не изменился — не перерисовываем
         if(offset === 0){
           const first = items[0] || {};
           const key = `${items.length}|${first.id ?? ""}|${first.message_id ?? ""}|${first.ts ?? ""}`;
           if(key && key === lastTopKey && !reset){
-            hasMore = more; // на всякий
+            hasMore = more;
+            isInitialLoading = false;
             return;
           }
           lastTopKey = key;
@@ -849,10 +879,15 @@
         offset = loaded.length;
         hasMore = more;
 
+        // ✅ загрузка закончилась (даже если items пустые)
+        isInitialLoading = false;
+
         render();
 
       }catch(e){
         $("grid").innerHTML = "";
+        isInitialLoading = false;
+        setEmptyState("hide");
         $("status").style.display="block";
         $("status").textContent = "Не удалось загрузить товары. " + (e && e.message ? e.message : e);
       } finally {
@@ -860,7 +895,7 @@
       }
     }
 
-    // ✅ обновление каждые 30 сек: просто обновляем верх (offset=0) и аккуратно мерджим
+    // ✅ обновление каждые 30 сек: обновляем верх и аккуратно мерджим
     async function refreshTop(){
       if(isLoading) return;
       if(document.hidden) return;
@@ -871,6 +906,7 @@
         const url = buildProductsUrl({ offset: 0, limit: PAGE_SIZE, ...f });
         const r = await fetch(url, { cache:"no-store" });
         if(!r.ok) return;
+
         const payload = await r.json();
         const items = Array.isArray(payload.items) ? payload.items : [];
         const more = !!payload.has_more;
@@ -883,7 +919,6 @@
         }
         lastTopKey = key;
 
-        // prepend new items
         const seen = new Set(loaded.map(x=>String(x.id)));
         const next = [];
         for(const it of items){
@@ -928,7 +963,7 @@
 
         loaded = loaded.filter(x => String(x.id) !== String(rowId));
         offset = loaded.length;
-        lastTopKey = ""; // чтобы следующее refresh точно обновило
+        lastTopKey = "";
         render();
 
       }catch(e){
@@ -983,7 +1018,6 @@
         openViewer(photos, 0);
       };
 
-      // eager на первых карточках первой загрузки
       const eager = (idxInList < 6);
       loadImage(img, photos[0], eager);
 
@@ -1118,6 +1152,7 @@
     }, {passive:true});
 
     // ✅ init
+    setEmptyState("loading");
     fetchPage({reset:true});
 
     // ✅ 30 сек
