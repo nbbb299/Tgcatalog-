@@ -20,6 +20,11 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 TABLE = os.getenv("SUPABASE_TABLE", "products")
 
+# ✅ ADMIN DELETE TOKEN (добавили)
+# Установи в Render -> Environment:
+# ADMIN_DELETE_TOKEN = любое сложное слово/строка
+ADMIN_DELETE_TOKEN = os.getenv("ADMIN_DELETE_TOKEN", "")
+
 if not BOT_TOKEN or not SUPABASE_URL or not SUPABASE_KEY:
     raise RuntimeError("Missing env: BOT_TOKEN / SUPABASE_URL / SUPABASE_KEY")
 
@@ -329,33 +334,38 @@ async def webhook(req: Request):
 
 @app.get("/api/products")
 def get_products():
+    # ✅ чуть увеличили лимит, чтобы на фронте не было "пустых" страниц
     res = (
         supabase.table(TABLE)
         .select("*")
         .order("ts", desc=True)
+        .limit(300)
         .execute()
     )
     return res.data or []
-# ================= DELETE PRODUCT (ADMIN) =================
 
-ADMIN_DELETE_TOKEN = os.getenv("ADMIN_DELETE_TOKEN", "secret_delete_key")
+# ================= DELETE PRODUCT (ADMIN) =================
+# ✅ PRO admin delete (удаление строки из каталога по id)
+# Защита: Header "X-ADMIN-TOKEN" должен совпадать с ADMIN_DELETE_TOKEN
 
 @app.delete("/api/delete/{row_id}")
 def delete_product(row_id: int, request: Request):
     try:
-        token = request.headers.get("X-ADMIN-TOKEN")
+        if not ADMIN_DELETE_TOKEN:
+            return JSONResponse({"error": "admin_delete_token_not_set"}, status_code=500)
 
-        # защита — удалять может только админ
+        token = request.headers.get("X-ADMIN-TOKEN", "")
         if token != ADMIN_DELETE_TOKEN:
             return JSONResponse({"error": "unauthorized"}, status_code=401)
 
         supabase.table(TABLE).delete().eq("id", row_id).execute()
-
         return {"ok": True}
 
     except Exception as e:
         print("DELETE ERROR ❌", repr(e))
+        traceback.print_exc()
         return JSONResponse({"error": "delete_failed"}, status_code=500)
+
 # ================= TELEGRAM FILE PROXY =================
 # ✅ FIX: добавили Cache-Control + ETag (+304), чтобы Safari/мобилки не грузили одно и то же по 2-3 раза
 
