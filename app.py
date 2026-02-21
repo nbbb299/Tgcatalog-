@@ -35,12 +35,18 @@ telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 # ================= SOURCE MAP =================
 # Boutiques: -1001158220106
 # Outlets:   -1002303984060
-# Очки:      -1001330891461
+# Digital-catalog -1003494522851  -> ВСЁ из него в Boutiques (как ты попросила)
+# Очки (NEW):     -1003791619052  -> в Очки
 
 CHAT_SOURCE = {
     -1001158220106: "Boutiques",
     -1002303984060: "Outlets",
-    -1001330891461: "Очки", 
+    
+    # ✅ Digital-catalog: всё что постится туда -> в Boutiques
+    -1003494522851: "Boutiques",
+
+    # ✅ Новый канал "Очки"
+    -1003791619052: "Очки",
 }
 
 def detect_source(chat_id: int) -> str:
