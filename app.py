@@ -33,12 +33,11 @@ app = FastAPI()
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 # ================= SOURCE MAP =================
-# ✅ ДОБАВИЛИ "Очки": -1001330891461
 
 CHAT_SOURCE = {
     -1001158220106: "Boutiques",
     -1002303984060: "Outlets",
-    -1001330891461: "Очки",   # ✅ NEW
+    -1001330891461: "Очки",  # ✅ NEW (если это реально отдельный канал)
 }
 
 def detect_source(chat_id: int) -> str:
@@ -138,11 +137,28 @@ def pick_brand(msg, fallback_text: str) -> str:
         return b
     return extract_brand_from_caption(fallback_text or "")
 
+# ✅ NEW: источник определяем по chat.id ИЛИ по названию топика
+def detect_source_from_msg(msg) -> str:
+    # 1) если это отдельный канал/чат — берем из карты
+    chat_id = int(msg.chat.id)
+    s = CHAT_SOURCE.get(chat_id)
+    if s:
+        return s
+
+    # 2) если это форум (топики) в одном чате — берем по названию топика
+    # (если топик называется "Очки", то source="Очки")
+    title = brand_from_topic_if_known(msg)  # мы уже умеем доставать title
+    if title.strip().lower() == "очки":
+        return "Очки"
+
+    # 3) дефолт как раньше
+    return "Boutiques"
+
 # ================= SAVE PRODUCT =================
 
 def save_product(msg):
     caption = msg.caption or ""
-    source = detect_source(int(msg.chat.id))
+    source = detect_source_from_msg(msg)  # ✅ CHANGED
     brand = pick_brand(msg, caption)
 
     media_group_id = msg.media_group_id
@@ -216,7 +232,7 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
     if not ts:
         return False
 
-    source = detect_source(int(msg.chat.id))
+    source = detect_source_from_msg(msg)  # ✅ CHANGED
     brand = pick_brand(msg, text)
 
     try:
@@ -263,9 +279,22 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not msg:
         return
 
+    # 0) сервисные сообщения топиков
     if getattr(msg, "forum_topic_created", None) or getattr(msg, "forum_topic_edited", None):
         remember_topic_title(msg)
         return
+
+    # ✅ DEBUG: покажет реальный chat_id и thread_id и выбранный source
+    try:
+        print(
+            "DBG msg:",
+            "chat_id=", int(msg.chat.id),
+            "thread_id=", getattr(msg, "message_thread_id", None),
+            "picked_source=", detect_source_from_msg(msg),
+            "message_id=", msg.message_id
+        )
+    except Exception:
+        pass
 
     if msg.photo:
         save_product(msg)
@@ -305,9 +334,6 @@ def get_products(
     brand: str = "",
     q: str = "",
 ):
-    """
-    ✅ серверная пагинация + фильтры.
-    """
     try:
         offset = max(0, int(offset))
         limit = max(1, min(200, int(limit)))
