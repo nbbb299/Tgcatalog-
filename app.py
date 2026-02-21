@@ -40,7 +40,7 @@ telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 CHAT_SOURCE = {
     -1001158220106: "Boutiques",
     -1002303984060: "Outlets",
-    -1001330891461: "Очки",
+    -1003494522851: "Очки", # Digital-catalog → Очки 
 }
 
 def detect_source(chat_id: int) -> str:
