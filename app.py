@@ -212,14 +212,15 @@ def save_product(msg):
         return
 
     supabase.table(TABLE).upsert({
-        "message_id": message_id,
-        "brand": brand,
-        "caption": caption,
-        "file_id": file_id or None,
-        "file_ids": [file_id] if file_id else [],
-        "ts": ts,
-        "source": source,
-    }, on_conflict="message_id").execute()
+    "chat_id": int(msg.chat.id),          # ✅ ДОБАВИЛИ
+    "message_id": message_id,
+    "brand": brand,
+    "caption": caption,
+    "file_id": file_id or None,
+    "file_ids": [file_id] if file_id else [],
+    "ts": ts,
+    "source": source,
+}, on_conflict="chat_id,message_id").execute()   # ✅ ИЗМЕНИЛИ
 
 # ================= CAPTION FIX =================
 
