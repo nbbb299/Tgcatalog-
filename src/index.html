@@ -493,6 +493,8 @@
             <button class="tabBtn active" id="tabAll" data-source="all" role="tab">Все</button>
             <button class="tabBtn" id="tabBoutiques" data-source="Boutiques" role="tab">Boutiques</button>
             <button class="tabBtn" id="tabOutlets" data-source="Outlets" role="tab">Outlets</button>
+            <!-- ✅ NEW TAB -->
+            <button class="tabBtn" id="tabGlasses" data-source="Очки" role="tab">Очки</button>
           </div>
           <div class="tabHint">Фильтр по источнику канала.</div>
         </div>
@@ -799,7 +801,6 @@
         $("pager").style.display = "none";
         $("moreMeta").style.display = "none";
 
-        // ✅ главное: на старте показываем "Загрузка…", а не "Ничего не найдено"
         if(isInitialLoading){
           setEmptyState("loading");
         } else {
@@ -832,7 +833,6 @@
         const f = currentFilters();
 
         if(reset){
-          // ✅ при reset показываем загрузку (вместо "ничего не найдено")
           isInitialLoading = true;
           loaded = [];
           offset = 0;
@@ -852,7 +852,6 @@
         const items = Array.isArray(payload.items) ? payload.items : [];
         const more = !!payload.has_more;
 
-        // ✅ анти-дерганье: если верх не изменился — не перерисовываем
         if(offset === 0){
           const first = items[0] || {};
           const key = `${items.length}|${first.id ?? ""}|${first.message_id ?? ""}|${first.ts ?? ""}`;
@@ -864,7 +863,6 @@
           lastTopKey = key;
         }
 
-        // мерджим без дублей по id
         const seen = new Set(loaded.map(x=>String(x.id)));
         const merged = reset ? [] : loaded.slice();
         for(const it of items){
@@ -879,9 +877,7 @@
         offset = loaded.length;
         hasMore = more;
 
-        // ✅ загрузка закончилась (даже если items пустые)
         isInitialLoading = false;
-
         render();
 
       }catch(e){
@@ -895,7 +891,6 @@
       }
     }
 
-    // ✅ обновление каждые 30 сек: обновляем верх и аккуратно мерджим
     async function refreshTop(){
       if(isLoading) return;
       if(document.hidden) return;
@@ -938,7 +933,6 @@
       }
     }
 
-    // ✅ ADMIN: delete
     async function adminDeleteRow(rowId){
       if(!IS_ADMIN) return;
 
@@ -1101,7 +1095,7 @@
     // ✅ Tabs
     function setActiveTab(source){
       currentSource = source;
-      const btns = [ $("tabAll"), $("tabBoutiques"), $("tabOutlets") ];
+      const btns = [ $("tabAll"), $("tabBoutiques"), $("tabOutlets"), $("tabGlasses") ];
       btns.forEach(b=>{
         const isActive = b.getAttribute("data-source") === source;
         b.classList.toggle("active", isActive);
@@ -1113,6 +1107,7 @@
     $("tabAll").onclick = ()=>setActiveTab("all");
     $("tabBoutiques").onclick = ()=>setActiveTab("Boutiques");
     $("tabOutlets").onclick = ()=>setActiveTab("Outlets");
+    $("tabGlasses").onclick = ()=>setActiveTab("Очки");
 
     // ✅ Find
     $("find").onclick = ()=>{
