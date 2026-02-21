@@ -33,18 +33,23 @@ app = FastAPI()
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 # ================= SOURCE MAP =================
+# Boutiques: -1001158220106
+# Outlets:   -1002303984060
+# Очки:      -1001330891461
 
 CHAT_SOURCE = {
     -1001158220106: "Boutiques",
     -1002303984060: "Outlets",
-    -1001330891461: "Очки",  # ✅ NEW (если это реально отдельный канал)
+    -1001330891461: "Очки",
 }
 
 def detect_source(chat_id: int) -> str:
     return CHAT_SOURCE.get(int(chat_id), "Boutiques")
 
 # ================= TOPIC CACHE =================
-
+# Telegram не присылает название топика в каждом сообщении.
+# Поэтому мы запоминаем название, когда приходят service-сообщения:
+# forum_topic_created / forum_topic_edited
 TopicKey = Tuple[int, int]  # (chat_id, thread_id)
 topic_title_cache: Dict[TopicKey, str] = {}
 
@@ -137,45 +142,30 @@ def pick_brand(msg, fallback_text: str) -> str:
         return b
     return extract_brand_from_caption(fallback_text or "")
 
-# ✅ NEW: источник определяем по chat.id ИЛИ по названию топика
-def detect_source_from_msg(msg) -> str:
-    # 1) если это отдельный канал/чат — берем из карты
-    chat_id = int(msg.chat.id)
-    s = CHAT_SOURCE.get(chat_id)
-    if s:
-        return s
-
-    # 2) если это форум (топики) в одном чате — берем по названию топика
-    # (если топик называется "Очки", то source="Очки")
-    title = brand_from_topic_if_known(msg)  # мы уже умеем доставать title
-    if title.strip().lower() == "очки":
-        return "Очки"
-
-    # 3) дефолт как раньше
-    return "Boutiques"
-
 # ================= SAVE PRODUCT =================
 
 def save_product(msg):
     caption = msg.caption or ""
-    source = detect_source_from_msg(msg)  # ✅ CHANGED
+    chat_id = int(msg.chat.id)
+    source = detect_source(chat_id)
     brand = pick_brand(msg, caption)
 
-    media_group_id = msg.media_group_id
+    media_group_id = msg.media_group_id  # album id or None
     message_id = msg.message_id
 
     file_id = ""
     if msg.photo:
-        file_id = msg.photo[-1].file_id
+        file_id = msg.photo[-1].file_id  # best size
 
     ts = msg_ts(msg)
 
+    # -------- ALBUM --------
     if media_group_id:
         existing = (
             supabase.table(TABLE)
-            .select("id,file_ids,file_id,caption,brand,ts,media_group_id,message_id,source")
+            .select("id,file_ids,file_id,caption,brand,ts,media_group_id,message_id,source,chat_id")
             .eq("media_group_id", str(media_group_id))
-            .eq("source", source)
+            .eq("chat_id", chat_id)     # ✅ важно: альбом только в рамках этого канала
             .limit(1)
             .execute()
         )
@@ -196,10 +186,12 @@ def save_product(msg):
                 "brand": new_brand,
                 "ts": new_ts,
                 "source": source,
+                "chat_id": chat_id,     # ✅ сохраняем chat_id
             }).eq("id", row["id"]).execute()
             return
 
         supabase.table(TABLE).insert({
+            "chat_id": chat_id,         # ✅ важно
             "media_group_id": str(media_group_id),
             "message_id": message_id,
             "brand": brand,
@@ -211,18 +203,21 @@ def save_product(msg):
         }).execute()
         return
 
+    # -------- SINGLE POST --------
+    # ✅ ВАЖНО: уникальность в рамках канала -> on_conflict="chat_id,message_id"
     supabase.table(TABLE).upsert({
-    "chat_id": int(msg.chat.id),          # ✅ ДОБАВИЛИ
-    "message_id": message_id,
-    "brand": brand,
-    "caption": caption,
-    "file_id": file_id or None,
-    "file_ids": [file_id] if file_id else [],
-    "ts": ts,
-    "source": source,
-}, on_conflict="chat_id,message_id").execute()   # ✅ ИЗМЕНИЛИ
+        "chat_id": chat_id,             # ✅ важно
+        "message_id": message_id,
+        "brand": brand,
+        "caption": caption,
+        "file_id": file_id or None,
+        "file_ids": [file_id] if file_id else [],
+        "ts": ts,
+        "source": source,
+    }, on_conflict="chat_id,message_id").execute()
 
-# ================= CAPTION FIX =================
+# ================= CAPTION FIX (120 sec) =================
+# ✅ ВАЖНО: теперь фикс привязан и к chat_id, чтобы текст не прилипал к другому каналу
 
 def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
     text = (msg.text or "").strip()
@@ -233,13 +228,15 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
     if not ts:
         return False
 
-    source = detect_source_from_msg(msg)  # ✅ CHANGED
+    chat_id = int(msg.chat.id)
+    source = detect_source(chat_id)
     brand = pick_brand(msg, text)
 
     try:
         res = (
             supabase.table(TABLE)
-            .select("id,caption,brand,ts,source")
+            .select("id,caption,brand,ts,source,chat_id")
+            .eq("chat_id", chat_id)         # ✅ важно
             .eq("source", source)
             .gte("ts", ts - window_seconds)
             .order("ts", desc=True)
@@ -261,11 +258,12 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
             return False
 
         upd = {"caption": text}
+
         if (not (target.get("brand") or "").strip()) and brand:
             upd["brand"] = brand
 
         supabase.table(TABLE).update(upd).eq("id", target["id"]).execute()
-        print(f"🧩 Caption FIX applied -> row id={target['id']} source={source}")
+        print(f"🧩 Caption FIX applied -> row id={target['id']} chat_id={chat_id} source={source}")
         return True
 
     except Exception as e:
@@ -280,27 +278,17 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not msg:
         return
 
-    # 0) сервисные сообщения топиков
+    # 0) service topic events
     if getattr(msg, "forum_topic_created", None) or getattr(msg, "forum_topic_edited", None):
         remember_topic_title(msg)
         return
 
-    # ✅ DEBUG: покажет реальный chat_id и thread_id и выбранный source
-    try:
-        print(
-            "DBG msg:",
-            "chat_id=", int(msg.chat.id),
-            "thread_id=", getattr(msg, "message_thread_id", None),
-            "picked_source=", detect_source_from_msg(msg),
-            "message_id=", msg.message_id
-        )
-    except Exception:
-        pass
-
+    # 1) photo -> save product
     if msg.photo:
         save_product(msg)
         return
 
+    # 2) text -> caption fix
     if msg.text:
         attach_text_caption_to_recent_item(msg, window_seconds=120)
         return
@@ -335,9 +323,12 @@ def get_products(
     brand: str = "",
     q: str = "",
 ):
+    """
+    ✅ серверная пагинация + фильтры.
+    """
     try:
         offset = max(0, int(offset))
-        limit = max(1, min(200, int(limit)))
+        limit = max(1, min(200, int(limit)))  # защита
 
         query = supabase.table(TABLE).select("*", count="exact").order("ts", desc=True)
 
