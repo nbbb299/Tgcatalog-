@@ -30,13 +30,12 @@ if not BOT_TOKEN or not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = FastAPI()
-telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
-
-# ================= SOURCE MAP =================
+telegram_app = ApplicationBuilder().token(BOT_TOKEN).# ================= SOURCE MAP =================
 
 CHAT_SOURCE = {
     -1001158220106: "Boutiques",
     -1002303984060: "Outlets",
+    -1001330891461: "Очки",   # ✅ новый канал
 }
 
 def detect_source(chat_id: int) -> str:
