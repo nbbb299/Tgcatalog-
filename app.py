@@ -30,12 +30,15 @@ if not BOT_TOKEN or not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = FastAPI()
-telegram_app = ApplicationBuilder().token(BOT_TOKEN).# ================= SOURCE MAP =================
+telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+# ================= SOURCE MAP =================
+# ✅ ДОБАВИЛИ "Очки": -1001330891461
 
 CHAT_SOURCE = {
     -1001158220106: "Boutiques",
     -1002303984060: "Outlets",
-    -1001330891461: "Очки",   # ✅ новый канал
+    -1001330891461: "Очки",   # ✅ NEW
 }
 
 def detect_source(chat_id: int) -> str:
@@ -303,13 +306,11 @@ def get_products(
     q: str = "",
 ):
     """
-    ✅ ВАЖНО: серверная пагинация + фильтры.
-    Теперь фронт НЕ грузит все 10 000 строк сразу.
+    ✅ серверная пагинация + фильтры.
     """
     try:
-        # нормальные границы
         offset = max(0, int(offset))
-        limit = max(1, min(200, int(limit)))  # защита, чтобы не убить сервер
+        limit = max(1, min(200, int(limit)))
 
         query = supabase.table(TABLE).select("*", count="exact").order("ts", desc=True)
 
@@ -319,7 +320,6 @@ def get_products(
 
         b = (brand or "").strip()
         if b:
-            # бренд ищем и в brand, и в caption (на случай старых постов с #)
             safe = b.replace("%", "").replace(",", " ")
             query = query.or_(f"brand.ilike.%{safe}%,caption.ilike.%{safe}%")
 
@@ -366,7 +366,6 @@ def delete_product(row_id: int, request: Request):
 
         resp = supabase.table(TABLE).delete().eq("id", int(row_id)).execute()
 
-        # если supabase вернул ошибку — покажем её
         err = getattr(resp, "error", None)
         if err:
             return JSONResponse({"error": "delete_failed", "detail": str(err)}, status_code=500)
