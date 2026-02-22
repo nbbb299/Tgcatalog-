@@ -33,29 +33,26 @@ app = FastAPI()
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 # ================= SOURCE MAP =================
-# Boutiques: -1001158220106
-# Outlets:   -1002303984060
-# Digital-catalog -1003494522851  -> ВСЁ из него в Boutiques (как ты попросила)
-# Очки (NEW):     -1003791619052  -> в Очки
+# 1) Boutiques:        -1001158220106
+# 2) Outlets:          -1002303984060
+# 3) Digital-catalog:  -1003494522851   -> ВСЁ из него в Boutiques
+# 4) Очки (NEW):       -1003791619052   -> в Очки
 
 CHAT_SOURCE = {
     -1001158220106: "Boutiques",
     -1002303984060: "Outlets",
-    
-    # ✅ Digital-catalog: всё что постится туда -> в Boutiques
-    -1003494522851: "Boutiques",
-
-    # ✅ Новый канал "Очки"
-    -1003791619052: "Очки",
+    -1003494522851: "Boutiques",  # Digital-catalog -> Boutiques
+    -1003791619052: "Очки",       # New glasses channel -> Очки
 }
 
+ALLOWED_CHATS = set(CHAT_SOURCE.keys())
+
 def detect_source(chat_id: int) -> str:
-    return CHAT_SOURCE.get(int(chat_id), "Boutiques")
+    # Тут НЕТ дефолта "Boutiques" для неизвестных чатов — неизвестные чаты игнорируем
+    return CHAT_SOURCE.get(int(chat_id), "")
 
 # ================= TOPIC CACHE =================
-# Telegram не присылает название топика в каждом сообщении.
-# Поэтому мы запоминаем название, когда приходят service-сообщения:
-# forum_topic_created / forum_topic_edited
+
 TopicKey = Tuple[int, int]  # (chat_id, thread_id)
 topic_title_cache: Dict[TopicKey, str] = {}
 
@@ -66,6 +63,8 @@ async def on_startup():
     await telegram_app.initialize()
     await telegram_app.start()
     print("✅ telegram_app started")
+    print("✅ Allowed chats:", sorted(list(ALLOWED_CHATS)))
+    print("✅ Chat->Source map:", CHAT_SOURCE)
 
 @app.on_event("shutdown")
 async def on_shutdown():
@@ -148,22 +147,62 @@ def pick_brand(msg, fallback_text: str) -> str:
         return b
     return extract_brand_from_caption(fallback_text or "")
 
+def extract_best_file_id(msg) -> str:
+    """
+    Поддержка:
+    - photo (обычное фото)
+    - document (если прислали как файл, но это картинка)
+    """
+    # обычные фото
+    if getattr(msg, "photo", None):
+        try:
+            return msg.photo[-1].file_id
+        except Exception:
+            pass
+
+    # если вдруг кто-то отправит как документ (картинка)
+    doc = getattr(msg, "document", None)
+    if doc:
+        mt = (getattr(doc, "mime_type", "") or "").lower()
+        if mt.startswith("image/"):
+            return doc.file_id
+
+    return ""
+
+def is_media_message(msg) -> bool:
+    if getattr(msg, "photo", None):
+        return True
+    doc = getattr(msg, "document", None)
+    if doc:
+        mt = (getattr(doc, "mime_type", "") or "").lower()
+        return mt.startswith("image/")
+    return False
+
 # ================= SAVE PRODUCT =================
 
 def save_product(msg):
     caption = msg.caption or ""
     chat_id = int(msg.chat.id)
+
+    # ✅ игнорируем ВСЕ кроме нужных каналов
+    if chat_id not in ALLOWED_CHATS:
+        print("IGNORED chat_id (not in allowed):", chat_id)
+        return
+
     source = detect_source(chat_id)
+    if not source:
+        print("IGNORED (no source) chat_id:", chat_id)
+        return
+
     brand = pick_brand(msg, caption)
 
     media_group_id = msg.media_group_id  # album id or None
     message_id = msg.message_id
 
-    file_id = ""
-    if msg.photo:
-        file_id = msg.photo[-1].file_id  # best size
-
+    file_id = extract_best_file_id(msg)
     ts = msg_ts(msg)
+
+    print("SAVE DBG:", {"chat_id": chat_id, "source": source, "message_id": message_id, "media_group_id": media_group_id})
 
     # -------- ALBUM --------
     if media_group_id:
@@ -171,7 +210,7 @@ def save_product(msg):
             supabase.table(TABLE)
             .select("id,file_ids,file_id,caption,brand,ts,media_group_id,message_id,source,chat_id")
             .eq("media_group_id", str(media_group_id))
-            .eq("chat_id", chat_id)     # ✅ важно: альбом только в рамках этого канала
+            .eq("chat_id", chat_id)
             .limit(1)
             .execute()
         )
@@ -192,12 +231,12 @@ def save_product(msg):
                 "brand": new_brand,
                 "ts": new_ts,
                 "source": source,
-                "chat_id": chat_id,     # ✅ сохраняем chat_id
+                "chat_id": chat_id,
             }).eq("id", row["id"]).execute()
             return
 
         supabase.table(TABLE).insert({
-            "chat_id": chat_id,         # ✅ важно
+            "chat_id": chat_id,
             "media_group_id": str(media_group_id),
             "message_id": message_id,
             "brand": brand,
@@ -210,9 +249,8 @@ def save_product(msg):
         return
 
     # -------- SINGLE POST --------
-    # ✅ ВАЖНО: уникальность в рамках канала -> on_conflict="chat_id,message_id"
     supabase.table(TABLE).upsert({
-        "chat_id": chat_id,             # ✅ важно
+        "chat_id": chat_id,
         "message_id": message_id,
         "brand": brand,
         "caption": caption,
@@ -223,26 +261,33 @@ def save_product(msg):
     }, on_conflict="chat_id,message_id").execute()
 
 # ================= CAPTION FIX (120 sec) =================
-# ✅ ВАЖНО: теперь фикс привязан и к chat_id, чтобы текст не прилипал к другому каналу
 
 def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
     text = (msg.text or "").strip()
     if not text:
         return False
 
+    chat_id = int(msg.chat.id)
+
+    # ✅ игнорируем ВСЕ кроме нужных каналов
+    if chat_id not in ALLOWED_CHATS:
+        return False
+
+    source = detect_source(chat_id)
+    if not source:
+        return False
+
     ts = msg_ts(msg)
     if not ts:
         return False
 
-    chat_id = int(msg.chat.id)
-    source = detect_source(chat_id)
     brand = pick_brand(msg, text)
 
     try:
         res = (
             supabase.table(TABLE)
             .select("id,caption,brand,ts,source,chat_id")
-            .eq("chat_id", chat_id)         # ✅ важно
+            .eq("chat_id", chat_id)
             .eq("source", source)
             .gte("ts", ts - window_seconds)
             .order("ts", desc=True)
@@ -264,7 +309,6 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
             return False
 
         upd = {"caption": text}
-
         if (not (target.get("brand") or "").strip()) and brand:
             upd["brand"] = brand
 
@@ -284,19 +328,40 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not msg:
         return
 
+    # ✅ DEBUG: что реально прилетает
+    try:
+        print("IN MSG:", {
+            "chat_id": int(msg.chat.id) if msg.chat else None,
+            "message_id": getattr(msg, "message_id", None),
+            "has_photo": bool(getattr(msg, "photo", None)),
+            "has_doc": bool(getattr(msg, "document", None)),
+            "media_group_id": getattr(msg, "media_group_id", None),
+            "text": (msg.text[:40] + "...") if getattr(msg, "text", None) and len(msg.text) > 40 else getattr(msg, "text", None),
+        })
+    except Exception:
+        pass
+
     # 0) service topic events
     if getattr(msg, "forum_topic_created", None) or getattr(msg, "forum_topic_edited", None):
         remember_topic_title(msg)
         return
 
-    # 1) photo -> save product
-    if msg.photo:
-        save_product(msg)
+    # 1) media -> save product
+    if is_media_message(msg):
+        try:
+            save_product(msg)
+        except Exception as e:
+            print("SAVE ERROR ❌", repr(e))
+            traceback.print_exc()
         return
 
     # 2) text -> caption fix
     if msg.text:
-        attach_text_caption_to_recent_item(msg, window_seconds=120)
+        try:
+            attach_text_caption_to_recent_item(msg, window_seconds=120)
+        except Exception as e:
+            print("CAPTION FIX ERROR ❌", repr(e))
+            traceback.print_exc()
         return
 
 telegram_app.add_handler(MessageHandler(filters.ALL, handler))
@@ -319,6 +384,12 @@ async def webhook(req: Request):
         traceback.print_exc()
         return {"ok": True}
 
+# ================= HEALTH =================
+
+@app.get("/health")
+def health():
+    return {"ok": True}
+
 # ================= PRODUCTS API (SERVER PAGINATION) =================
 
 @app.get("/api/products")
@@ -329,12 +400,9 @@ def get_products(
     brand: str = "",
     q: str = "",
 ):
-    """
-    ✅ серверная пагинация + фильтры.
-    """
     try:
         offset = max(0, int(offset))
-        limit = max(1, min(200, int(limit)))  # защита
+        limit = max(1, min(200, int(limit)))
 
         query = supabase.table(TABLE).select("*", count="exact").order("ts", desc=True)
 
@@ -433,11 +501,7 @@ def tgfile(file_id: str, request: Request):
         return JSONResponse({"detail": "Telegram file fetch failed"}, status_code=404)
 
     content_type = file_resp.headers.get("content-type", "image/jpeg")
-
-    headers = {
-        "Cache-Control": "public, max-age=604800, immutable",
-        "ETag": etag,
-    }
+    headers = {"Cache-Control": "public, max-age=604800, immutable", "ETag": etag}
     return Response(content=file_resp.content, media_type=content_type, headers=headers)
 
 # ================= ROOT =================
