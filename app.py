@@ -181,28 +181,19 @@ def is_media_message(msg) -> bool:
 # ================= SAVE PRODUCT =================
 
 def save_product(msg):
-    caption = msg.caption or ""
+    caption = (msg.caption or "").strip()
     chat_id = int(msg.chat.id)
-
-    # ✅ игнорируем ВСЕ кроме нужных каналов
-    if chat_id not in ALLOWED_CHATS:
-        print("IGNORED chat_id (not in allowed):", chat_id)
-        return
-
     source = detect_source(chat_id)
-    if not source:
-        print("IGNORED (no source) chat_id:", chat_id)
-        return
-
     brand = pick_brand(msg, caption)
 
     media_group_id = msg.media_group_id  # album id or None
     message_id = msg.message_id
 
-    file_id = extract_best_file_id(msg)
-    ts = msg_ts(msg)
+    file_id = ""
+    if msg.photo:
+        file_id = msg.photo[-1].file_id  # best size
 
-    print("SAVE DBG:", {"chat_id": chat_id, "source": source, "message_id": message_id, "media_group_id": media_group_id})
+    ts = msg_ts(msg)
 
     # -------- ALBUM --------
     if media_group_id:
@@ -219,8 +210,17 @@ def save_product(msg):
             row = existing.data[0]
             new_file_ids = safe_append_file_id(row.get("file_ids"), file_id)
 
-            new_caption = row.get("caption") or caption
-            new_brand = row.get("brand") or brand
+            # ✅ НЕ затираем caption пустотой
+            old_caption = (row.get("caption") or "").strip()
+            new_caption = old_caption or caption
+            if caption:
+                new_caption = caption
+
+            old_brand = (row.get("brand") or "").strip()
+            new_brand = old_brand or brand
+            if brand and not old_brand:
+                new_brand = brand
+
             new_ts = row.get("ts") or ts
             new_file_id = row.get("file_id") or file_id
 
@@ -249,7 +249,48 @@ def save_product(msg):
         return
 
     # -------- SINGLE POST --------
-    supabase.table(TABLE).upsert({
+    # ✅ Вместо upsert: сначала пробуем найти строку и update без затирания caption пустотой
+    ex = (
+        supabase.table(TABLE)
+        .select("id,caption,brand,file_id,file_ids,ts")
+        .eq("chat_id", chat_id)
+        .eq("message_id", message_id)
+        .limit(1)
+        .execute()
+    )
+
+    if ex.data:
+        row = ex.data[0]
+
+        upd = {
+            "source": source,
+            "chat_id": chat_id,
+        }
+
+        # ✅ caption обновляем ТОЛЬКО если он не пустой
+        if caption:
+            upd["caption"] = caption
+
+        # brand — тоже аккуратно
+        old_brand = (row.get("brand") or "").strip()
+        if (not old_brand) and brand:
+            upd["brand"] = brand
+
+        # файлы всегда можно обновлять
+        old_file_ids = row.get("file_ids") if isinstance(row.get("file_ids"), list) else []
+        if file_id:
+            upd["file_id"] = row.get("file_id") or file_id
+            upd["file_ids"] = safe_append_file_id(old_file_ids, file_id)
+
+        # ts не портим
+        if not row.get("ts") and ts:
+            upd["ts"] = ts
+
+        supabase.table(TABLE).update(upd).eq("id", row["id"]).execute()
+        return
+
+    # если строки нет — вставляем
+    supabase.table(TABLE).insert({
         "chat_id": chat_id,
         "message_id": message_id,
         "brand": brand,
@@ -258,7 +299,7 @@ def save_product(msg):
         "file_ids": [file_id] if file_id else [],
         "ts": ts,
         "source": source,
-    }, on_conflict="chat_id,message_id").execute()
+    }).execute()
 
 # ================= CAPTION FIX (120 sec) =================
 
