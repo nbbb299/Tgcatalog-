@@ -736,15 +736,38 @@
     });
 
     function buyLinks(source){
-      const boutiques = { tgUser: "mikab16", wa: "393463203783" };
-      const outlets   = { tgUser: "yana_stgn", wa: "79155554259" };
-      const cfg = (source === "Outlets") ? outlets : boutiques;
-      return {
-        tg: `https://t.me/${encodeURIComponent(cfg.tgUser)}`,
-        wa: `https://wa.me/${encodeURIComponent(cfg.wa)}`
-      };
-    }
 
+  const boutiques = {
+    tgUser: "mikab16",
+    wa: "393463203783"
+  };
+
+  const outlets = {
+    tgUser: "yana_stgn",
+    wa: "79155554259"
+  };
+
+  // ✅ Очки — контакт коллеги
+  const glasses = {
+    tgUser: "yana_stgn",
+    wa: "79155554259"
+  };
+
+  let cfg = boutiques;
+
+  if(source === "Outlets"){
+    cfg = outlets;
+  }
+
+  if(source === "Очки"){
+    cfg = glasses;
+  }
+
+  return {
+    tg: `https://t.me/${encodeURIComponent(cfg.tgUser)}`,
+    wa: `https://wa.me/${encodeURIComponent(cfg.wa)}`
+  };
+}
     // =========================
     // ✅ LOADING / EMPTY STATE
     // =========================
