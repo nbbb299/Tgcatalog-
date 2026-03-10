@@ -497,57 +497,143 @@ def get_brands():
         )
 
         raw = res.data or []
-        found = set()
+        found = {}
 
-        for row in raw:
-            brand = str(row.get("brand", "") or "").strip()
+        def clean_brand_name(s: str) -> str:
+            s = (s or "").strip()
+            if not s:
+                return ""
 
-            if brand:
-                found.add(brand)
-                continue
+            # убираем битые символы / мусор
+            bad_parts = [
+                "ðÿ", "ð", "ÿ", "œ", "™", "�", "\uFFFD"
+            ]
+            low0 = s.lower()
+            for bp in bad_parts:
+                if bp in low0:
+                    return ""
 
-            caption = str(row.get("caption", "") or "").strip()
+            # убираем эмодзи/мусор по краям
+            s = s.strip("👜👠👓🕶️✨💼🤍🖤🤎💛💙💚💜❤️🩷🩶🧸🌍•-–—,.;:()[]{}|/\\\"' ")
+
+            if not s:
+                return ""
+
+            low = s.lower()
+
+            # мусорные слова
+            skip_exact = {
+                "reviews", "review", "new", "outlet", "sale", "brand",
+                "по вопросам", "размер", "size", "price"
+            }
+            if low in skip_exact:
+                return ""
+
+            # если строка явно не бренд
+            if "по вопросам" in low:
+                return ""
+            if "price" in low:
+                return ""
+            if "размер" in low:
+                return ""
+            if "size" in low:
+                return ""
+            if s.startswith("@"):
+                return ""
+            if "€" in s or "$" in s:
+                return ""
+
+            # убираем слово outlet/new в конце
+            for suffix in [" outlet", " new", " boutique", " boutiques"]:
+                if low.endswith(suffix):
+                    s = s[: -len(suffix)].strip()
+                    low = s.lower()
+
+            if not s:
+                return ""
+
+            # нормализуем самые частые кейсы
+            title_map = {
+                "dior": "Dior",
+                "prada": "Prada",
+                "gucci": "Gucci",
+                "miumiu": "MiuMiu",
+                "miu miu": "MiuMiu",
+                "ysl": "YSL",
+                "lv": "LV",
+                "loewe": "Loewe",
+                "celine": "Celine",
+                "fendi": "Fendi",
+                "burberry": "Burberry",
+                "valentino": "Valentino",
+                "balenciaga": "Balenciaga",
+                "bottega veneta": "Bottega Veneta",
+                "brunellocucinelli": "BrunelloCucinelli",
+                "brunello cucinelli": "BrunelloCucinelli",
+                "christiandior": "ChristianDior",
+                "christian dior": "ChristianDior",
+                "dolce&gabbana": "Dolce&Gabbana",
+                "dolce & gabbana": "Dolce&Gabbana",
+                "givenchy": "Givenchy",
+                "tom ford": "Tom Ford",
+                "max mara": "Max Mara",
+                "marc jacobs": "Marc Jacobs",
+                "golden goose": "Golden Goose",
+                "off-white": "OFF-WHITE",
+                "off white": "OFF-WHITE",
+                "saintlaurent": "SaintLaurent",
+                "saint laurent": "SaintLaurent",
+                "zimmermann": "Zimmermann",
+                "schiaparelli": "Schiaparelli",
+                "loro piana": "Loro Piana",
+                "alexsander wang": "Alexander Wang",
+                "alexander wang": "Alexander Wang",
+            }
+
+            if low in title_map:
+                return title_map[low]
+
+            # если всё ок — просто аккуратный Title Case
+            return " ".join(word.capitalize() for word in s.split())
+
+        def extract_brand_from_caption_for_nav(caption: str) -> str:
+            caption = (caption or "").strip()
             if not caption:
-                continue
+                return ""
 
             # 1) hashtag
             if "#" in caption:
                 try:
                     tag = caption.split("#", 1)[1].split()[0].strip()
-                    if tag:
-                        found.add(tag)
-                        continue
+                    cleaned = clean_brand_name(tag)
+                    if cleaned:
+                        return cleaned
                 except Exception:
                     pass
 
             # 2) первая нормальная строка
             for line in caption.splitlines():
-                s = line.strip()
-                if not s:
+                line = line.strip()
+                if not line:
                     continue
+                cleaned = clean_brand_name(line)
+                if cleaned:
+                    return cleaned
 
-                low = s.lower()
+            return ""
 
-                if "price" in low:
-                    continue
-                if "размер" in low:
-                    continue
-                if "size" in low:
-                    continue
-                if "по вопросам" in low:
-                    continue
-                if s.startswith("@"):
-                    continue
-                if "€" in s or "$" in s:
-                    continue
+        for row in raw:
+            brand = clean_brand_name(str(row.get("brand", "") or "").strip())
 
-                s = s.strip("👜👠👓🕶️✨💼🤍🖤🤎💛💙💚💜❤️🩷🩶🧸🌍•-–— ")
+            if not brand:
+                brand = extract_brand_from_caption_for_nav(
+                    str(row.get("caption", "") or "").strip()
+                )
 
-                if s:
-                    found.add(s)
-                    break
+            if brand:
+                found[brand.lower()] = brand
 
-        brands = sorted(found, key=lambda s: s.lower())
+        brands = sorted(found.values(), key=lambda s: s.lower())
 
         return {"brands": brands}
 
