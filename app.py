@@ -485,6 +485,36 @@ def get_products(
         traceback.print_exc()
         return JSONResponse({"detail": "products_fetch_failed"}, status_code=500)
 
+# ================= BRANDS API =================
+
+@app.get("/api/brands")
+def get_brands():
+    try:
+        res = (
+            supabase.table(TABLE)
+            .select("brand")
+            .not_.is_("brand", "null")
+            .execute()
+        )
+
+        raw = res.data or []
+
+        brands = sorted(
+            {
+                str(x.get("brand", "")).strip()
+                for x in raw
+                if str(x.get("brand", "")).strip()
+            },
+            key=lambda s: s.lower()
+        )
+
+        return {"brands": brands}
+
+    except Exception as e:
+        print("BRANDS API ERROR ❌", repr(e))
+        traceback.print_exc()
+        return JSONResponse({"brands": []}, status_code=200)
+
 # ================= DELETE PRODUCT (ADMIN) =================
 
 @app.delete("/api/delete/{row_id}")
