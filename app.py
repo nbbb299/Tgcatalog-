@@ -490,8 +490,7 @@ def get_brands():
 
         res = (
             supabase.table(TABLE)
-            .select("brand")
-            .not_.is_("brand", "null")
+            .select("brand,caption")
             .execute()
         )
 
@@ -536,7 +535,6 @@ def get_brands():
             "alexsander wang": "Alexander Wang",
             "tiffany&co": "Tiffany&Co",
             "tiffany & co": "Tiffany&Co",
-            "christiandior": "ChristianDior",
         }
 
         skip_exact = {
@@ -549,19 +547,16 @@ def get_brands():
             if not s:
                 return ""
 
-            # битая кодировка / мусор
             bad_parts = ["ð", "ÿ", "œ", "™", "�", "\uFFFD", "Ð", "Ñ"]
             low0 = s.lower()
             for bp in bad_parts:
                 if bp.lower() in low0:
                     return ""
 
-            # если слишком много нечитабельных символов — выкидываем
             bad_ratio = sum(1 for c in s if ord(c) > 1000)
             if bad_ratio > 2:
                 return ""
 
-            # мусор по краям
             s = s.strip("👜👠👓🕶️✨💼🤍🖤🤎💛💙💚💜❤️🩷🩶🧸🌍•-–—,.;:()[]{}|/\\\"' ")
             if not s:
                 return ""
@@ -597,11 +592,40 @@ def get_brands():
 
             return " ".join(word.capitalize() for word in s.split())
 
+        def extract_brand_from_caption_for_nav(caption: str) -> str:
+            caption = (caption or "").strip()
+            if not caption:
+                return ""
+
+            if "#" in caption:
+                try:
+                    tag = caption.split("#", 1)[1].split()[0].strip()
+                    cleaned = clean_brand_name(tag)
+                    if cleaned:
+                        return cleaned
+                except Exception:
+                    pass
+
+            for line in caption.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                cleaned = clean_brand_name(line)
+                if cleaned:
+                    return cleaned
+
+            return ""
+
         for row in raw:
             b = clean_brand_name(str(row.get("brand", "") or "").strip())
+
             if not b:
-                continue
-            found[b.lower()] = b
+                b = extract_brand_from_caption_for_nav(
+                    str(row.get("caption", "") or "").strip()
+                )
+
+            if b:
+                found[b.lower()] = b
 
         brands = sorted(found.values(), key=lambda s: s.lower())
 
