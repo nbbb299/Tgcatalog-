@@ -55,13 +55,6 @@ def detect_source(chat_id: int) -> str:
 TopicKey = Tuple[int, int]  # (chat_id, thread_id)
 topic_title_cache: Dict[TopicKey, str] = {}
 
-# ================= BRANDS CACHE =================
-
-brands_cache = {
-    "ts": 0,
-    "data": []
-}
-
 # ================= STARTUP / SHUTDOWN =================
 
 @app.on_event("startup")
@@ -482,12 +475,6 @@ def get_products(
 @app.get("/api/brands")
 def get_brands():
     try:
-        now_ts = int(asyncio.get_event_loop().time())
-
-        # кэш 10 минут
-        if brands_cache["data"] and (now_ts - brands_cache["ts"] < 600):
-            return {"brands": brands_cache["data"]}
-
         res = (
             supabase.table(TABLE)
             .select("brand,caption")
@@ -495,7 +482,7 @@ def get_brands():
         )
 
         raw = res.data or []
-        found = {}
+        print("BRANDS RAW COUNT:", len(raw))
 
         normalize_map = {
             "dior": "Dior",
@@ -553,10 +540,6 @@ def get_brands():
                 if bp.lower() in low0:
                     return ""
 
-            bad_ratio = sum(1 for c in s if ord(c) > 1000)
-            if bad_ratio > 2:
-                return ""
-
             s = s.strip("👜👠👓🕶️✨💼🤍🖤🤎💛💙💚💜❤️🩷🩶🧸🌍•-–—,.;:()[]{}|/\\\"' ")
             if not s:
                 return ""
@@ -581,7 +564,7 @@ def get_brands():
 
             for suffix in [" outlet", " new", " boutique", " boutiques"]:
                 if low.endswith(suffix):
-                    s = s[: -len(suffix)].strip()
+                    s = s[:-len(suffix)].strip()
                     low = s.lower()
 
             if not s:
@@ -616,21 +599,21 @@ def get_brands():
 
             return ""
 
-        for row in raw:
-            b = clean_brand_name(str(row.get("brand", "") or "").strip())
+        found = {}
 
-            if not b:
-                b = extract_brand_from_caption_for_nav(
+        for row in raw:
+            brand = clean_brand_name(str(row.get("brand", "") or "").strip())
+
+            if not brand:
+                brand = extract_brand_from_caption_for_nav(
                     str(row.get("caption", "") or "").strip()
                 )
 
-            if b:
-                found[b.lower()] = b
+            if brand:
+                found[brand.lower()] = brand
 
         brands = sorted(found.values(), key=lambda s: s.lower())
-
-        brands_cache["ts"] = now_ts
-        brands_cache["data"] = brands
+        print("BRANDS FINAL COUNT:", len(brands))
 
         return {"brands": brands}
 
