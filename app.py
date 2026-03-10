@@ -492,21 +492,62 @@ def get_brands():
     try:
         res = (
             supabase.table(TABLE)
-            .select("brand")
-            .not_.is_("brand", "null")
+            .select("brand,caption")
             .execute()
         )
 
         raw = res.data or []
+        found = set()
 
-        brands = sorted(
-            {
-                str(x.get("brand", "")).strip()
-                for x in raw
-                if str(x.get("brand", "")).strip()
-            },
-            key=lambda s: s.lower()
-        )
+        for row in raw:
+            brand = str(row.get("brand", "") or "").strip()
+
+            if brand:
+                found.add(brand)
+                continue
+
+            caption = str(row.get("caption", "") or "").strip()
+            if not caption:
+                continue
+
+            # 1) hashtag
+            if "#" in caption:
+                try:
+                    tag = caption.split("#", 1)[1].split()[0].strip()
+                    if tag:
+                        found.add(tag)
+                        continue
+                except Exception:
+                    pass
+
+            # 2) первая нормальная строка
+            for line in caption.splitlines():
+                s = line.strip()
+                if not s:
+                    continue
+
+                low = s.lower()
+
+                if "price" in low:
+                    continue
+                if "размер" in low:
+                    continue
+                if "size" in low:
+                    continue
+                if "по вопросам" in low:
+                    continue
+                if s.startswith("@"):
+                    continue
+                if "€" in s or "$" in s:
+                    continue
+
+                s = s.strip("👜👠👓🕶️✨💼🤍🖤🤎💛💙💚💜❤️🩷🩶🧸🌍•-–— ")
+
+                if s:
+                    found.add(s)
+                    break
+
+        brands = sorted(found, key=lambda s: s.lower())
 
         return {"brands": brands}
 
