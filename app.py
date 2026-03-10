@@ -48,13 +48,19 @@ CHAT_SOURCE = {
 ALLOWED_CHATS = set(CHAT_SOURCE.keys())
 
 def detect_source(chat_id: int) -> str:
-    # Тут НЕТ дефолта "Boutiques" для неизвестных чатов — неизвестные чаты игнорируем
     return CHAT_SOURCE.get(int(chat_id), "")
 
 # ================= TOPIC CACHE =================
 
 TopicKey = Tuple[int, int]  # (chat_id, thread_id)
 topic_title_cache: Dict[TopicKey, str] = {}
+
+# ================= BRANDS CACHE =================
+
+brands_cache = {
+    "ts": 0,
+    "data": []
+}
 
 # ================= STARTUP / SHUTDOWN =================
 
@@ -153,14 +159,12 @@ def extract_best_file_id(msg) -> str:
     - photo (обычное фото)
     - document (если прислали как файл, но это картинка)
     """
-    # обычные фото
     if getattr(msg, "photo", None):
         try:
             return msg.photo[-1].file_id
         except Exception:
             pass
 
-    # если вдруг кто-то отправит как документ (картинка)
     doc = getattr(msg, "document", None)
     if doc:
         mt = (getattr(doc, "mime_type", "") or "").lower()
@@ -210,7 +214,6 @@ def save_product(msg):
             row = existing.data[0]
             new_file_ids = safe_append_file_id(row.get("file_ids"), file_id)
 
-            # ✅ НЕ затираем caption пустотой
             old_caption = (row.get("caption") or "").strip()
             new_caption = old_caption or caption
             if caption:
@@ -249,7 +252,6 @@ def save_product(msg):
         return
 
     # -------- SINGLE POST --------
-    # ✅ Вместо upsert: сначала пробуем найти строку и update без затирания caption пустотой
     ex = (
         supabase.table(TABLE)
         .select("id,caption,brand,file_id,file_ids,ts")
@@ -267,29 +269,24 @@ def save_product(msg):
             "chat_id": chat_id,
         }
 
-        # ✅ caption обновляем ТОЛЬКО если он не пустой
         if caption:
             upd["caption"] = caption
 
-        # brand — тоже аккуратно
         old_brand = (row.get("brand") or "").strip()
         if (not old_brand) and brand:
             upd["brand"] = brand
 
-        # файлы всегда можно обновлять
         old_file_ids = row.get("file_ids") if isinstance(row.get("file_ids"), list) else []
         if file_id:
             upd["file_id"] = row.get("file_id") or file_id
             upd["file_ids"] = safe_append_file_id(old_file_ids, file_id)
 
-        # ts не портим
         if not row.get("ts") and ts:
             upd["ts"] = ts
 
         supabase.table(TABLE).update(upd).eq("id", row["id"]).execute()
         return
 
-    # если строки нет — вставляем
     supabase.table(TABLE).insert({
         "chat_id": chat_id,
         "message_id": message_id,
@@ -310,7 +307,6 @@ def attach_text_caption_to_recent_item(msg, window_seconds: int = 120) -> bool:
 
     chat_id = int(msg.chat.id)
 
-    # ✅ игнорируем ВСЕ кроме нужных каналов
     if chat_id not in ALLOWED_CHATS:
         return False
 
@@ -369,7 +365,6 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not msg:
         return
 
-    # ✅ DEBUG: что реально прилетает
     try:
         print("IN MSG:", {
             "chat_id": int(msg.chat.id) if msg.chat else None,
@@ -382,12 +377,10 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         pass
 
-    # 0) service topic events
     if getattr(msg, "forum_topic_created", None) or getattr(msg, "forum_topic_edited", None):
         remember_topic_title(msg)
         return
 
-    # 1) media -> save product
     if is_media_message(msg):
         try:
             save_product(msg)
@@ -396,7 +389,6 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             traceback.print_exc()
         return
 
-    # 2) text -> caption fix
     if msg.text:
         try:
             attach_text_caption_to_recent_item(msg, window_seconds=120)
@@ -490,46 +482,95 @@ def get_products(
 @app.get("/api/brands")
 def get_brands():
     try:
+        now_ts = int(asyncio.get_event_loop().time())
+
+        # кэш 10 минут
+        if brands_cache["data"] and (now_ts - brands_cache["ts"] < 600):
+            return {"brands": brands_cache["data"]}
+
         res = (
             supabase.table(TABLE)
-            .select("brand,caption")
+            .select("brand")
+            .not_.is_("brand", "null")
             .execute()
         )
 
         raw = res.data or []
         found = {}
 
+        normalize_map = {
+            "dior": "Dior",
+            "prada": "Prada",
+            "gucci": "Gucci",
+            "miumiu": "MiuMiu",
+            "miu miu": "MiuMiu",
+            "ysl": "YSL",
+            "lv": "LV",
+            "loewe": "Loewe",
+            "celine": "Celine",
+            "fendi": "Fendi",
+            "burberry": "Burberry",
+            "valentino": "Valentino",
+            "balenciaga": "Balenciaga",
+            "bottega veneta": "Bottega Veneta",
+            "brunellocucinelli": "BrunelloCucinelli",
+            "brunello cucinelli": "BrunelloCucinelli",
+            "christiandior": "ChristianDior",
+            "christian dior": "ChristianDior",
+            "dolce&gabbana": "Dolce&Gabbana",
+            "dolce & gabbana": "Dolce&Gabbana",
+            "givenchy": "Givenchy",
+            "tom ford": "Tom Ford",
+            "max mara": "Max Mara",
+            "marc jacobs": "Marc Jacobs",
+            "golden goose": "Golden Goose",
+            "goldengoose": "Golden Goose",
+            "off-white": "OFF-WHITE",
+            "off white": "OFF-WHITE",
+            "saintlaurent": "SaintLaurent",
+            "saint laurent": "SaintLaurent",
+            "zimmermann": "Zimmermann",
+            "schiaparelli": "Schiaparelli",
+            "loro piana": "Loro Piana",
+            "alexander wang": "Alexander Wang",
+            "alexsander wang": "Alexander Wang",
+            "tiffany&co": "Tiffany&Co",
+            "tiffany & co": "Tiffany&Co",
+            "christiandior": "ChristianDior",
+        }
+
+        skip_exact = {
+            "reviews", "review", "new", "outlet", "sale", "brand",
+            "по вопросам", "размер", "size", "price"
+        }
+
         def clean_brand_name(s: str) -> str:
             s = (s or "").strip()
             if not s:
                 return ""
 
-            # убираем битые символы / мусор
-            bad_parts = [
-                "ðÿ", "ð", "ÿ", "œ", "™", "�", "\uFFFD"
-            ]
+            # битая кодировка / мусор
+            bad_parts = ["ð", "ÿ", "œ", "™", "�", "\uFFFD", "Ð", "Ñ"]
             low0 = s.lower()
             for bp in bad_parts:
-                if bp in low0:
+                if bp.lower() in low0:
                     return ""
 
-            # убираем эмодзи/мусор по краям
-            s = s.strip("👜👠👓🕶️✨💼🤍🖤🤎💛💙💚💜❤️🩷🩶🧸🌍•-–—,.;:()[]{}|/\\\"' ")
+            # если слишком много нечитабельных символов — выкидываем
+            bad_ratio = sum(1 for c in s if ord(c) > 1000)
+            if bad_ratio > 2:
+                return ""
 
+            # мусор по краям
+            s = s.strip("👜👠👓🕶️✨💼🤍🖤🤎💛💙💚💜❤️🩷🩶🧸🌍•-–—,.;:()[]{}|/\\\"' ")
             if not s:
                 return ""
 
             low = s.lower()
 
-            # мусорные слова
-            skip_exact = {
-                "reviews", "review", "new", "outlet", "sale", "brand",
-                "по вопросам", "размер", "size", "price"
-            }
             if low in skip_exact:
                 return ""
 
-            # если строка явно не бренд
             if "по вопросам" in low:
                 return ""
             if "price" in low:
@@ -543,7 +584,6 @@ def get_brands():
             if "€" in s or "$" in s:
                 return ""
 
-            # убираем слово outlet/new в конце
             for suffix in [" outlet", " new", " boutique", " boutiques"]:
                 if low.endswith(suffix):
                     s = s[: -len(suffix)].strip()
@@ -552,88 +592,21 @@ def get_brands():
             if not s:
                 return ""
 
-            # нормализуем самые частые кейсы
-            title_map = {
-                "dior": "Dior",
-                "prada": "Prada",
-                "gucci": "Gucci",
-                "miumiu": "MiuMiu",
-                "miu miu": "MiuMiu",
-                "ysl": "YSL",
-                "lv": "LV",
-                "loewe": "Loewe",
-                "celine": "Celine",
-                "fendi": "Fendi",
-                "burberry": "Burberry",
-                "valentino": "Valentino",
-                "balenciaga": "Balenciaga",
-                "bottega veneta": "Bottega Veneta",
-                "brunellocucinelli": "BrunelloCucinelli",
-                "brunello cucinelli": "BrunelloCucinelli",
-                "christiandior": "ChristianDior",
-                "christian dior": "ChristianDior",
-                "dolce&gabbana": "Dolce&Gabbana",
-                "dolce & gabbana": "Dolce&Gabbana",
-                "givenchy": "Givenchy",
-                "tom ford": "Tom Ford",
-                "max mara": "Max Mara",
-                "marc jacobs": "Marc Jacobs",
-                "golden goose": "Golden Goose",
-                "off-white": "OFF-WHITE",
-                "off white": "OFF-WHITE",
-                "saintlaurent": "SaintLaurent",
-                "saint laurent": "SaintLaurent",
-                "zimmermann": "Zimmermann",
-                "schiaparelli": "Schiaparelli",
-                "loro piana": "Loro Piana",
-                "alexsander wang": "Alexander Wang",
-                "alexander wang": "Alexander Wang",
-            }
+            if low in normalize_map:
+                return normalize_map[low]
 
-            if low in title_map:
-                return title_map[low]
-
-            # если всё ок — просто аккуратный Title Case
             return " ".join(word.capitalize() for word in s.split())
 
-        def extract_brand_from_caption_for_nav(caption: str) -> str:
-            caption = (caption or "").strip()
-            if not caption:
-                return ""
-
-            # 1) hashtag
-            if "#" in caption:
-                try:
-                    tag = caption.split("#", 1)[1].split()[0].strip()
-                    cleaned = clean_brand_name(tag)
-                    if cleaned:
-                        return cleaned
-                except Exception:
-                    pass
-
-            # 2) первая нормальная строка
-            for line in caption.splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-                cleaned = clean_brand_name(line)
-                if cleaned:
-                    return cleaned
-
-            return ""
-
         for row in raw:
-            brand = clean_brand_name(str(row.get("brand", "") or "").strip())
-
-            if not brand:
-                brand = extract_brand_from_caption_for_nav(
-                    str(row.get("caption", "") or "").strip()
-                )
-
-            if brand:
-                found[brand.lower()] = brand
+            b = clean_brand_name(str(row.get("brand", "") or "").strip())
+            if not b:
+                continue
+            found[b.lower()] = b
 
         brands = sorted(found.values(), key=lambda s: s.lower())
+
+        brands_cache["ts"] = now_ts
+        brands_cache["data"] = brands
 
         return {"brands": brands}
 
