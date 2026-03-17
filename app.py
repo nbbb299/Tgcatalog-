@@ -43,6 +43,7 @@ CHAT_SOURCE = {
     -1002303984060: "Outlets",
     -1003494522851: "Boutiques",  # Digital-catalog -> Boutiques
     -1003791619052: "Очки",       # New glasses channel -> Очки
+    -1003873476684: "Мужское",
 }
 
 ALLOWED_CHATS = set(CHAT_SOURCE.keys())
