@@ -630,6 +630,10 @@
       return `/api/tgfile/${encodeURIComponent(v)}`;
     }
 
+    function itemUrl(itemId){
+      return `${location.origin}/?item=${encodeURIComponent(itemId)}`;
+    }
+
     function preload(url){
       if(!url) return;
       const im = new Image();
@@ -1213,6 +1217,37 @@
       actions.appendChild(waBtn);
       body.appendChild(actions);
 
+      const shareRow = document.createElement("div");
+      shareRow.style.marginTop = "8px";
+
+      const shareBtn = document.createElement("button");
+      shareBtn.type = "button";
+      shareBtn.className = "adminDelete";
+      shareBtn.style.borderColor = "rgba(17,17,17,.15)";
+      shareBtn.style.background = "#fff";
+      shareBtn.style.color = "#111";
+      shareBtn.textContent = "Скопировать ссылку";
+
+      shareBtn.onclick = async (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+
+        const url = itemUrl(p.id);
+
+        try{
+          await navigator.clipboard.writeText(url);
+          shareBtn.textContent = "Ссылка скопирована";
+          setTimeout(()=>{
+            shareBtn.textContent = "Скопировать ссылку";
+          }, 1500);
+        }catch(_){
+          prompt("Скопируй ссылку:", url);
+        }
+      };
+
+      shareRow.appendChild(shareBtn);
+      body.appendChild(shareRow);
+
       const adminRow = document.createElement("div");
       adminRow.className = "adminRow" + (IS_ADMIN ? " show" : "");
       if(IS_ADMIN){
@@ -1236,7 +1271,7 @@
 
     function setActiveTab(source){
       currentSource = source;
-      const btns = [ $("tabAll"), $("tabBoutiques"), $("tabOutlets"), $("tabGlasses") ];
+      const btns = [ $("tabAll"), $("tabBoutiques"), $("tabOutlets"), $("tabGlasses"), $("tabMen") ];
       btns.forEach(b=>{
         const isActive = b.getAttribute("data-source") === source;
         b.classList.toggle("active", isActive);
@@ -1311,13 +1346,68 @@
       onScrollAutoLoad();
     }, {passive:true});
 
-    setEmptyState("loading");
-    fetchPage({reset:true});
+    async function openItemFromUrlIfNeeded(){
+      const params = new URLSearchParams(location.search);
+      const itemId = params.get("item");
+      if(!itemId) return false;
 
-    setInterval(refreshTop, 30000);
+      try{
+        $("status").style.display = "none";
+        setEmptyState("loading");
+
+        const r = await fetch(`/api/product/${encodeURIComponent(itemId)}`, { cache: "no-store" });
+        if(!r.ok) throw new Error("API /api/product вернул " + r.status);
+
+        const payload = await r.json();
+        const item = payload.item;
+        if(!item) return false;
+
+        loaded = [item];
+        offset = 1;
+        hasMore = false;
+        isInitialLoading = false;
+        currentSource = "all";
+        lastTopKey = "";
+
+        const btns = [ $("tabAll"), $("tabBoutiques"), $("tabOutlets"), $("tabGlasses"), $("tabMen") ].filter(Boolean);
+        btns.forEach(b=>{
+          const isActive = b.getAttribute("data-source") === "all";
+          b.classList.toggle("active", isActive);
+        });
+
+        render();
+        return true;
+
+      }catch(e){
+        $("grid").innerHTML = "";
+        isInitialLoading = false;
+        setEmptyState("hide");
+        $("status").style.display = "block";
+        $("status").textContent = "Не удалось открыть товар по ссылке.";
+        return true;
+      }
+    }
+
+    setEmptyState("loading");
+
+    openItemFromUrlIfNeeded().then((opened)=>{
+      if(!opened){
+        fetchPage({reset:true});
+      }
+    });
+
+    setInterval(()=>{
+      const params = new URLSearchParams(location.search);
+      if(!params.get("item")){
+        refreshTop();
+      }
+    }, 30000);
 
     document.addEventListener("visibilitychange", ()=>{
-      if(!document.hidden) refreshTop();
+      const params = new URLSearchParams(location.search);
+      if(!document.hidden && !params.get("item")){
+        refreshTop();
+      }
     });
   </script>
 </body>
