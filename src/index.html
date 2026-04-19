@@ -537,6 +537,7 @@
             <button class="tabBtn" id="tabOutlets" data-source="Outlets" role="tab">Outlets</button>
             <button class="tabBtn" id="tabGlasses" data-source="Очки" role="tab">Очки</button>
             <button class="tabBtn" id="tabMen" data-source="Мужское">Мужское</button>
+            <button class="tabBtn" id="tabAbout" data-source="about">О нас</button>
           </div>
 
           <div class="brandMenuWrap">
@@ -1270,14 +1271,34 @@
     }
 
     function setActiveTab(source){
-      currentSource = source;
-      const btns = [ $("tabAll"), $("tabBoutiques"), $("tabOutlets"), $("tabGlasses"), $("tabMen") ];
-      btns.forEach(b=>{
-        const isActive = b.getAttribute("data-source") === source;
-        b.classList.toggle("active", isActive);
-      });
-      scrollToTopSoft();
-      fetchPage({reset:true});
+  currentSource = source;
+
+  if(source === "about"){
+    document.querySelector(".gridWrap").style.display = "none";
+    document.getElementById("aboutPage").style.display = "block";
+  } else {
+    document.querySelector(".gridWrap").style.display = "block";
+    document.getElementById("aboutPage").style.display = "none";
+  }
+
+  const btns = [
+    $("tabAll"),
+    $("tabBoutiques"),
+    $("tabOutlets"),
+    $("tabGlasses"),
+    $("tabMen"),
+    $("tabAbout")
+  ].filter(Boolean);
+
+  btns.forEach(b=>{
+    const isActive = b.getAttribute("data-source") === source;
+    b.classList.toggle("active", isActive);
+  });
+
+  if(source !== "about"){
+    scrollToTopSoft();
+    fetchPage({reset:true});
+  }
     }
 
     $("tabAll").onclick = ()=>setActiveTab("all");
@@ -1285,6 +1306,7 @@
     $("tabOutlets").onclick = ()=>setActiveTab("Outlets");
     $("tabGlasses").onclick = ()=>setActiveTab("Очки");
     $("tabMen").onclick = ()=>setActiveTab("Мужское");
+    $("tabAbout").onclick = ()=>setActiveTab("about");
 
     $("brandToggle").onclick = toggleBrandDropdown;
 
@@ -1408,7 +1430,50 @@
       if(!document.hidden && !params.get("item")){
         refreshTop();
       }
-    });
+    }); 
   </script>
+
+<div id="aboutPage" style="display:none; max-width:900px; margin:20px auto; padding:20px;">
+  <div style="background:#fff; border-radius:20px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.06);">
+
+    <h2>О нас</h2>
+
+    <p>
+      Добро пожаловать в мир европейского шопинга!<br><br>
+      Здесь вы найдёте оригинальные вещи из Италии, Франции и не только:
+      брендовую одежду, обувь, сумки, аксессуары и многое другое —
+      напрямую из бутиков и аутлетов.<br><br>
+
+      ✔ Только подлинные товары<br>
+      ✔ Быстрая доставка в любую страну<br>
+      ✔ Выгодные условия покупки<br>
+      ✔ Гибкие способы оплаты
+    </p>
+
+    <h3>Как заказать</h3>
+    <p>Напишите нам в Telegram или WhatsApp</p>
+
+    <h3>Контакты</h3>
+
+    <p>
+      <b>Бутики и украшения</b><br>
+      <a href="https://t.me/mikab16" target="_blank">Telegram</a> |
+      <a href="https://wa.me/393463203783" target="_blank">WhatsApp</a>
+    </p>
+
+    <p>
+      <b>Аутлеты и очки</b><br>
+      <a href="https://t.me/yana_stgn" target="_blank">Telegram</a> |
+      <a href="https://wa.me/79155554259" target="_blank">WhatsApp</a>
+    </p>
+
+    <a href="https://www.instagram.com/usa.outlets.italy" target="_blank"
+       style="display:inline-block; margin-top:15px; padding:12px 18px;
+       border-radius:14px; background:#111; color:#fff; text-decoration:none; font-weight:900;">
+       Instagram
+    </a>
+
+  </div>
+</div>
 </body>
 </html>
