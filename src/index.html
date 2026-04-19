@@ -1320,12 +1320,23 @@
     function setActiveTab(source){
   currentSource = source;
 
+  const aboutPage = document.getElementById("aboutPage");
+  const gridWrap = document.querySelector(".gridWrap");
+  const pager = $("pager");
+  const moreMeta = $("moreMeta");
+  const status = $("status");
+  const empty = $("empty");
+
   if(source === "about"){
-    document.querySelector(".gridWrap").style.display = "none";
-    document.getElementById("aboutPage").style.display = "block";
+    if(gridWrap) gridWrap.style.display = "none";
+    if(pager) pager.style.display = "none";
+    if(moreMeta) moreMeta.style.display = "none";
+    if(status) status.style.display = "none";
+    if(empty) empty.style.display = "none";
+    if(aboutPage) aboutPage.style.display = "block";
   } else {
-    document.querySelector(".gridWrap").style.display = "block";
-    document.getElementById("aboutPage").style.display = "none";
+    if(gridWrap) gridWrap.style.display = "block";
+    if(aboutPage) aboutPage.style.display = "none";
   }
 
   const btns = [
@@ -1342,18 +1353,19 @@
     b.classList.toggle("active", isActive);
   });
 
+  scrollToTopSoft();
+
   if(source !== "about"){
-    scrollToTopSoft();
     fetchPage({reset:true});
   }
-    }
+}
 
-    $("tabAll").onclick = ()=>setActiveTab("all");
-    $("tabBoutiques").onclick = ()=>setActiveTab("Boutiques");
-    $("tabOutlets").onclick = ()=>setActiveTab("Outlets");
-    $("tabGlasses").onclick = ()=>setActiveTab("Очки");
-    $("tabMen").onclick = ()=>setActiveTab("Мужское");
-    $("tabAbout").onclick = ()=>setActiveTab("about");
+$("tabAll").onclick = ()=>setActiveTab("all");
+$("tabBoutiques").onclick = ()=>setActiveTab("Boutiques");
+$("tabOutlets").onclick = ()=>setActiveTab("Outlets");
+$("tabGlasses").onclick = ()=>setActiveTab("Очки");
+$("tabMen").onclick = ()=>setActiveTab("Мужское");
+$("tabAbout").onclick = ()=>setActiveTab("about");
 
     $("brandToggle").onclick = toggleBrandDropdown;
 
