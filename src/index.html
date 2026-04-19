@@ -26,7 +26,7 @@
     }
 
     .top{
-      position:sticky; top:0; z-index:10;
+      position:sticky; top:0; z-index:1000;
       background: rgba(246,247,251,.92);
       backdrop-filter: blur(10px);
       border-bottom:1px solid var(--stroke);
@@ -64,6 +64,7 @@
       gap:10px;
       flex-wrap:wrap;
       align-items:center;
+      overflow: visible;
     }
     .tabs{
       display:inline-flex;
@@ -97,57 +98,83 @@
 
     /* ✅ Бренды dropdown */
     .brandMenuWrap{
-      position:relative;
-    }
-    .brandToggle{
-      padding:10px 14px;
-      border-radius:16px;
-      background:#fff;
-      border:1px solid var(--stroke);
-      font-weight:900;
-      font-size:13px;
-      color:#111;
-      box-shadow: 0 8px 18px rgba(0,0,0,.04);
-      cursor:pointer;
-    }
-    .brandDropdown{
-      position:absolute;
-      top:calc(100% + 8px);
-      right:0;
-      width:min(280px, 84vw);
-      background:#fff;
-      border:1px solid var(--stroke);
-      border-radius:18px;
-      box-shadow: 0 18px 40px rgba(0,0,0,.12);
-      display:none;
-      z-index:30;
-    }
-    .brandDropdown.open{
-      display:block;
-    }
-    .brandDropdownInner{
-      max-height:340px;
-      overflow:auto;
-      padding:8px;
-    }
-    .brandItem{
-      width:100%;
-      text-align:left;
-      padding:12px 14px;
-      border-radius:14px;
-      background:transparent;
-      border:0;
-      color:#111;
-      font-size:14px;
-      font-weight:800;
-      cursor:pointer;
-    }
-    .brandItem:hover{
-      background:#f4f6fb;
-    }
-    .brandItem.active{
-      background:#111;
-      color:#fff;
+  position:relative;
+  z-index:60;
+}
+
+.brandToggle{
+  padding:10px 14px;
+  border-radius:16px;
+  background:#fff;
+  border:1px solid var(--stroke);
+  font-weight:900;
+  font-size:13px;
+  color:#111;
+  box-shadow: 0 8px 18px rgba(0,0,0,.04);
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.brandDropdown{
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0;
+  right:auto;
+  width:min(320px, calc(100vw - 28px));
+  max-width:calc(100vw - 28px);
+  background:#fff;
+  border:1px solid var(--stroke);
+  border-radius:18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.12);
+  display:none;
+  z-index:9999;
+  overflow:hidden;
+}
+
+.brandDropdown.open{
+  display:block;
+}
+
+.brandDropdownInner{
+  max-height:340px;
+  overflow:auto;
+  padding:8px;
+  -webkit-overflow-scrolling:touch;
+  background:#fff;
+}
+
+.brandItem{
+  width:100%;
+  text-align:left;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#fff;
+  border:0;
+  color:#111;
+  font-size:14px;
+  font-weight:800;
+  cursor:pointer;
+  display:block;
+}
+
+.brandItem:hover{
+  background:#f4f6fb;
+}
+
+.brandItem.active{
+  background:#111;
+  color:#fff;
+}
+
+@media (max-width: 640px){
+  .tabsWrap{
+    align-items:flex-start;
+  }
+
+  .brandDropdown{
+    width:min(320px, calc(100vw - 24px));
+    max-width:calc(100vw - 24px);
+  }
     }
 
     .gridWrap{max-width:1100px; margin:0 auto; padding:14px;}
