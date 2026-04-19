@@ -116,12 +116,12 @@
 }
 
 .brandDropdown{
-  position:absolute;
-  top:calc(100% + 8px);
-  left:0;
-  right:auto;
-  width:min(320px, calc(100vw - 28px));
-  max-width:calc(100vw - 28px);
+  position: fixed;
+  top: 220px;
+  left: 12px;
+  right: 12px;
+  width: auto;
+  max-width: none;
   background:#fff;
   border:1px solid var(--stroke);
   border-radius:18px;
@@ -136,7 +136,7 @@
 }
 
 .brandDropdownInner{
-  max-height:340px;
+  max-height: min(50vh, 340px);
   overflow:auto;
   padding:8px;
   -webkit-overflow-scrolling:touch;
