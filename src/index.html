@@ -579,8 +579,7 @@
 
         <div class="tabsWrap">
           <div class="tabs" role="tablist" aria-label="Source filter">
-            <button class="tabBtn active" id="tabAll" data-source="all" role="tab">Все</button>
-            <button class="tabBtn" id="tabBoutiques" data-source="Boutiques" role="tab">Boutiques</button>
+            <button class="tabBtn active" id="tabBoutiques" data-source="Boutiques">
             <button class="tabBtn" id="tabOutlets" data-source="Outlets" role="tab">Outlets</button>
             <button class="tabBtn" id="tabGlasses" data-source="Очки" role="tab">Очки</button>
             <button class="tabBtn" id="tabMen" data-source="Мужское">Мужское</button>
@@ -1367,7 +1366,6 @@ filtered.push(
   }
 
   const btns = [
-    $("tabAll"),
     $("tabBoutiques"),
     $("tabOutlets"),
     $("tabGlasses"),
@@ -1387,8 +1385,6 @@ filtered.push(
     fetchPage({reset:true});
   }
 }
-
-$("tabAll").onclick = ()=>setActiveTab("all");
 $("tabBoutiques").onclick = ()=>setActiveTab("Boutiques");
 $("tabOutlets").onclick = ()=>setActiveTab("Outlets");
 $("tabGlasses").onclick = ()=>setActiveTab("Очки");
