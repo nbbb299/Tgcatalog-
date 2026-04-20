@@ -584,6 +584,7 @@
             <button class="tabBtn" id="tabOutlets" data-source="Outlets" role="tab">Outlets</button>
             <button class="tabBtn" id="tabGlasses" data-source="Очки" role="tab">Очки</button>
             <button class="tabBtn" id="tabMen" data-source="Мужское">Мужское</button>
+            <button class="tabBtn" id="tabJewelry" data-source="Украшения">Украшения</button>
             <button class="tabBtn" id="tabAbout" data-source="about">О нас</button>
           </div>
 
@@ -1346,6 +1347,7 @@
     $("tabOutlets"),
     $("tabGlasses"),
     $("tabMen"),
+    $("tabJewelry"),
     $("tabAbout")
   ].filter(Boolean);
 
@@ -1366,6 +1368,7 @@ $("tabBoutiques").onclick = ()=>setActiveTab("Boutiques");
 $("tabOutlets").onclick = ()=>setActiveTab("Outlets");
 $("tabGlasses").onclick = ()=>setActiveTab("Очки");
 $("tabMen").onclick = ()=>setActiveTab("Мужское");
+$("tabJewelry").onclick = ()=>setActiveTab("Украшения"); 
 $("tabAbout").onclick = ()=>setActiveTab("about");
 
     $("brandToggle").onclick = toggleBrandDropdown;
