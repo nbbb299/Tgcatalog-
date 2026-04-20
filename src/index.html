@@ -666,6 +666,7 @@
         if(/по вопросам/i.test(s)) return false;
         if(/@mikab16/i.test(s)) return false;
         if(/@yana_stgn/i.test(s)) return false;
+        if(/наш digital-каталог/i.test(s)) return false;
         return true;
       });
       return filtered.join("\n").trim();
