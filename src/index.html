@@ -672,7 +672,30 @@
       });
       return filtered.join("\n").trim();
     }
+ function hidePriceForJewelry(text, source){
+  let result = cleanCaption(text);
 
+  if(source !== "Украшения") return result;
+
+  const lines = result.split("\n").filter(Boolean);
+
+  const filtered = lines.filter(line=>{
+    const s = line.trim();
+
+    if(/\d+\s*€/.test(s)) return false;
+    if(/€\s*\d+/.test(s)) return false;
+    if(/\d+\s*eur/i.test(s)) return false;
+    if(/\d+\s*\$/.test(s)) return false;
+    if(/цена/i.test(s)) return false;
+    if(/price/i.test(s)) return false;
+
+    return true;
+  });
+
+  filtered.push("Цена по запросу");
+
+  return filtered.join("\n").trim();
+}
     function imgUrl(fileIdOrUrl){
       if(!fileIdOrUrl) return "";
       const v = String(fileIdOrUrl);
@@ -1167,7 +1190,7 @@
 
       const source = getSource(p);
       const brand = (p.brand || "").toString().trim();
-      const caption = cleanCaption(p.caption || "");
+      const caption = hidePriceForJewelry(p.caption || "", source);
 
       const {tg, wa} = buyLinks(source);
 
