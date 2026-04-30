@@ -26,10 +26,17 @@
     }
 
     .top{
-      position:sticky; top:0; z-index:1000;
-      background: rgba(246,247,251,.92);
-      backdrop-filter: blur(10px);
-      border-bottom:1px solid var(--stroke);
+  position:sticky; top:0; z-index:1000;
+  background: rgba(246,247,251,.92);
+  backdrop-filter: blur(10px);
+  border-bottom:1px solid var(--stroke);
+
+  transition: transform 0.25s ease;
+  will-change: transform;
+
+  .top.hideTop{
+  transform: translateY(-100%);
+    
     }
     .wrap{max-width:1100px; margin:0 auto; padding:10px;}
     .inputs{display:grid; gap:6px;}
@@ -1464,9 +1471,25 @@ $("tabAbout").onclick = ()=>setActiveTab("about");
     }
     $("toTop").addEventListener("click", scrollToTopSoft);
 
+    let scrollTimer = null;
+
+function hideTopWhileScroll(){
+  const top = document.querySelector(".top");
+  if(!top) return;
+
+  if(window.scrollY > 100){
+    top.classList.add("hideTop");
+  }
+
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(()=>{
+    top.classList.remove("hideTop");
+  }, 300);
+}
     window.addEventListener("scroll", ()=>{
       toggleToTop();
       onScrollAutoLoad();
+      hideTopWhileScroll();
     }, {passive:true});
 
     async function openItemFromUrlIfNeeded(){
