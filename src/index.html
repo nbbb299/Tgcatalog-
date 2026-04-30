@@ -67,23 +67,30 @@
       overflow: visible;
     }
     .tabs{
-      display:inline-flex;
-      background:#fff;
-      border:1px solid var(--stroke);
-      border-radius:16px;
-      overflow:hidden;
-      box-shadow: 0 8px 18px rgba(0,0,0,.04);
-    }
+  display:flex;
+  overflow-x:auto;
+  -webkit-overflow-scrolling: touch;
+  gap:6px;
+
+  background:#fff;
+  border:1px solid var(--stroke);
+  border-radius:16px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.04);
+}
+    .tabs::-webkit-scrollbar{
+  display:none;
+}
     .tabBtn{
-      padding:10px 12px;
-      font-weight:900;
-      font-size:13px;
-      background:transparent;
-      color:#111;
-      border:0;
-      cursor:pointer;
-      min-width:110px;
-    }
+  flex:0 0 auto;
+  padding:10px 12px;
+  font-weight:900;
+  font-size:13px;
+  background:transparent;
+  color:#111;
+  border:0;
+  cursor:pointer;
+  min-width:110px;
+}
     .tabBtn:not(.active){opacity:.55}
     .tabBtn.active{
       background:#111;
