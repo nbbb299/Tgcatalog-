@@ -64,13 +64,17 @@
       gap:10px;
       flex-wrap:wrap;
       align-items:center;
-      overflow: visible;
+      overflow: hidden;
     }
     .tabs{
   display:flex;
   overflow-x:auto;
   -webkit-overflow-scrolling: touch;
   gap:6px;
+
+  width:100%;
+  max-width:100%;
+  min-width:0;
 
   background:#fff;
   border:1px solid var(--stroke);
