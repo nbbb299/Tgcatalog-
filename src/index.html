@@ -201,6 +201,82 @@
   }
     }
 
+    /* Карточки брендов во вкладке Outlets */
+
+.outletToolbar{
+  display:none;
+  max-width:1100px;
+  margin:0 auto;
+  padding:14px 14px 0;
+  align-items:center;
+  gap:12px;
+}
+
+.outletToolbar.show{
+  display:flex;
+}
+
+.outletBack{
+  padding:10px 14px;
+  border-radius:14px;
+  background:#fff;
+  border:1px solid var(--stroke);
+  color:#111;
+  font-size:13px;
+  font-weight:900;
+  box-shadow:0 8px 18px rgba(0,0,0,.04);
+}
+
+.outletTitle{
+  font-size:18px;
+  font-weight:900;
+}
+
+.grid.outletBrandsGrid{
+  grid-template-columns:repeat(2, minmax(0,1fr));
+}
+
+.outletBrandCard{
+  min-height:135px;
+  background:#fff;
+  border:1px solid var(--stroke);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  padding:18px 14px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  cursor:pointer;
+  color:#111;
+}
+
+.outletBrandCard:active{
+  transform:translateY(1px);
+}
+
+.outletBrandName{
+  font-size:17px;
+  line-height:1.15;
+  font-weight:900;
+  text-transform:uppercase;
+  overflow-wrap:anywhere;
+}
+
+.outletBrandBottom{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:8px;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+}
+
+.outletBrandArrow{
+  color:#111;
+  font-size:22px;
+  line-height:1;
+}
     .gridWrap{max-width:1100px; margin:0 auto; padding:14px;}
     .grid{
       display:grid;
@@ -622,8 +698,16 @@
     </div>
   </div>
 
-  <div class="gridWrap">
-    <div id="grid" class="grid"></div>
+  <div id="outletToolbar" class="outletToolbar">
+  <button id="outletBack" class="outletBack" type="button">
+    ← Назад к брендам
+  </button>
+
+  <div id="outletTitle" class="outletTitle"></div>
+</div>
+
+<div class="gridWrap">
+  <div id="grid" class="grid"></div>
     <div id="empty" class="empty" style="display:none">Загрузка…</div>
   </div>
 
@@ -935,6 +1019,198 @@ filtered.push(
 
     let currentBrandMenu = "";
     let brandsLoaded = false;
+    let outletBrandsView = false;
+let outletBrandsLoaded = false;
+let outletBrands = [];
+let outletBrandsLoading = false;
+
+function outletProductWord(count){
+  const n = Math.abs(Number(count) || 0) % 100;
+  const n1 = n % 10;
+
+  if(n > 10 && n < 20) return "товаров";
+  if(n1 === 1) return "товар";
+  if(n1 >= 2 && n1 <= 4) return "товара";
+  return "товаров";
+}
+
+function showOutletToolbar(show, title=""){
+  const toolbar = $("outletToolbar");
+  const titleEl = $("outletTitle");
+
+  toolbar.classList.toggle("show", !!show);
+  titleEl.textContent = title || "";
+}
+
+function renderOutletBrands(){
+  const grid = $("grid");
+
+  grid.innerHTML = "";
+  grid.classList.add("outletBrandsGrid");
+
+  $("pager").style.display = "none";
+  $("moreMeta").style.display = "none";
+  showOutletToolbar(false);
+
+  if(outletBrandsLoading){
+    setEmptyState("loading");
+    return;
+  }
+
+  if(!outletBrands.length){
+    setEmptyState("empty");
+    return;
+  }
+
+  setEmptyState("hide");
+
+  const frag = document.createDocumentFragment();
+
+  outletBrands.forEach(item=>{
+    const brandName = String(item.brand || "").trim();
+    const count = Number(item.count || 0);
+
+    if(!brandName) return;
+
+    const card = document.createElement("div");
+    card.className = "outletBrandCard";
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+
+    const name = document.createElement("div");
+    name.className = "outletBrandName";
+    name.textContent = brandName;
+
+    const bottom = document.createElement("div");
+    bottom.className = "outletBrandBottom";
+
+    const amount = document.createElement("div");
+    amount.textContent =
+      `${count} ${outletProductWord(count)}`;
+
+    const arrow = document.createElement("div");
+    arrow.className = "outletBrandArrow";
+    arrow.textContent = "→";
+
+    bottom.appendChild(amount);
+    bottom.appendChild(arrow);
+
+    card.appendChild(name);
+    card.appendChild(bottom);
+
+    const open = ()=>{
+      openOutletBrand(brandName);
+    };
+
+    card.onclick = open;
+
+    card.addEventListener("keydown", e=>{
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        open();
+      }
+    });
+
+    frag.appendChild(card);
+  });
+
+  grid.appendChild(frag);
+}
+
+async function loadOutletBrands(force=false){
+  outletBrandsView = true;
+  showOutletToolbar(false);
+
+  $("grid").classList.add("outletBrandsGrid");
+  $("pager").style.display = "none";
+  $("moreMeta").style.display = "none";
+
+  if(outletBrandsLoaded && !force){
+    renderOutletBrands();
+    return;
+  }
+
+  if(outletBrandsLoading) return;
+
+  outletBrandsLoading = true;
+  renderOutletBrands();
+
+  try{
+    const r = await fetch("/api/outlet-brands", {
+      cache:"no-store"
+    });
+
+    if(!r.ok){
+      throw new Error(
+        "API /api/outlet-brands вернул " + r.status
+      );
+    }
+
+    const payload = await r.json();
+
+    outletBrands = Array.isArray(payload.brands)
+      ? payload.brands
+      : [];
+
+    outletBrandsLoaded = true;
+
+  }catch(e){
+    outletBrands = [];
+    $("status").style.display = "block";
+    $("status").textContent =
+      "Не удалось загрузить бренды Outlets. " +
+      (e && e.message ? e.message : e);
+
+  }finally{
+    outletBrandsLoading = false;
+    renderOutletBrands();
+  }
+}
+
+function openOutletBrand(brandName){
+  outletBrandsView = false;
+
+  $("grid").classList.remove("outletBrandsGrid");
+  $("q").value = "";
+  $("brand").value = brandName;
+
+  currentBrandMenu = brandName;
+  syncBrandMenuActive();
+
+  showOutletToolbar(true, brandName);
+  scrollToTopSoft();
+  fetchPage({reset:true});
+}
+
+function backToOutletBrands(){
+  outletBrandsView = true;
+
+  $("q").value = "";
+  $("brand").value = "";
+
+  currentBrandMenu = "";
+  syncBrandMenuActive();
+
+  loaded = [];
+  offset = 0;
+  hasMore = false;
+  lastTopKey = "";
+
+  scrollToTopSoft();
+  renderOutletBrands();
+}
+
+function prepareOutletProductResults(title=""){
+  if(currentSource !== "Outlets") return;
+
+  outletBrandsView = false;
+  $("grid").classList.remove("outletBrandsGrid");
+
+  showOutletToolbar(
+    true,
+    title || $("brand").value.trim() || "Результаты поиска"
+  );
+}
 
     function currentFilters(){
       const q = norm($("q").value);
@@ -1031,8 +1307,14 @@ filtered.push(
     }
 
     function render(){
-      const grid = $("grid");
-      grid.innerHTML = "";
+  if(currentSource === "Outlets" && outletBrandsView){
+    renderOutletBrands();
+    return;
+  }
+
+  const grid = $("grid");
+  grid.classList.remove("outletBrandsGrid");
+  grid.innerHTML = "";
 
       if(!loaded.length){
         $("pager").style.display = "none";
@@ -1060,6 +1342,7 @@ filtered.push(
     }
 
     async function fetchPage({reset=false}={}){
+      if(currentSource === "Outlets" && outletBrandsView) return;
       if(isLoading) return;
       if(document.hidden) return;
 
@@ -1129,6 +1412,7 @@ filtered.push(
     }
 
     async function refreshTop(){
+      if(currentSource === "Outlets" && outletBrandsView) return;
       if(isLoading) return;
       if(document.hidden) return;
 
@@ -1370,13 +1654,19 @@ filtered.push(
   const status = $("status");
   const empty = $("empty");
 
+  closeBrandDropdown();
+  showOutletToolbar(false);
+
   if(source === "about"){
+    outletBrandsView = false;
+
     if(gridWrap) gridWrap.style.display = "none";
     if(pager) pager.style.display = "none";
     if(moreMeta) moreMeta.style.display = "none";
     if(status) status.style.display = "none";
     if(empty) empty.style.display = "none";
     if(aboutPage) aboutPage.style.display = "block";
+
   } else {
     if(gridWrap) gridWrap.style.display = "block";
     if(aboutPage) aboutPage.style.display = "none";
@@ -1392,11 +1682,32 @@ filtered.push(
   ].filter(Boolean);
 
   btns.forEach(b=>{
-    const isActive = b.getAttribute("data-source") === source;
+    const isActive =
+      b.getAttribute("data-source") === source;
+
     b.classList.toggle("active", isActive);
   });
 
   scrollToTopSoft();
+
+  if(source === "Outlets"){
+    $("q").value = "";
+    $("brand").value = "";
+
+    currentBrandMenu = "";
+    syncBrandMenuActive();
+
+    loaded = [];
+    offset = 0;
+    hasMore = false;
+    lastTopKey = "";
+
+    loadOutletBrands();
+    return;
+  }
+
+  outletBrandsView = false;
+  $("grid").classList.remove("outletBrandsGrid");
 
   if(source !== "about"){
     fetchPage({reset:true});
@@ -1408,6 +1719,7 @@ $("tabGlasses").onclick = ()=>setActiveTab("Очки");
 $("tabMen").onclick = ()=>setActiveTab("Мужское");
 $("tabJewelry").onclick = ()=>setActiveTab("Украшения"); 
 $("tabAbout").onclick = ()=>setActiveTab("about");
+$("outletBack").onclick = backToOutletBrands;
 
     setActiveTab("Boutiques");
     $("brandToggle").onclick = toggleBrandDropdown;
@@ -1420,33 +1732,49 @@ $("tabAbout").onclick = ()=>setActiveTab("about");
     });
 
     $("find").onclick = ()=>{
-      currentBrandMenu = $("brand").value.trim();
-      syncBrandMenuActive();
-      scrollToTopSoft();
-      fetchPage({reset:true});
-    };
+  currentBrandMenu = $("brand").value.trim();
+  syncBrandMenuActive();
+
+  prepareOutletProductResults(
+    currentBrandMenu || "Результаты поиска"
+  );
+
+  scrollToTopSoft();
+  fetchPage({reset:true});
+};
 
     $("q").addEventListener("keydown", (e)=>{
-      if(e.key==="Enter"){
-        currentBrandMenu = $("brand").value.trim();
-        syncBrandMenuActive();
-        scrollToTopSoft();
-        fetchPage({reset:true});
-      }
-    });
+  if(e.key==="Enter"){
+    currentBrandMenu = $("brand").value.trim();
+    syncBrandMenuActive();
+
+    prepareOutletProductResults(
+      currentBrandMenu || "Результаты поиска"
+    );
+
+    scrollToTopSoft();
+    fetchPage({reset:true});
+  }
+});
 
     $("brand").addEventListener("keydown", (e)=>{
-      if(e.key==="Enter"){
-        currentBrandMenu = $("brand").value.trim();
-        syncBrandMenuActive();
-        scrollToTopSoft();
-        fetchPage({reset:true});
-      }
-    });
+  if(e.key==="Enter"){
+    currentBrandMenu = $("brand").value.trim();
+    syncBrandMenuActive();
+
+    prepareOutletProductResults(
+      currentBrandMenu || "Результаты поиска"
+    );
+
+    scrollToTopSoft();
+    fetchPage({reset:true});
+  }
+});
 
     $("moreBtn").onclick = ()=>fetchPage({reset:false});
 
     function onScrollAutoLoad(){
+      if(currentSource === "Outlets" && outletBrandsView) return;
       if(autoLoading) return;
       if(!hasMore) return;
       const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 700);
