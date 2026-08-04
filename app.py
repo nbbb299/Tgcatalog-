@@ -1,6 +1,7 @@
 import os
 import asyncio
 import traceback
+import re
 import time
 import requests
 from pathlib import Path
@@ -57,6 +58,10 @@ def detect_source(chat_id: int) -> str:
 
 TopicKey = Tuple[int, int]  # (chat_id, thread_id)
 topic_title_cache: Dict[TopicKey, str] = {}
+boutique_sales_cache = {
+    "ts": 0.0,
+    "data": [],
+}
 outlet_brands_cache = {
     "ts": 0.0,
     "data": [],
@@ -842,6 +847,132 @@ def get_outlet_brands():
                 "total_brands": 0,
                 "detail": "outlet_brands_fetch_failed",
             },
+            status_code=500,
+        )
+        # ================= BOUTIQUES SALES API =================
+
+def extract_discount_percent(caption: str) -> Optional[int]:
+    text = str(caption or "")
+
+    patterns = [
+        r"-\s*(\d{1,3})\s*%",
+        r"(\d{1,3})\s*%",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if not match:
+            continue
+
+        try:
+            value = int(match.group(1))
+        except Exception:
+            continue
+
+        if 0 <= value <= 100:
+            return value
+
+    return None
+
+
+@app.get("/api/boutique-sales")
+def get_boutique_sales(
+    offset: int = 0,
+    limit: int = 24,
+    brand: str = "",
+    q: str = "",
+):
+    try:
+        offset = max(0, int(offset))
+        limit = max(1, min(200, int(limit)))
+
+        now = time.time()
+        cached_at = float(boutique_sales_cache.get("ts", 0.0))
+        cached_data = boutique_sales_cache.get("data", [])
+
+        if not cached_data or now - cached_at >= 300:
+            rows = []
+            page_size = 1000
+            start = 0
+
+            while True:
+                response = (
+                    supabase.table(TABLE)
+                    .select("*")
+                    .eq("source", "Boutiques")
+                    .order("ts", desc=True)
+                    .range(start, start + page_size - 1)
+                    .execute()
+                )
+
+                chunk = response.data or []
+                rows.extend(chunk)
+
+                if len(chunk) < page_size:
+                    break
+
+                start += page_size
+
+                if start >= 500000:
+                    break
+
+            filtered_rows = []
+
+            for row in rows:
+                discount = extract_discount_percent(
+                    str(row.get("caption", "") or "")
+                )
+
+                if discount is None:
+                    continue
+
+                if 30 <= discount <= 80:
+                    item = dict(row)
+                    item["discount_percent"] = discount
+                    filtered_rows.append(item)
+
+            boutique_sales_cache["ts"] = now
+            boutique_sales_cache["data"] = filtered_rows
+            cached_data = filtered_rows
+
+        result = list(cached_data)
+
+        brand_value = str(brand or "").strip().lower()
+        if brand_value:
+            result = [
+                row
+                for row in result
+                if brand_value in str(row.get("brand", "") or "").lower()
+                or brand_value in str(row.get("caption", "") or "").lower()
+            ]
+
+        search_value = str(q or "").strip().lower()
+        if search_value:
+            result = [
+                row
+                for row in result
+                if search_value in str(row.get("brand", "") or "").lower()
+                or search_value in str(row.get("caption", "") or "").lower()
+            ]
+
+        total = len(result)
+        items = result[offset:offset + limit]
+        has_more = offset + len(items) < total
+
+        return {
+            "items": items,
+            "offset": offset,
+            "limit": limit,
+            "total": total,
+            "has_more": has_more,
+        }
+
+    except Exception as e:
+        print("BOUTIQUE SALES API ERROR", repr(e))
+        traceback.print_exc()
+
+        return JSONResponse(
+            {"detail": "boutique_sales_fetch_failed"},
             status_code=500,
         )
 # ================= SINGLE PRODUCT API =================
