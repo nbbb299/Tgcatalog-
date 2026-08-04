@@ -1,6 +1,7 @@
 import os
 import asyncio
 import traceback
+import time
 import requests
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict
@@ -56,6 +57,10 @@ def detect_source(chat_id: int) -> str:
 
 TopicKey = Tuple[int, int]  # (chat_id, thread_id)
 topic_title_cache: Dict[TopicKey, str] = {}
+outlet_brands_cache = {
+    "ts": 0.0,
+    "data": [],
+}
 
 # ================= STARTUP / SHUTDOWN =================
 
@@ -623,7 +628,222 @@ def get_brands():
         print("BRANDS API ERROR ❌", repr(e))
         traceback.print_exc()
         return JSONResponse({"brands": []}, status_code=200)
-        
+     
+# ================= OUTLETS BRAND CARDS API =================
+
+@app.get("/api/outlet-brands")
+def get_outlet_brands():
+    try:
+        now = time.time()
+        cached_at = float(outlet_brands_cache.get("ts", 0.0) or 0.0)
+        cached_data = outlet_brands_cache.get("data", [])
+
+        if cached_data and now - cached_at < 300:
+            return {
+                "brands": cached_data,
+                "total_brands": len(cached_data),
+                "cached": True,
+            }
+
+        normalize_map = {
+            "dior": "Dior",
+            "prada": "Prada",
+            "gucci": "Gucci",
+            "miumiu": "MiuMiu",
+            "miu miu": "MiuMiu",
+            "ysl": "YSL",
+            "lv": "LV",
+            "loewe": "Loewe",
+            "celine": "Celine",
+            "fendi": "Fendi",
+            "burberry": "Burberry",
+            "valentino": "Valentino",
+            "balenciaga": "Balenciaga",
+            "bottega veneta": "Bottega Veneta",
+            "brunellocucinelli": "BrunelloCucinelli",
+            "brunello cucinelli": "BrunelloCucinelli",
+            "christiandior": "ChristianDior",
+            "christian dior": "ChristianDior",
+            "dolce&gabbana": "Dolce&Gabbana",
+            "dolce & gabbana": "Dolce&Gabbana",
+            "givenchy": "Givenchy",
+            "tom ford": "Tom Ford",
+            "max mara": "Max Mara",
+            "marc jacobs": "Marc Jacobs",
+            "golden goose": "Golden Goose",
+            "goldengoose": "Golden Goose",
+            "off-white": "OFF-WHITE",
+            "off white": "OFF-WHITE",
+            "saintlaurent": "SaintLaurent",
+            "saint laurent": "SaintLaurent",
+            "zimmermann": "Zimmermann",
+            "schiaparelli": "Schiaparelli",
+            "loro piana": "Loro Piana",
+            "alexander wang": "Alexander Wang",
+            "alexsander wang": "Alexander Wang",
+            "tiffany&co": "Tiffany&Co",
+            "tiffany & co": "Tiffany&Co",
+        }
+
+        skip_exact = {
+            "reviews",
+            "review",
+            "new",
+            "outlet",
+            "sale",
+            "brand",
+            "size",
+            "price",
+        }
+
+        def clean_name(value: str) -> str:
+            value = (value or "").strip()
+
+            if not value:
+                return ""
+
+            value = value.strip(".,;:()[]{}|/\\\"' ")
+
+            if not value:
+                return ""
+
+            low = value.lower()
+
+            if low in skip_exact:
+                return ""
+
+            if "price" in low or "size" in low:
+                return ""
+
+            if value.startswith("@"):
+                return ""
+
+            if "\u20ac" in value or "$" in value:
+                return ""
+
+            for suffix in [
+                " outlet",
+                " new",
+                " boutique",
+                " boutiques",
+            ]:
+                if low.endswith(suffix):
+                    value = value[:-len(suffix)].strip()
+                    low = value.lower()
+
+            if not value:
+                return ""
+
+            if low in normalize_map:
+                return normalize_map[low]
+
+            return " ".join(
+                word.capitalize()
+                for word in value.split()
+            )
+
+        def get_row_brand(row: dict) -> str:
+            brand = clean_name(
+                str(row.get("brand", "") or "")
+            )
+
+            if brand:
+                return brand
+
+            caption = str(
+                row.get("caption", "") or ""
+            ).strip()
+
+            if not caption:
+                return ""
+
+            if "#" in caption:
+                try:
+                    tag = (
+                        caption
+                        .split("#", 1)[1]
+                        .split()[0]
+                        .strip()
+                    )
+
+                    brand = clean_name(tag)
+
+                    if brand:
+                        return brand
+
+                except Exception:
+                    pass
+
+            return ""
+
+        rows = []
+        page_size = 1000
+        start = 0
+
+        while True:
+            response = (
+                supabase.table(TABLE)
+                .select("brand,caption")
+                .eq("source", "Outlets")
+                .range(start, start + page_size - 1)
+                .execute()
+            )
+
+            chunk = response.data or []
+            rows.extend(chunk)
+
+            if len(chunk) < page_size:
+                break
+
+            start += page_size
+
+            if start >= 500000:
+                break
+
+        grouped = {}
+
+        for row in rows:
+            brand = get_row_brand(row)
+
+            if not brand:
+                continue
+
+            key = brand.lower()
+
+            if key not in grouped:
+                grouped[key] = {
+                    "brand": brand,
+                    "count": 0,
+                }
+
+            grouped[key]["count"] += 1
+
+        brands = sorted(
+            grouped.values(),
+            key=lambda item: item["brand"].lower(),
+        )
+
+        outlet_brands_cache["ts"] = now
+        outlet_brands_cache["data"] = brands
+
+        return {
+            "brands": brands,
+            "total_brands": len(brands),
+            "cached": False,
+        }
+
+    except Exception as e:
+        print("OUTLET BRANDS API ERROR", repr(e))
+        traceback.print_exc()
+
+        return JSONResponse(
+            {
+                "brands": [],
+                "total_brands": 0,
+                "detail": "outlet_brands_fetch_failed",
+            },
+            status_code=500,
+        )
 # ================= SINGLE PRODUCT API =================
 
 @app.get("/api/product/{row_id}")
