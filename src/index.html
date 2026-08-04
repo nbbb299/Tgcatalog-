@@ -673,6 +673,7 @@
         <div class="tabsWrap">
           <div class="tabs" role="tablist" aria-label="Source filter">
             <button class="tabBtn active" id="tabBoutiques" data-source="Boutiques">Boutiques</button>
+            <button class="tabBtn" id="tabSales" data-source="sales" role="tab">Скидки 30–70%</button>
             <button class="tabBtn" id="tabOutlets" data-source="Outlets" role="tab">Outlets</button>
             <button class="tabBtn" id="tabGlasses" data-source="Очки" role="tab">Очки</button>
             <button class="tabBtn" id="tabMen" data-source="Мужское">Мужское</button>
@@ -1213,21 +1214,38 @@ function prepareOutletProductResults(title=""){
 }
 
     function currentFilters(){
-      const q = norm($("q").value);
-      const b = normBrand($("brand").value);
-      const source = (currentSource === "all") ? "" : currentSource;
-      return { q, brand: b, source };
-    }
+  const q = norm($("q").value);
+  const b = normBrand($("brand").value);
+
+  let source = (currentSource === "all") ? "" : currentSource;
+
+  if(currentSource === "sales"){
+    source = "";
+  }
+
+  return { q, brand: b, source };
+}
 
     function buildProductsUrl({offset, limit, q, brand, source}){
-      const u = new URL("/api/products", location.origin);
-      u.searchParams.set("offset", String(offset || 0));
-      u.searchParams.set("limit", String(limit || PAGE_SIZE));
-      if(q) u.searchParams.set("q", q);
-      if(brand) u.searchParams.set("brand", brand);
-      if(source) u.searchParams.set("source", source);
-      return u.toString();
-    }
+  const endpoint =
+    currentSource === "sales"
+      ? "/api/boutique-sales"
+      : "/api/products";
+
+  const u = new URL(endpoint, location.origin);
+
+  u.searchParams.set("offset", String(offset || 0));
+  u.searchParams.set("limit", String(limit || PAGE_SIZE));
+
+  if(q) u.searchParams.set("q", q);
+  if(brand) u.searchParams.set("brand", brand);
+
+  if(source && currentSource !== "sales"){
+    u.searchParams.set("source", source);
+  }
+
+  return u.toString();
+}
 
     async function loadBrands(){
       if(brandsLoaded) return;
@@ -1647,6 +1665,12 @@ function prepareOutletProductResults(title=""){
     function setActiveTab(source){
   currentSource = source;
 
+      if(source === "sales"){
+  outletBrandsView = false;
+  $("grid").classList.remove("outletBrandsGrid");
+  showOutletToolbar(false);
+}
+
   const aboutPage = document.getElementById("aboutPage");
   const gridWrap = document.querySelector(".gridWrap");
   const pager = $("pager");
@@ -1673,13 +1697,14 @@ function prepareOutletProductResults(title=""){
   }
 
   const btns = [
-    $("tabBoutiques"),
-    $("tabOutlets"),
-    $("tabGlasses"),
-    $("tabMen"),
-    $("tabJewelry"),
-    $("tabAbout")
-  ].filter(Boolean);
+  $("tabBoutiques"),
+  $("tabSales"),
+  $("tabOutlets"),
+  $("tabGlasses"),
+  $("tabMen"),
+  $("tabJewelry"),
+  $("tabAbout")
+].filter(Boolean);
 
   btns.forEach(b=>{
     const isActive =
@@ -1714,6 +1739,7 @@ function prepareOutletProductResults(title=""){
   }
 }
 $("tabBoutiques").onclick = ()=>setActiveTab("Boutiques");
+$("tabSales").onclick = ()=>setActiveTab("sales");
 $("tabOutlets").onclick = ()=>setActiveTab("Outlets");
 $("tabGlasses").onclick = ()=>setActiveTab("Очки");
 $("tabMen").onclick = ()=>setActiveTab("Мужское");
@@ -1821,7 +1847,7 @@ $("outletBack").onclick = backToOutletBrands;
         currentSource = "all";
         lastTopKey = "";
 
-        const btns = [ $("tabAll"), $("tabBoutiques"), $("tabOutlets"), $("tabGlasses"), $("tabMen") ].filter(Boolean);
+        const btns = [ $("tabAll"), $("tabBoutiques"),$("tabSales"),$("tabOutlets"), $("tabGlasses"), $("tabMen") ].filter(Boolean);
         btns.forEach(b=>{
           const isActive = b.getAttribute("data-source") === "all";
           b.classList.toggle("active", isActive);
