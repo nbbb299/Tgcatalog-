@@ -1303,25 +1303,25 @@ def get_jewelry_no_brand(
 
         filtered = []
 
-for row in rows:
-    # Этот товар попадает в специальную карточку
-    # только если определить бренд не удалось.
-    if get_row_brand(row):
-        continue
+        for row in rows:
+            # Товар относится к "Часы и украшения",
+            # только если бренд определить не удалось.
+            if get_row_brand(row):
+                continue
 
-    if q_value:
-        haystack = " ".join([
-            str(row.get("caption", "") or ""),
-            str(row.get("brand", "") or ""),
-        ]).lower()
+            if q_value:
+                haystack = " ".join([
+                    str(row.get("caption", "") or ""),
+                    str(row.get("brand", "") or ""),
+                ]).lower()
 
-        if q_value not in haystack:
-            continue
+                if q_value not in haystack:
+                    continue
 
-    filtered.append(row)
+            filtered.append(row)
 
-total = len(filtered)
-items = filtered[offset:offset + limit]
+        total = len(filtered)
+        items = filtered[offset:offset + limit]
 
         return {
             "items": items,
