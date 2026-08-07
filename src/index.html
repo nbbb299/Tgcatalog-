@@ -1029,6 +1029,7 @@ let jewelryBrandsView = false;
 let jewelryBrandsLoaded = false;
 let jewelryBrands = [];
 let jewelryBrandsLoading = false;
+let jewelryNoBrandOnly = false;
 
 function outletProductWord(count){
   const n = Math.abs(Number(count) || 0) % 100;
@@ -1091,8 +1092,7 @@ function renderOutletBrands(){
     bottom.className = "outletBrandBottom";
 
     const amount = document.createElement("div");
-    amount.textContent =
-      `${count} ${outletProductWord(count)}`;
+    amount.textContent = `${count} ${outletProductWord(count)}`;
 
     const arrow = document.createElement("div");
     arrow.className = "outletBrandArrow";
@@ -1122,50 +1122,88 @@ function renderOutletBrands(){
 
   grid.appendChild(frag);
 }
+
 function renderJewelryBrands(){
-    const grid = $("grid");
+  const grid = $("grid");
 
-    grid.innerHTML = "";
-    grid.classList.add("outletBrandsGrid");
+  grid.innerHTML = "";
+  grid.classList.add("outletBrandsGrid");
 
-    $("pager").style.display = "none";
-    $("moreMeta").style.display = "none";
+  $("pager").style.display = "none";
+  $("moreMeta").style.display = "none";
+  showOutletToolbar(false);
 
-    if(!jewelryBrands.length){
-        setEmptyState("empty");
-        return;
-    }
+  if(jewelryBrandsLoading){
+    setEmptyState("loading");
+    return;
+  }
 
-    setEmptyState("hide");
+  if(!jewelryBrands.length){
+    setEmptyState("empty");
+    return;
+  }
 
-    const frag = document.createDocumentFragment();
+  setEmptyState("hide");
 
-    jewelryBrands.forEach(item=>{
-        const brandName = String(item.brand || "").trim();
-        const count = Number(item.count || 0);
+  const frag = document.createDocumentFragment();
 
-        const card = document.createElement("div");
-        card.className = "outletBrandCard";
-        card.setAttribute("role","button");
+  jewelryBrands.forEach(item=>{
+    const isNoBrand = item.special === "no_brand";
+    const brandName = String(item.brand || "").trim();
+    const count = Number(item.count || 0);
 
-        card.innerHTML = `
-            <div class="brandName">${brandName}</div>
-            <div class="brandCount">${count} ${outletProductWord(count)}</div>
-        `;
+    if(!brandName && !isNoBrand) return;
 
-        card.onclick = ()=>{
-            if(item.special==="no_brand"){
-                openJewelryBrand("");
-            }else{
-                openJewelryBrand(brandName);
-            }
-        };
+    const card = document.createElement("div");
+    card.className = "outletBrandCard";
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
 
-        frag.appendChild(card);
+    const name = document.createElement("div");
+    name.className = "outletBrandName";
+    name.textContent = isNoBrand
+      ? "Часы и украшения"
+      : brandName;
+
+    const bottom = document.createElement("div");
+    bottom.className = "outletBrandBottom";
+
+    const amount = document.createElement("div");
+    amount.textContent = `${count} ${outletProductWord(count)}`;
+
+    const arrow = document.createElement("div");
+    arrow.className = "outletBrandArrow";
+    arrow.textContent = "→";
+
+    bottom.appendChild(amount);
+    bottom.appendChild(arrow);
+
+    card.appendChild(name);
+    card.appendChild(bottom);
+
+    const open = ()=>{
+      if(isNoBrand){
+        openJewelryBrand("", true);
+      }else{
+        openJewelryBrand(brandName, false);
+      }
+    };
+
+    card.onclick = open;
+
+    card.addEventListener("keydown", e=>{
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        open();
+      }
     });
 
-    grid.appendChild(frag);
+    frag.appendChild(card);
+  });
+
+  grid.appendChild(frag);
 }
+
 async function loadOutletBrands(force=false){
   outletBrandsView = true;
   showOutletToolbar(false);
@@ -1205,6 +1243,7 @@ async function loadOutletBrands(force=false){
 
   }catch(e){
     outletBrands = [];
+
     $("status").style.display = "block";
     $("status").textContent =
       "Не удалось загрузить бренды Outlets. " +
@@ -1216,14 +1255,29 @@ async function loadOutletBrands(force=false){
   }
 }
 
-    async function loadJewelryBrands(){
-  if(jewelryBrandsLoaded || jewelryBrandsLoading) return;
+async function loadJewelryBrands(force=false){
+  jewelryBrandsView = true;
+  jewelryNoBrandOnly = false;
+
+  showOutletToolbar(false);
+
+  $("grid").classList.add("outletBrandsGrid");
+  $("pager").style.display = "none";
+  $("moreMeta").style.display = "none";
+
+  if(jewelryBrandsLoaded && !force){
+    renderJewelryBrands();
+    return;
+  }
+
+  if(jewelryBrandsLoading) return;
 
   jewelryBrandsLoading = true;
+  renderJewelryBrands();
 
   try{
     const r = await fetch("/api/jewelry-brands", {
-      cache: "no-store"
+      cache:"no-store"
     });
 
     if(!r.ok){
@@ -1250,8 +1304,10 @@ async function loadOutletBrands(force=false){
 
   }finally{
     jewelryBrandsLoading = false;
+    renderJewelryBrands();
   }
 }
+
 function openOutletBrand(brandName){
   outletBrandsView = false;
 
@@ -1263,27 +1319,33 @@ function openOutletBrand(brandName){
   syncBrandMenuActive();
 
   showOutletToolbar(true, brandName);
+
   scrollToTopSoft();
   fetchPage({reset:true});
 }
-function openJewelryBrand(brandName){
+
+function openJewelryBrand(brandName, noBrand=false){
   jewelryBrandsView = false;
+  jewelryNoBrandOnly = !!noBrand;
 
   $("grid").classList.remove("outletBrandsGrid");
   $("q").value = "";
-  $("brand").value = brandName;
+  $("brand").value = noBrand ? "" : brandName;
 
-  currentBrandMenu = brandName;
+  currentBrandMenu = noBrand ? "" : brandName;
   syncBrandMenuActive();
 
   showOutletToolbar(
     true,
-    brandName || "Часы и украшения"
+    noBrand
+      ? "Часы и украшения"
+      : brandName
   );
 
   scrollToTopSoft();
   fetchPage({reset:true});
 }
+
 function backToOutletBrands(){
   outletBrandsView = true;
 
@@ -1301,22 +1363,24 @@ function backToOutletBrands(){
   scrollToTopSoft();
   renderOutletBrands();
 }
+
 function backToJewelryBrands(){
-    jewelryBrandsView = true;
+  jewelryBrandsView = true;
+  jewelryNoBrandOnly = false;
 
-    $("q").value = "";
-    $("brand").value = "";
+  $("q").value = "";
+  $("brand").value = "";
 
-    currentBrandMenu = "";
-    syncBrandMenuActive();
+  currentBrandMenu = "";
+  syncBrandMenuActive();
 
-    loaded = [];
-    offset = 0;
-    hasMore = false;
-    lastTopKey = "";
+  loaded = [];
+  offset = 0;
+  hasMore = false;
+  lastTopKey = "";
 
-    scrollToTopSoft();
-    renderJewelryBrands();
+  scrollToTopSoft();
+  renderJewelryBrands();
 }
 function prepareOutletProductResults(title=""){
   if(currentSource !== "Outlets") return;
@@ -1340,7 +1404,7 @@ function prepareJewelryProductResults(title=""){
         title || $("brand").value.trim() || "Результаты поиска"
     );
 }
-    function currentFilters(){
+function currentFilters(){
   const q = norm($("q").value);
   const b = normBrand($("brand").value);
 
@@ -1353,21 +1417,38 @@ function prepareJewelryProductResults(title=""){
   return { q, brand: b, source };
 }
 
-    function buildProductsUrl({offset, limit, q, brand, source}){
-  const endpoint =
-    currentSource === "sales"
-      ? "/api/boutique-sales"
-      : "/api/products";
+function buildProductsUrl({offset, limit, q, brand, source}){
+  let endpoint = "/api/products";
+
+  if(currentSource === "sales"){
+    endpoint = "/api/boutique-sales";
+  }
+
+  if(currentSource === "Украшения" && jewelryNoBrandOnly){
+    endpoint = "/api/jewelry-no-brand";
+  }
 
   const u = new URL(endpoint, location.origin);
 
   u.searchParams.set("offset", String(offset || 0));
   u.searchParams.set("limit", String(limit || PAGE_SIZE));
 
-  if(q) u.searchParams.set("q", q);
-  if(brand) u.searchParams.set("brand", brand);
+  if(q){
+    u.searchParams.set("q", q);
+  }
 
-  if(source && currentSource !== "sales"){
+  if(
+    brand &&
+    !(currentSource === "Украшения" && jewelryNoBrandOnly)
+  ){
+    u.searchParams.set("brand", brand);
+  }
+
+  if(
+    source &&
+    currentSource !== "sales" &&
+    !(currentSource === "Украшения" && jewelryNoBrandOnly)
+  ){
     u.searchParams.set("source", source);
   }
 
@@ -1795,15 +1876,8 @@ function prepareJewelryProductResults(title=""){
       card.appendChild(body);
       return card;
     }
-
-    function setActiveTab(source){
+function setActiveTab(source){
   currentSource = source;
-
-      if(source === "sales"){
-  outletBrandsView = false;
-  $("grid").classList.remove("outletBrandsGrid");
-  showOutletToolbar(false);
-}
 
   const aboutPage = document.getElementById("aboutPage");
   const gridWrap = document.querySelector(".gridWrap");
@@ -1815,8 +1889,25 @@ function prepareJewelryProductResults(title=""){
   closeBrandDropdown();
   showOutletToolbar(false);
 
+  /*
+    При переходе между разделами обязательно
+    выключаем специальные режимы предыдущего раздела.
+  */
+  if(source !== "Outlets"){
+    outletBrandsView = false;
+  }
+
+  if(source !== "Украшения"){
+    jewelryBrandsView = false;
+    jewelryNoBrandOnly = false;
+  }
+
+  $("grid").classList.remove("outletBrandsGrid");
+
   if(source === "about"){
     outletBrandsView = false;
+    jewelryBrandsView = false;
+    jewelryNoBrandOnly = false;
 
     if(gridWrap) gridWrap.style.display = "none";
     if(pager) pager.style.display = "none";
@@ -1824,21 +1915,20 @@ function prepareJewelryProductResults(title=""){
     if(status) status.style.display = "none";
     if(empty) empty.style.display = "none";
     if(aboutPage) aboutPage.style.display = "block";
-
-  } else {
+  }else{
     if(gridWrap) gridWrap.style.display = "block";
     if(aboutPage) aboutPage.style.display = "none";
   }
 
   const btns = [
-  $("tabBoutiques"),
-  $("tabSales"),
-  $("tabOutlets"),
-  $("tabGlasses"),
-  $("tabMen"),
-  $("tabJewelry"),
-  $("tabAbout")
-].filter(Boolean);
+    $("tabBoutiques"),
+    $("tabSales"),
+    $("tabOutlets"),
+    $("tabGlasses"),
+    $("tabMen"),
+    $("tabJewelry"),
+    $("tabAbout")
+  ].filter(Boolean);
 
   btns.forEach(b=>{
     const isActive =
@@ -1849,7 +1939,14 @@ function prepareJewelryProductResults(title=""){
 
   scrollToTopSoft();
 
+  /*
+    OUTLETS:
+    сначала показываем карточки брендов.
+  */
   if(source === "Outlets"){
+    jewelryBrandsView = false;
+    jewelryNoBrandOnly = false;
+
     $("q").value = "";
     $("brand").value = "";
 
@@ -1864,7 +1961,16 @@ function prepareJewelryProductResults(title=""){
     loadOutletBrands();
     return;
   }
-if(source === "Украшения"){
+
+  /*
+    УКРАШЕНИЯ:
+    сначала показываем карточки брендов.
+  */
+  if(source === "Украшения"){
+    outletBrandsView = false;
+    jewelryBrandsView = true;
+    jewelryNoBrandOnly = false;
+
     $("q").value = "";
     $("brand").value = "";
 
@@ -1878,9 +1984,16 @@ if(source === "Украшения"){
 
     loadJewelryBrands();
     return;
-}
-  outletBrandsView = false;
-  $("grid").classList.remove("outletBrandsGrid");
+  }
+
+  /*
+    Обычные разделы.
+  */
+  if(source === "sales"){
+    outletBrandsView = false;
+    jewelryBrandsView = false;
+    jewelryNoBrandOnly = false;
+  }
 
   if(source !== "about"){
     fetchPage({reset:true});
@@ -1954,16 +2067,26 @@ $("outletBack").onclick = ()=>{
     $("moreBtn").onclick = ()=>fetchPage({reset:false});
 
     function onScrollAutoLoad(){
-      if(currentSource === "Outlets" && outletBrandsView) return;
-      if(autoLoading) return;
-      if(!hasMore) return;
-      const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 700);
-      if(nearBottom){
-        autoLoading = true;
-        fetchPage({reset:false});
-        setTimeout(()=>{ autoLoading = false; }, 160);
-      }
-    }
+  if(currentSource === "Outlets" && outletBrandsView) return;
+  if(currentSource === "Украшения" && jewelryBrandsView) return;
+
+  if(autoLoading) return;
+  if(!hasMore) return;
+
+  const nearBottom =
+    (window.innerHeight + window.scrollY) >=
+    (document.body.offsetHeight - 700);
+
+  if(nearBottom){
+    autoLoading = true;
+
+    fetchPage({reset:false});
+
+    setTimeout(()=>{
+      autoLoading = false;
+    }, 160);
+  }
+}
 
     function scrollToTopSoft(){ window.scrollTo({ top: 0, behavior: "smooth" }); }
     function toggleToTop(){
