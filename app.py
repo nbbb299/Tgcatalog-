@@ -975,6 +975,185 @@ def get_boutique_sales(
             {"detail": "boutique_sales_fetch_failed"},
             status_code=500,
         )
+
+# ================= JEWELRY BRAND CARDS API =================
+
+jewelry_brands_cache = {
+    "ts": 0.0,
+    "data": [],
+}
+
+@app.get("/api/jewelry-brands")
+def get_jewelry_brands():
+    try:
+        now = time.time()
+        cached_at = float(jewelry_brands_cache.get("ts", 0.0))
+        cached_data = jewelry_brands_cache.get("data", [])
+
+        if cached_data and now - cached_at < 300:
+            return {
+                "brands": cached_data,
+                "total_brands": len(cached_data),
+                "cached": True,
+            }
+
+        rows = []
+        page_size = 1000
+        start = 0
+
+        while True:
+            response = (
+                supabase.table(TABLE)
+                .select("brand,caption")
+                .eq("source", "Украшения")
+                .range(start, start + page_size - 1)
+                .execute()
+            )
+
+            chunk = response.data or []
+            rows.extend(chunk)
+
+            if len(chunk) < page_size:
+                break
+
+            start += page_size
+
+            if start >= 500000:
+                break
+
+        normalize_map = {
+            "cartier": "Cartier",
+            "chopard": "Chopard",
+            "bvlgari": "Bvlgari",
+            "bulgari": "Bvlgari",
+            "tiffany": "Tiffany & Co",
+            "tiffany&co": "Tiffany & Co",
+            "tiffany & co": "Tiffany & Co",
+            "messika": "Messika",
+            "vancleef": "Van Cleef & Arpels",
+            "van cleef": "Van Cleef & Arpels",
+            "van cleef & arpels": "Van Cleef & Arpels",
+            "vca": "Van Cleef & Arpels",
+            "boucheron": "Boucheron",
+            "chaumet": "Chaumet",
+            "graff": "Graff",
+            "piaget": "Piaget",
+            "dior": "Dior",
+            "hermes": "Hermès",
+            "hermès": "Hermès",
+            "rolex": "Rolex",
+            "omega": "Omega",
+            "patek philippe": "Patek Philippe",
+            "audemars piguet": "Audemars Piguet",
+            "vacheron constantin": "Vacheron Constantin",
+            "jaeger-lecoultre": "Jaeger-LeCoultre",
+            "jaeger lecoultre": "Jaeger-LeCoultre",
+        }
+
+        skip_exact = {
+            "reviews", "review", "new", "sale", "brand",
+            "size", "price", "по вопросам", "размер"
+        }
+
+        def clean_name(value: str) -> str:
+            value = (value or "").strip()
+            if not value:
+                return ""
+
+            value = value.strip(".,;:()[]{}|/\\\"' ")
+            if not value:
+                return ""
+
+            low = value.lower()
+
+            if low in skip_exact:
+                return ""
+
+            if "price" in low or "размер" in low or "по вопросам" in low:
+                return ""
+
+            if value.startswith("@"):
+                return ""
+
+            if "€" in value or "$" in value:
+                return ""
+
+            if low in normalize_map:
+                return normalize_map[low]
+
+            return " ".join(word.capitalize() for word in value.split())
+
+        def get_row_brand(row: dict) -> str:
+            brand = clean_name(str(row.get("brand", "") or ""))
+            if brand:
+                return brand
+
+            caption = str(row.get("caption", "") or "").strip()
+
+            if "#" in caption:
+                try:
+                    tag = caption.split("#", 1)[1].split()[0].strip()
+                    brand = clean_name(tag)
+                    if brand:
+                        return brand
+                except Exception:
+                    pass
+
+            return ""
+
+        grouped = {}
+        no_brand_count = 0
+
+        for row in rows:
+            brand = get_row_brand(row)
+
+            if not brand:
+                no_brand_count += 1
+                continue
+
+            key = brand.lower()
+
+            if key not in grouped:
+                grouped[key] = {
+                    "brand": brand,
+                    "count": 0,
+                }
+
+            grouped[key]["count"] += 1
+
+        brands = sorted(
+            grouped.values(),
+            key=lambda item: item["brand"].lower(),
+        )
+
+        if no_brand_count > 0:
+            brands.insert(0, {
+                "brand": "Часы и украшения",
+                "count": no_brand_count,
+                "special": "no_brand",
+            })
+
+        jewelry_brands_cache["ts"] = now
+        jewelry_brands_cache["data"] = brands
+
+        return {
+            "brands": brands,
+            "total_brands": len(brands),
+            "cached": False,
+        }
+
+    except Exception as e:
+        print("JEWELRY BRANDS API ERROR", repr(e))
+        traceback.print_exc()
+
+        return JSONResponse(
+            {
+                "brands": [],
+                "total_brands": 0,
+                "detail": "jewelry_brands_fetch_failed",
+            },
+            status_code=500,
+        )
 # ================= SINGLE PRODUCT API =================
 
 @app.get("/api/product/{row_id}")
