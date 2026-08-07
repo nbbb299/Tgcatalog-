@@ -1154,6 +1154,198 @@ def get_jewelry_brands():
             },
             status_code=500,
         )
+        # ================ JEWELRY NO-BRAND PRODUCTS API ================
+
+@app.get("/api/jewelry-no-brand")
+def get_jewelry_no_brand(
+    offset: int = 0,
+    limit: int = 24,
+    q: str = "",
+):
+    try:
+        offset = max(0, int(offset))
+        limit = max(1, min(200, int(limit)))
+
+        q_value = str(q or "").strip().lower()
+
+        rows = []
+        page_size = 1000
+        start = 0
+
+        while True:
+            response = (
+                supabase.table(TABLE)
+                .select("*")
+                .eq("source", "Украшения")
+                .order("ts", desc=True)
+                .range(start, start + page_size - 1)
+                .execute()
+            )
+
+            chunk = response.data or []
+            rows.extend(chunk)
+
+            if len(chunk) < page_size:
+                break
+
+            start += page_size
+
+            if start >= 500000:
+                break
+
+        normalize_map = {
+            "cartier": "Cartier",
+            "chopard": "Chopard",
+            "bvlgari": "Bvlgari",
+            "bulgari": "Bvlgari",
+            "tiffany": "Tiffany & Co",
+            "tiffany&co": "Tiffany & Co",
+            "tiffany & co": "Tiffany & Co",
+            "messika": "Messika",
+            "vancleef": "Van Cleef & Arpels",
+            "van cleef": "Van Cleef & Arpels",
+            "van cleef & arpels": "Van Cleef & Arpels",
+            "vca": "Van Cleef & Arpels",
+            "boucheron": "Boucheron",
+            "chaumet": "Chaumet",
+            "graff": "Graff",
+            "piaget": "Piaget",
+            "dior": "Dior",
+            "hermes": "Hermès",
+            "hermès": "Hermès",
+            "rolex": "Rolex",
+            "omega": "Omega",
+            "patek philippe": "Patek Philippe",
+            "audemars piguet": "Audemars Piguet",
+            "vacheron constantin": "Vacheron Constantin",
+            "jaeger-lecoultre": "Jaeger-LeCoultre",
+            "jaeger lecoultre": "Jaeger-LeCoultre",
+        }
+
+        skip_exact = {
+            "reviews",
+            "review",
+            "new",
+            "sale",
+            "brand",
+            "size",
+            "price",
+            "по вопросам",
+            "размер",
+        }
+
+        def clean_name(value: str) -> str:
+            value = (value or "").strip()
+
+            if not value:
+                return ""
+
+            value = value.strip(".,;:()[]{}|/\\\\\"' ")
+
+            if not value:
+                return ""
+
+            low = value.lower()
+
+            if low in skip_exact:
+                return ""
+
+            if (
+                "price" in low
+                or "размер" in low
+                or "по вопросам" in low
+            ):
+                return ""
+
+            if value.startswith("@"):
+                return ""
+
+            if "€" in value or "$" in value:
+                return ""
+
+            if low in normalize_map:
+                return normalize_map[low]
+
+            return " ".join(
+                word.capitalize()
+                for word in value.split()
+            )
+
+        def get_row_brand(row: dict) -> str:
+            brand = clean_name(
+                str(row.get("brand", "") or "")
+            )
+
+            if brand:
+                return brand
+
+            caption = str(
+                row.get("caption", "") or ""
+            ).strip()
+
+            if "#" in caption:
+                try:
+                    tag = (
+                        caption
+                        .split("#", 1)[1]
+                        .split()[0]
+                    )
+
+                    brand = clean_name(tag)
+
+                    if brand:
+                        return brand
+
+                except Exception:
+                    pass
+
+            return ""
+
+        filtered = []
+
+for row in rows:
+    # Этот товар попадает в специальную карточку
+    # только если определить бренд не удалось.
+    if get_row_brand(row):
+        continue
+
+    if q_value:
+        haystack = " ".join([
+            str(row.get("caption", "") or ""),
+            str(row.get("brand", "") or ""),
+        ]).lower()
+
+        if q_value not in haystack:
+            continue
+
+    filtered.append(row)
+
+total = len(filtered)
+items = filtered[offset:offset + limit]
+
+        return {
+            "items": items,
+            "offset": offset,
+            "limit": limit,
+            "total": total,
+            "has_more": offset + len(items) < total,
+        }
+
+    except Exception as e:
+        print("JEWELRY NO BRAND API ERROR", repr(e))
+        traceback.print_exc()
+
+        return JSONResponse(
+            {
+                "items": [],
+                "offset": 0,
+                "limit": limit,
+                "total": 0,
+                "has_more": False,
+                "detail": "jewelry_no_brand_fetch_failed",
+            },
+            status_code=500,
+        )
 # ================= SINGLE PRODUCT API =================
 
 @app.get("/api/product/{row_id}")
