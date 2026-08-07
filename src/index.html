@@ -1025,6 +1025,11 @@ let outletBrandsLoaded = false;
 let outletBrands = [];
 let outletBrandsLoading = false;
 
+let jewelryBrandsView = false;
+let jewelryBrandsLoaded = false;
+let jewelryBrands = [];
+let jewelryBrandsLoading = false;
+
 function outletProductWord(count){
   const n = Math.abs(Number(count) || 0) % 100;
   const n1 = n % 10;
@@ -1117,7 +1122,50 @@ function renderOutletBrands(){
 
   grid.appendChild(frag);
 }
+function renderJewelryBrands(){
+    const grid = $("grid");
 
+    grid.innerHTML = "";
+    grid.classList.add("outletBrandsGrid");
+
+    $("pager").style.display = "none";
+    $("moreMeta").style.display = "none";
+
+    if(!jewelryBrands.length){
+        setEmptyState("empty");
+        return;
+    }
+
+    setEmptyState("hide");
+
+    const frag = document.createDocumentFragment();
+
+    jewelryBrands.forEach(item=>{
+        const brandName = String(item.brand || "").trim();
+        const count = Number(item.count || 0);
+
+        const card = document.createElement("div");
+        card.className = "outletBrandCard";
+        card.setAttribute("role","button");
+
+        card.innerHTML = `
+            <div class="brandName">${brandName}</div>
+            <div class="brandCount">${count} ${outletProductWord(count)}</div>
+        `;
+
+        card.onclick = ()=>{
+            if(item.special==="no_brand"){
+                openJewelryBrand("");
+            }else{
+                openJewelryBrand(brandName);
+            }
+        };
+
+        frag.appendChild(card);
+    });
+
+    grid.appendChild(frag);
+}
 async function loadOutletBrands(force=false){
   outletBrandsView = true;
   showOutletToolbar(false);
@@ -1168,6 +1216,42 @@ async function loadOutletBrands(force=false){
   }
 }
 
+    async function loadJewelryBrands(){
+  if(jewelryBrandsLoaded || jewelryBrandsLoading) return;
+
+  jewelryBrandsLoading = true;
+
+  try{
+    const r = await fetch("/api/jewelry-brands", {
+      cache: "no-store"
+    });
+
+    if(!r.ok){
+      throw new Error(
+        "API /api/jewelry-brands вернул " + r.status
+      );
+    }
+
+    const payload = await r.json();
+
+    jewelryBrands = Array.isArray(payload.brands)
+      ? payload.brands
+      : [];
+
+    jewelryBrandsLoaded = true;
+
+  }catch(e){
+    jewelryBrands = [];
+
+    $("status").style.display = "block";
+    $("status").textContent =
+      "Не удалось загрузить бренды украшений. " +
+      (e && e.message ? e.message : e);
+
+  }finally{
+    jewelryBrandsLoading = false;
+  }
+}
 function openOutletBrand(brandName){
   outletBrandsView = false;
 
@@ -1182,7 +1266,24 @@ function openOutletBrand(brandName){
   scrollToTopSoft();
   fetchPage({reset:true});
 }
+function openJewelryBrand(brandName){
+  jewelryBrandsView = false;
 
+  $("grid").classList.remove("outletBrandsGrid");
+  $("q").value = "";
+  $("brand").value = brandName;
+
+  currentBrandMenu = brandName;
+  syncBrandMenuActive();
+
+  showOutletToolbar(
+    true,
+    brandName || "Часы и украшения"
+  );
+
+  scrollToTopSoft();
+  fetchPage({reset:true});
+}
 function backToOutletBrands(){
   outletBrandsView = true;
 
@@ -1200,7 +1301,23 @@ function backToOutletBrands(){
   scrollToTopSoft();
   renderOutletBrands();
 }
+function backToJewelryBrands(){
+    jewelryBrandsView = true;
 
+    $("q").value = "";
+    $("brand").value = "";
+
+    currentBrandMenu = "";
+    syncBrandMenuActive();
+
+    loaded = [];
+    offset = 0;
+    hasMore = false;
+    lastTopKey = "";
+
+    scrollToTopSoft();
+    renderJewelryBrands();
+}
 function prepareOutletProductResults(title=""){
   if(currentSource !== "Outlets") return;
 
@@ -1212,7 +1329,17 @@ function prepareOutletProductResults(title=""){
     title || $("brand").value.trim() || "Результаты поиска"
   );
 }
+function prepareJewelryProductResults(title=""){
+    if(currentSource !== "Украшения") return;
 
+    jewelryBrandsView = false;
+    $("grid").classList.remove("outletBrandsGrid");
+
+    showOutletToolbar(
+        true,
+        title || $("brand").value.trim() || "Результаты поиска"
+    );
+}
     function currentFilters(){
   const q = norm($("q").value);
   const b = normBrand($("brand").value);
@@ -1325,12 +1452,17 @@ function prepareOutletProductResults(title=""){
     }
 
     function render(){
-  if(currentSource === "Outlets" && outletBrandsView){
-    renderOutletBrands();
-    return;
-  }
+    if(currentSource === "Outlets" && outletBrandsView){
+        renderOutletBrands();
+        return;
+    }
 
-  const grid = $("grid");
+    if(currentSource === "Украшения" && jewelryBrandsView){
+        renderJewelryBrands();
+        return;
+    }
+
+    const grid = $("grid");
   grid.classList.remove("outletBrandsGrid");
   grid.innerHTML = "";
 
@@ -1361,6 +1493,7 @@ function prepareOutletProductResults(title=""){
 
     async function fetchPage({reset=false}={}){
       if(currentSource === "Outlets" && outletBrandsView) return;
+      if(currentSource === "Украшения" && jewelryBrandsView) return;
       if(isLoading) return;
       if(document.hidden) return;
 
@@ -1431,6 +1564,7 @@ function prepareOutletProductResults(title=""){
 
     async function refreshTop(){
       if(currentSource === "Outlets" && outletBrandsView) return;
+      if(currentSource === "Украшения" && jewelryBrandsView) return;
       if(isLoading) return;
       if(document.hidden) return;
 
@@ -1730,7 +1864,21 @@ function prepareOutletProductResults(title=""){
     loadOutletBrands();
     return;
   }
+if(source === "Украшения"){
+    $("q").value = "";
+    $("brand").value = "";
 
+    currentBrandMenu = "";
+    syncBrandMenuActive();
+
+    loaded = [];
+    offset = 0;
+    hasMore = false;
+    lastTopKey = "";
+
+    loadJewelryBrands();
+    return;
+}
   outletBrandsView = false;
   $("grid").classList.remove("outletBrandsGrid");
 
@@ -1745,7 +1893,13 @@ $("tabGlasses").onclick = ()=>setActiveTab("Очки");
 $("tabMen").onclick = ()=>setActiveTab("Мужское");
 $("tabJewelry").onclick = ()=>setActiveTab("Украшения"); 
 $("tabAbout").onclick = ()=>setActiveTab("about");
-$("outletBack").onclick = backToOutletBrands;
+$("outletBack").onclick = ()=>{
+  if(currentSource === "Украшения"){
+    backToJewelryBrands();
+  }else{
+    backToOutletBrands();
+  }
+};
 
     setActiveTab("Boutiques");
     $("brandToggle").onclick = toggleBrandDropdown;
