@@ -1677,6 +1677,54 @@ def get_boutique_cards():
         )
         # ================= BOUTIQUE CARD PRODUCTS API =================
 
+boutique_card_products_cache = {
+    "ts": 0.0,
+    "rows": [],
+}
+
+
+def get_cached_boutique_rows():
+    now = time.time()
+    cached_at = float(
+        boutique_card_products_cache.get("ts", 0.0) or 0.0
+    )
+    cached_rows = boutique_card_products_cache.get("rows", [])
+
+    # Используем готовый список 5 минут
+    if cached_rows and now - cached_at < 300:
+        return cached_rows
+
+    rows = []
+    page_size = 1000
+    start = 0
+
+    while True:
+        response = (
+            supabase.table(TABLE)
+            .select("*")
+            .eq("source", "Boutiques")
+            .order("ts", desc=True)
+            .range(start, start + page_size - 1)
+            .execute()
+        )
+
+        chunk = response.data or []
+        rows.extend(chunk)
+
+        if len(chunk) < page_size:
+            break
+
+        start += page_size
+
+        if start >= 500000:
+            break
+
+    boutique_card_products_cache["ts"] = now
+    boutique_card_products_cache["rows"] = rows
+
+    return rows
+
+
 @app.get("/api/boutique-card-products")
 def get_boutique_card_products(
     card: str = "",
@@ -1709,30 +1757,7 @@ def get_boutique_card_products(
                 status_code=400,
             )
 
-        rows = []
-        page_size = 1000
-        start = 0
-
-        while True:
-            response = (
-                supabase.table(TABLE)
-                .select("*")
-                .eq("source", "Boutiques")
-                .order("ts", desc=True)
-                .range(start, start + page_size - 1)
-                .execute()
-            )
-
-            chunk = response.data or []
-            rows.extend(chunk)
-
-            if len(chunk) < page_size:
-                break
-
-            start += page_size
-
-            if start >= 500000:
-                break
+        rows = get_cached_boutique_rows()
 
         normalize_map = {
             "dior": "Dior",
@@ -1922,8 +1947,6 @@ def get_boutique_card_products(
             include = False
 
             if card_value == "misc":
-                # В "Разное" идут товары,
-                # у которых не удалось определить бренд.
                 if not get_row_brand(row):
                     include = True
 
