@@ -1025,6 +1025,12 @@ let outletBrandsLoaded = false;
 let outletBrands = [];
 let outletBrandsLoading = false;
 
+let boutiqueCardsView = false;
+let boutiqueCardsLoaded = false;
+let boutiqueCards = [];
+let boutiqueCardsLoading = false;
+let boutiqueCardFilter = "";
+    
 let jewelryBrandsView = false;
 let jewelryBrandsLoaded = false;
 let jewelryBrands = [];
@@ -1049,6 +1055,82 @@ function showOutletToolbar(show, title=""){
   titleEl.textContent = title || "";
 }
 
+function renderBoutiqueCards(){
+  const grid = $("grid");
+
+  grid.innerHTML = "";
+  grid.classList.add("outletBrandsGrid");
+
+  $("pager").style.display = "none";
+  $("moreMeta").style.display = "none";
+  showOutletToolbar(false);
+
+  if(boutiqueCardsLoading){
+    setEmptyState("loading");
+    return;
+  }
+
+  if(!boutiqueCards.length){
+    setEmptyState("empty");
+    return;
+  }
+
+  setEmptyState("hide");
+
+  const frag = document.createDocumentFragment();
+
+  boutiqueCards.forEach(item=>{
+    const title = String(item.title || "").trim();
+    const count = Number(item.count || 0);
+    const type = String(item.type || "").trim();
+    const value = String(item.value || "").trim();
+
+    if(!title) return;
+
+    const card = document.createElement("div");
+    card.className = "outletBrandCard";
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+
+    const name = document.createElement("div");
+    name.className = "outletBrandName";
+    name.textContent = title;
+
+    const bottom = document.createElement("div");
+    bottom.className = "outletBrandBottom";
+
+    const amount = document.createElement("div");
+    amount.textContent =
+      `${count} ${outletProductWord(count)}`;
+
+    const arrow = document.createElement("div");
+    arrow.className = "outletBrandArrow";
+    arrow.textContent = "→";
+
+    bottom.appendChild(amount);
+    bottom.appendChild(arrow);
+
+    card.appendChild(name);
+    card.appendChild(bottom);
+
+    const open = ()=>{
+      openBoutiqueCard(type, value, title);
+    };
+
+    card.onclick = open;
+
+    card.addEventListener("keydown", e=>{
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        open();
+      }
+    });
+
+    frag.appendChild(card);
+  });
+
+  grid.appendChild(frag);
+}
 function renderOutletBrands(){
   const grid = $("grid");
 
@@ -1204,6 +1286,56 @@ function renderJewelryBrands(){
   grid.appendChild(frag);
 }
 
+async function loadBoutiqueCards(force=false){
+  boutiqueCardsView = true;
+  showOutletToolbar(false);
+
+  $("grid").classList.add("outletBrandsGrid");
+  $("pager").style.display = "none";
+  $("moreMeta").style.display = "none";
+
+  if(boutiqueCardsLoaded && !force){
+    renderBoutiqueCards();
+    return;
+  }
+
+  if(boutiqueCardsLoading) return;
+
+  boutiqueCardsLoading = true;
+  renderBoutiqueCards();
+
+  try{
+    const r = await fetch("/api/boutique-cards", {
+      cache:"no-store"
+    });
+
+    if(!r.ok){
+      throw new Error(
+        "API /api/boutique-cards вернул " + r.status
+      );
+    }
+
+    const payload = await r.json();
+
+    boutiqueCards = Array.isArray(payload.cards)
+      ? payload.cards
+      : [];
+
+    boutiqueCardsLoaded = true;
+
+  }catch(e){
+    boutiqueCards = [];
+
+    $("status").style.display = "block";
+    $("status").textContent =
+      "Не удалось загрузить бренды Boutiques. " +
+      (e && e.message ? e.message : e);
+
+  }finally{
+    boutiqueCardsLoading = false;
+    renderBoutiqueCards();
+  }
+}
 async function loadOutletBrands(force=false){
   outletBrandsView = true;
   showOutletToolbar(false);
@@ -1308,6 +1440,55 @@ async function loadJewelryBrands(force=false){
   }
 }
 
+function openBoutiqueCard(type, value, title){
+  boutiqueCardsView = false;
+
+  $("grid").classList.remove("outletBrandsGrid");
+  $("q").value = "";
+  $("brand").value = "";
+
+  currentBrandMenu = "";
+  syncBrandMenuActive();
+
+  if(type === "brand"){
+    $("brand").value = value;
+    currentBrandMenu = value;
+    boutiqueCardFilter = "";
+  }else{
+    boutiqueCardFilter = value;
+  }
+
+  showOutletToolbar(
+    true,
+    title || value || "Boutiques"
+  );
+
+  loaded = [];
+  offset = 0;
+  hasMore = true;
+  lastTopKey = "";
+
+  scrollToTopSoft();
+  fetchPage({reset:true});
+}
+function backToBoutiqueCards(){
+  boutiqueCardsView = true;
+  boutiqueCardFilter = "";
+
+  $("q").value = "";
+  $("brand").value = "";
+
+  currentBrandMenu = "";
+  syncBrandMenuActive();
+
+  loaded = [];
+  offset = 0;
+  hasMore = false;
+  lastTopKey = "";
+
+  scrollToTopSoft();
+  renderBoutiqueCards();
+}
 function openOutletBrand(brandName){
   outletBrandsView = false;
 
@@ -1414,10 +1595,22 @@ function currentFilters(){
     source = "";
   }
 
-  return { q, brand: b, source };
+  return {
+    q,
+    brand: b,
+    source,
+    boutiqueCard: boutiqueCardFilter
+  };
 }
 
-function buildProductsUrl({offset, limit, q, brand, source}){
+function buildProductsUrl({
+  offset,
+  limit,
+  q,
+  brand,
+  source,
+  boutiqueCard
+}){
   let endpoint = "/api/products";
 
   if(currentSource === "sales"){
@@ -1426,6 +1619,10 @@ function buildProductsUrl({offset, limit, q, brand, source}){
 
   if(currentSource === "Украшения" && jewelryNoBrandOnly){
     endpoint = "/api/jewelry-no-brand";
+  }
+
+  if(currentSource === "Boutiques" && boutiqueCard){
+    endpoint = "/api/boutique-card-products";
   }
 
   const u = new URL(endpoint, location.origin);
@@ -1450,6 +1647,10 @@ function buildProductsUrl({offset, limit, q, brand, source}){
     !(currentSource === "Украшения" && jewelryNoBrandOnly)
   ){
     u.searchParams.set("source", source);
+  }
+
+  if(currentSource === "Boutiques" && boutiqueCard){
+    u.searchParams.set("card", boutiqueCard);
   }
 
   return u.toString();
@@ -1533,15 +1734,23 @@ function buildProductsUrl({offset, limit, q, brand, source}){
     }
 
     function render(){
-    if(currentSource === "Outlets" && outletBrandsView){
-        renderOutletBrands();
-        return;
-    }
 
-    if(currentSource === "Украшения" && jewelryBrandsView){
-        renderJewelryBrands();
-        return;
-    }
+  if(currentSource === "Boutiques" && boutiqueCardsView){
+    renderBoutiqueCards();
+    return;
+  }
+
+  if(currentSource === "Outlets" && outletBrandsView){
+    renderOutletBrands();
+    return;
+  }
+
+  if(currentSource === "Украшения" && jewelryBrandsView){
+    renderJewelryBrands();
+    return;
+  }
+
+  // дальше обычный render товаров
 
     const grid = $("grid");
   grid.classList.remove("outletBrandsGrid");
@@ -1573,6 +1782,7 @@ function buildProductsUrl({offset, limit, q, brand, source}){
     }
 
     async function fetchPage({reset=false}={}){
+      if(currentSource === "Boutiques" && boutiqueCardsView) return;
       if(currentSource === "Outlets" && outletBrandsView) return;
       if(currentSource === "Украшения" && jewelryBrandsView) return;
       if(isLoading) return;
@@ -1644,10 +1854,11 @@ function buildProductsUrl({offset, limit, q, brand, source}){
     }
 
     async function refreshTop(){
-      if(currentSource === "Outlets" && outletBrandsView) return;
-      if(currentSource === "Украшения" && jewelryBrandsView) return;
-      if(isLoading) return;
-      if(document.hidden) return;
+  if(currentSource === "Boutiques" && boutiqueCardsView) return;
+  if(currentSource === "Outlets" && outletBrandsView) return;
+  if(currentSource === "Украшения" && jewelryBrandsView) return;
+
+  if(isLoading) return;
 
       isLoading = true;
       try{
@@ -1901,7 +2112,10 @@ function setActiveTab(source){
     jewelryBrandsView = false;
     jewelryNoBrandOnly = false;
   }
-
+ if(source !== "Boutiques"){
+  boutiqueCardsView = false;
+  boutiqueCardFilter = "";
+}
   $("grid").classList.remove("outletBrandsGrid");
 
   if(source === "about"){
@@ -1938,7 +2152,32 @@ function setActiveTab(source){
   });
 
   scrollToTopSoft();
+/*
+  BOUTIQUES:
+  сначала показываем карточки брендов / скидок / Разное.
+*/
+if(source === "Boutiques"){
+  outletBrandsView = false;
+  jewelryBrandsView = false;
+  jewelryNoBrandOnly = false;
 
+  boutiqueCardsView = true;
+  boutiqueCardFilter = "";
+
+  $("q").value = "";
+  $("brand").value = "";
+
+  currentBrandMenu = "";
+  syncBrandMenuActive();
+
+  loaded = [];
+  offset = 0;
+  hasMore = false;
+  lastTopKey = "";
+
+  loadBoutiqueCards();
+  return;
+}
   /*
     OUTLETS:
     сначала показываем карточки брендов.
@@ -2007,7 +2246,9 @@ $("tabMen").onclick = ()=>setActiveTab("Мужское");
 $("tabJewelry").onclick = ()=>setActiveTab("Украшения"); 
 $("tabAbout").onclick = ()=>setActiveTab("about");
 $("outletBack").onclick = ()=>{
-  if(currentSource === "Украшения"){
+  if(currentSource === "Boutiques"){
+    backToBoutiqueCards();
+  }else if(currentSource === "Украшения"){
     backToJewelryBrands();
   }else{
     backToOutletBrands();
@@ -2028,6 +2269,11 @@ $("outletBack").onclick = ()=>{
   currentBrandMenu = $("brand").value.trim();
   syncBrandMenuActive();
 
+  if(currentSource === "Boutiques"){
+    boutiqueCardsView = false;
+    boutiqueCardFilter = "";
+  }
+
   prepareOutletProductResults(
     currentBrandMenu || "Результаты поиска"
   );
@@ -2036,10 +2282,15 @@ $("outletBack").onclick = ()=>{
   fetchPage({reset:true});
 };
 
-    $("q").addEventListener("keydown", (e)=>{
+   $("q").addEventListener("keydown", (e)=>{
   if(e.key==="Enter"){
     currentBrandMenu = $("brand").value.trim();
     syncBrandMenuActive();
+
+    if(currentSource === "Boutiques"){
+      boutiqueCardsView = false;
+      boutiqueCardFilter = "";
+    }
 
     prepareOutletProductResults(
       currentBrandMenu || "Результаты поиска"
@@ -2050,10 +2301,15 @@ $("outletBack").onclick = ()=>{
   }
 });
 
-    $("brand").addEventListener("keydown", (e)=>{
+  $("brand").addEventListener("keydown", (e)=>{
   if(e.key==="Enter"){
     currentBrandMenu = $("brand").value.trim();
     syncBrandMenuActive();
+
+    if(currentSource === "Boutiques"){
+      boutiqueCardsView = false;
+      boutiqueCardFilter = "";
+    }
 
     prepareOutletProductResults(
       currentBrandMenu || "Результаты поиска"
@@ -2067,6 +2323,7 @@ $("outletBack").onclick = ()=>{
     $("moreBtn").onclick = ()=>fetchPage({reset:false});
 
     function onScrollAutoLoad(){
+  if(currentSource === "Boutiques" && boutiqueCardsView) return;
   if(currentSource === "Outlets" && outletBrandsView) return;
   if(currentSource === "Украшения" && jewelryBrandsView) return;
 
