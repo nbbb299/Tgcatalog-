@@ -1675,6 +1675,316 @@ def get_boutique_cards():
             },
             status_code=500,
         )
+        # ================= BOUTIQUE CARD PRODUCTS API =================
+
+@app.get("/api/boutique-card-products")
+def get_boutique_card_products(
+    card: str = "",
+    offset: int = 0,
+    limit: int = 24,
+    q: str = "",
+):
+    try:
+        offset = max(0, int(offset))
+        limit = max(1, min(200, int(limit)))
+
+        card_value = str(card or "").strip().lower()
+        q_value = str(q or "").strip().lower()
+
+        if card_value not in {
+            "30-40",
+            "41-59",
+            "60-80",
+            "misc",
+        }:
+            return JSONResponse(
+                {
+                    "items": [],
+                    "offset": offset,
+                    "limit": limit,
+                    "total": 0,
+                    "has_more": False,
+                    "detail": "invalid_boutique_card",
+                },
+                status_code=400,
+            )
+
+        rows = []
+        page_size = 1000
+        start = 0
+
+        while True:
+            response = (
+                supabase.table(TABLE)
+                .select("*")
+                .eq("source", "Boutiques")
+                .order("ts", desc=True)
+                .range(start, start + page_size - 1)
+                .execute()
+            )
+
+            chunk = response.data or []
+            rows.extend(chunk)
+
+            if len(chunk) < page_size:
+                break
+
+            start += page_size
+
+            if start >= 500000:
+                break
+
+        normalize_map = {
+            "dior": "Dior",
+            "christiandior": "Dior",
+            "christian dior": "Dior",
+
+            "fendi": "Fendi",
+
+            "dolce&gabbana": "Dolce & Gabbana",
+            "dolce & gabbana": "Dolce & Gabbana",
+            "dolcegabbana": "Dolce & Gabbana",
+            "dg": "Dolce & Gabbana",
+
+            "prada": "Prada",
+            "gucci": "Gucci",
+
+            "miumiu": "Miu Miu",
+            "miu miu": "Miu Miu",
+
+            "celine": "Celine",
+            "loewe": "Loewe",
+            "valentino": "Valentino",
+
+            "bottega veneta": "Bottega Veneta",
+            "bottegaveneta": "Bottega Veneta",
+
+            "saintlaurent": "Saint Laurent",
+            "saint laurent": "Saint Laurent",
+            "ysl": "Saint Laurent",
+
+            "balenciaga": "Balenciaga",
+            "burberry": "Burberry",
+            "givenchy": "Givenchy",
+
+            "max mara": "Max Mara",
+            "maxmara": "Max Mara",
+
+            "brunello cucinelli": "Brunello Cucinelli",
+            "brunellocucinelli": "Brunello Cucinelli",
+
+            "loro piana": "Loro Piana",
+            "loropiana": "Loro Piana",
+
+            "zimmermann": "Zimmermann",
+            "tom ford": "Tom Ford",
+
+            "golden goose": "Golden Goose",
+            "goldengoose": "Golden Goose",
+
+            "moncler": "Moncler",
+            "etro": "Etro",
+            "versace": "Versace",
+            "jacquemus": "Jacquemus",
+
+            "the row": "The Row",
+            "therow": "The Row",
+
+            "alaia": "Alaïa",
+            "alaïa": "Alaïa",
+        }
+
+        skip_exact = {
+            "reviews",
+            "review",
+            "new",
+            "outlet",
+            "sale",
+            "brand",
+            "size",
+            "price",
+            "по вопросам",
+            "размер",
+        }
+
+        def clean_brand_name(value: str) -> str:
+            value = (value or "").strip()
+
+            if not value:
+                return ""
+
+            value = value.strip(
+                "👜👠👓🕶️✨💼🤍🖤🤎💛💙💚💜❤️🩷🩶🧸🌍"
+                "•-–—,.;:()[]{}|/\\\"' "
+            )
+
+            if not value:
+                return ""
+
+            low = value.lower()
+
+            if low in skip_exact:
+                return ""
+
+            if "по вопросам" in low:
+                return ""
+
+            if "price" in low:
+                return ""
+
+            if "размер" in low or "size" in low:
+                return ""
+
+            if value.startswith("@"):
+                return ""
+
+            if "€" in value or "$" in value:
+                return ""
+
+            for suffix in [
+                " outlet",
+                " new",
+                " boutique",
+                " boutiques",
+            ]:
+                if low.endswith(suffix):
+                    value = value[:-len(suffix)].strip()
+                    low = value.lower()
+
+            if not value:
+                return ""
+
+            if low in normalize_map:
+                return normalize_map[low]
+
+            return " ".join(
+                word.capitalize()
+                for word in value.split()
+            )
+
+        def get_row_brand(row: dict) -> str:
+            brand = clean_brand_name(
+                str(row.get("brand", "") or "")
+            )
+
+            if brand:
+                return brand
+
+            caption = str(
+                row.get("caption", "") or ""
+            ).strip()
+
+            if "#" in caption:
+                try:
+                    tag = (
+                        caption
+                        .split("#", 1)[1]
+                        .split()[0]
+                        .strip()
+                    )
+
+                    brand = clean_brand_name(tag)
+
+                    if brand:
+                        return brand
+
+                except Exception:
+                    pass
+
+            return ""
+
+        def get_discount(row: dict):
+            caption = str(
+                row.get("caption", "") or ""
+            )
+
+            match = re.search(
+                r"-\s*(\d{1,2})\s*%",
+                caption
+            )
+
+            if not match:
+                return None
+
+            try:
+                value = int(match.group(1))
+            except Exception:
+                return None
+
+            if 0 <= value <= 100:
+                return value
+
+            return None
+
+        filtered = []
+
+        for row in rows:
+            include = False
+
+            if card_value == "misc":
+                # В "Разное" идут товары,
+                # у которых не удалось определить бренд.
+                if not get_row_brand(row):
+                    include = True
+
+            else:
+                discount = get_discount(row)
+
+                if discount is None:
+                    continue
+
+                if card_value == "30-40":
+                    include = 30 <= discount <= 40
+
+                elif card_value == "41-59":
+                    include = 41 <= discount <= 59
+
+                elif card_value == "60-80":
+                    include = 60 <= discount <= 80
+
+            if not include:
+                continue
+
+            if q_value:
+                haystack = " ".join([
+                    str(row.get("brand", "") or ""),
+                    str(row.get("caption", "") or ""),
+                ]).lower()
+
+                if q_value not in haystack:
+                    continue
+
+            filtered.append(row)
+
+        total = len(filtered)
+        items = filtered[offset:offset + limit]
+
+        return {
+            "items": items,
+            "offset": offset,
+            "limit": limit,
+            "total": total,
+            "has_more": offset + len(items) < total,
+        }
+
+    except Exception as e:
+        print(
+            "BOUTIQUE CARD PRODUCTS API ERROR",
+            repr(e)
+        )
+        traceback.print_exc()
+
+        return JSONResponse(
+            {
+                "items": [],
+                "offset": offset,
+                "limit": limit,
+                "total": 0,
+                "has_more": False,
+                "detail": "boutique_card_products_fetch_failed",
+            },
+            status_code=500,
+        )
 # ================= SINGLE PRODUCT API =================
 
 @app.get("/api/product/{row_id}")
