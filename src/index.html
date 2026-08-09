@@ -2354,9 +2354,8 @@ $("outletBack").onclick = ()=>{
     $("toTop").addEventListener("click", scrollToTopSoft);
 
     window.addEventListener("scroll", ()=>{
-      toggleToTop();
-      onScrollAutoLoad();
-    }, {passive:true});
+  toggleToTop();
+}, {passive:true});
 
     async function openItemFromUrlIfNeeded(){
       const params = new URLSearchParams(location.search);
@@ -2413,7 +2412,7 @@ $("outletBack").onclick = ()=>{
       if(!params.get("item")){
         refreshTop();
       }
-    }, 30000);
+    }, 300000);
 
     document.addEventListener("visibilitychange", ()=>{
       const params = new URLSearchParams(location.search);
