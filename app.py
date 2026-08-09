@@ -1346,7 +1346,7 @@ def get_jewelry_no_brand(
             },
             status_code=500,
         )
-        # ================= BOUTIQUES CARDS API =================
+      # ================= BOUTIQUES CARDS API =================
 
 boutique_cards_cache = {
     "ts": 0.0,
@@ -1368,95 +1368,46 @@ def get_boutique_cards():
                 "cached": True,
             }
 
-        rows = []
-        page_size = 1000
-        start = 0
-
-        while True:
-            response = (
-                supabase.table(TABLE)
-                .select("brand,caption")
-                .eq("source", "Boutiques")
-                .range(start, start + page_size - 1)
-                .execute()
-            )
-
-            chunk = response.data or []
-            rows.extend(chunk)
-
-            if len(chunk) < page_size:
-                break
-
-            start += page_size
-
-            if start >= 500000:
-                break
-
         normalize_map = {
             "dior": "Dior",
             "christiandior": "Dior",
             "christian dior": "Dior",
-
             "fendi": "Fendi",
-
             "dolce&gabbana": "Dolce & Gabbana",
             "dolce & gabbana": "Dolce & Gabbana",
             "dolcegabbana": "Dolce & Gabbana",
             "dg": "Dolce & Gabbana",
-
             "prada": "Prada",
-
             "gucci": "Gucci",
-
             "miumiu": "Miu Miu",
             "miu miu": "Miu Miu",
-
             "celine": "Celine",
-
             "loewe": "Loewe",
-
             "valentino": "Valentino",
-
             "bottega veneta": "Bottega Veneta",
             "bottegaveneta": "Bottega Veneta",
-
             "saintlaurent": "Saint Laurent",
             "saint laurent": "Saint Laurent",
             "ysl": "Saint Laurent",
-
             "balenciaga": "Balenciaga",
-
             "burberry": "Burberry",
-
             "givenchy": "Givenchy",
-
             "max mara": "Max Mara",
             "maxmara": "Max Mara",
-
             "brunello cucinelli": "Brunello Cucinelli",
             "brunellocucinelli": "Brunello Cucinelli",
-
             "loro piana": "Loro Piana",
             "loropiana": "Loro Piana",
-
             "zimmermann": "Zimmermann",
-
             "tom ford": "Tom Ford",
-
             "golden goose": "Golden Goose",
             "goldengoose": "Golden Goose",
-
             "moncler": "Moncler",
-
             "etro": "Etro",
-
             "versace": "Versace",
-
             "jacquemus": "Jacquemus",
-
             "the row": "The Row",
             "therow": "The Row",
-
             "alaia": "Alaïa",
             "alaïa": "Alaïa",
         }
@@ -1560,65 +1511,48 @@ def get_boutique_cards():
 
             return ""
 
-        def get_discount(row: dict):
-            caption = str(
-                row.get("caption", "") or ""
-            )
-
-            match = re.search(
-                r"-\s*(\d{1,2})\s*%",
-                caption
-            )
-
-            if not match:
-                return None
-
-            try:
-                value = int(match.group(1))
-            except Exception:
-                return None
-
-            if 0 <= value <= 100:
-                return value
-
-            return None
-
         grouped = {}
-
         misc_count = 0
-        sale_30_40 = 0
-        sale_41_59 = 0
-        sale_60_80 = 0
 
-        for row in rows:
-            brand = get_row_brand(row)
-            discount = get_discount(row)
+        page_size = 1000
+        start = 0
 
-            if brand:
-                key = brand.lower()
+        while True:
+            response = (
+                supabase.table(TABLE)
+                .select("brand,caption")
+                .eq("source", "Boutiques")
+                .range(start, start + page_size - 1)
+                .execute()
+            )
 
-                if key not in grouped:
-                    grouped[key] = {
-                        "title": brand,
-                        "count": 0,
-                        "type": "brand",
-                        "value": brand,
-                    }
+            chunk = response.data or []
 
-                grouped[key]["count"] += 1
+            for row in chunk:
+                brand = get_row_brand(row)
 
-            else:
-                misc_count += 1
+                if brand:
+                    key = brand.lower()
 
-            if discount is not None:
-                if 30 <= discount <= 40:
-                    sale_30_40 += 1
+                    if key not in grouped:
+                        grouped[key] = {
+                            "title": brand,
+                            "count": 0,
+                            "type": "brand",
+                            "value": brand,
+                        }
 
-                elif 41 <= discount <= 59:
-                    sale_41_59 += 1
+                    grouped[key]["count"] += 1
+                else:
+                    misc_count += 1
 
-                elif 60 <= discount <= 80:
-                    sale_60_80 += 1
+            if len(chunk) < page_size:
+                break
+
+            start += page_size
+
+            if start >= 500000:
+                break
 
         brand_cards = sorted(
             grouped.values(),
@@ -1627,29 +1561,11 @@ def get_boutique_cards():
 
         special_cards = [
             {
-                "title": "Скидка 30–40%",
-                "count": sale_30_40,
-                "type": "sale",
-                "value": "30-40",
-            },
-            {
-                "title": "Скидка 41–59%",
-                "count": sale_41_59,
-                "type": "sale",
-                "value": "41-59",
-            },
-            {
-                "title": "Скидка 60–80%",
-                "count": sale_60_80,
-                "type": "sale",
-                "value": "60-80",
-            },
-            {
                 "title": "Разное",
                 "count": misc_count,
                 "type": "misc",
                 "value": "misc",
-            },
+            }
         ]
 
         cards = brand_cards + special_cards
@@ -1675,55 +1591,7 @@ def get_boutique_cards():
             },
             status_code=500,
         )
-        # ================= BOUTIQUE CARD PRODUCTS API =================
-
-boutique_card_products_cache = {
-    "ts": 0.0,
-    "rows": [],
-}
-
-
-def get_cached_boutique_rows():
-    now = time.time()
-    cached_at = float(
-        boutique_card_products_cache.get("ts", 0.0) or 0.0
-    )
-    cached_rows = boutique_card_products_cache.get("rows", [])
-
-    # Используем готовый список 5 минут
-    if cached_rows and now - cached_at < 300:
-        return cached_rows
-
-    rows = []
-    page_size = 1000
-    start = 0
-
-    while True:
-        response = (
-            supabase.table(TABLE)
-            .select("*")
-            .eq("source", "Boutiques")
-            .order("ts", desc=True)
-            .range(start, start + page_size - 1)
-            .execute()
-        )
-
-        chunk = response.data or []
-        rows.extend(chunk)
-
-        if len(chunk) < page_size:
-            break
-
-        start += page_size
-
-        if start >= 500000:
-            break
-
-    boutique_card_products_cache["ts"] = now
-    boutique_card_products_cache["rows"] = rows
-
-    return rows
-
+    # ================= BOUTIQUE MISC PRODUCTS API =================
 
 @app.get("/api/boutique-card-products")
 def get_boutique_card_products(
@@ -1739,12 +1607,7 @@ def get_boutique_card_products(
         card_value = str(card or "").strip().lower()
         q_value = str(q or "").strip().lower()
 
-        if card_value not in {
-            "30-40",
-            "41-59",
-            "60-80",
-            "misc",
-        }:
+        if card_value != "misc":
             return JSONResponse(
                 {
                     "items": [],
@@ -1757,227 +1620,57 @@ def get_boutique_card_products(
                 status_code=400,
             )
 
-        rows = get_cached_boutique_rows()
-
-        normalize_map = {
-            "dior": "Dior",
-            "christiandior": "Dior",
-            "christian dior": "Dior",
-
-            "fendi": "Fendi",
-
-            "dolce&gabbana": "Dolce & Gabbana",
-            "dolce & gabbana": "Dolce & Gabbana",
-            "dolcegabbana": "Dolce & Gabbana",
-            "dg": "Dolce & Gabbana",
-
-            "prada": "Prada",
-            "gucci": "Gucci",
-
-            "miumiu": "Miu Miu",
-            "miu miu": "Miu Miu",
-
-            "celine": "Celine",
-            "loewe": "Loewe",
-            "valentino": "Valentino",
-
-            "bottega veneta": "Bottega Veneta",
-            "bottegaveneta": "Bottega Veneta",
-
-            "saintlaurent": "Saint Laurent",
-            "saint laurent": "Saint Laurent",
-            "ysl": "Saint Laurent",
-
-            "balenciaga": "Balenciaga",
-            "burberry": "Burberry",
-            "givenchy": "Givenchy",
-
-            "max mara": "Max Mara",
-            "maxmara": "Max Mara",
-
-            "brunello cucinelli": "Brunello Cucinelli",
-            "brunellocucinelli": "Brunello Cucinelli",
-
-            "loro piana": "Loro Piana",
-            "loropiana": "Loro Piana",
-
-            "zimmermann": "Zimmermann",
-            "tom ford": "Tom Ford",
-
-            "golden goose": "Golden Goose",
-            "goldengoose": "Golden Goose",
-
-            "moncler": "Moncler",
-            "etro": "Etro",
-            "versace": "Versace",
-            "jacquemus": "Jacquemus",
-
-            "the row": "The Row",
-            "therow": "The Row",
-
-            "alaia": "Alaïa",
-            "alaïa": "Alaïa",
-        }
-
-        skip_exact = {
-            "reviews",
-            "review",
-            "new",
-            "outlet",
-            "sale",
-            "brand",
-            "size",
-            "price",
-            "по вопросам",
-            "размер",
-        }
-
-        def clean_brand_name(value: str) -> str:
-            value = (value or "").strip()
-
-            if not value:
-                return ""
-
-            value = value.strip(
-                "👜👠👓🕶️✨💼🤍🖤🤎💛💙💚💜❤️🩷🩶🧸🌍"
-                "•-–—,.;:()[]{}|/\\\"' "
-            )
-
-            if not value:
-                return ""
-
-            low = value.lower()
-
-            if low in skip_exact:
-                return ""
-
-            if "по вопросам" in low:
-                return ""
-
-            if "price" in low:
-                return ""
-
-            if "размер" in low or "size" in low:
-                return ""
-
-            if value.startswith("@"):
-                return ""
-
-            if "€" in value or "$" in value:
-                return ""
-
-            for suffix in [
-                " outlet",
-                " new",
-                " boutique",
-                " boutiques",
-            ]:
-                if low.endswith(suffix):
-                    value = value[:-len(suffix)].strip()
-                    low = value.lower()
-
-            if not value:
-                return ""
-
-            if low in normalize_map:
-                return normalize_map[low]
-
-            return " ".join(
-                word.capitalize()
-                for word in value.split()
-            )
-
-        def get_row_brand(row: dict) -> str:
-            brand = clean_brand_name(
-                str(row.get("brand", "") or "")
-            )
-
-            if brand:
-                return brand
-
-            caption = str(
-                row.get("caption", "") or ""
-            ).strip()
-
-            if "#" in caption:
-                try:
-                    tag = (
-                        caption
-                        .split("#", 1)[1]
-                        .split()[0]
-                        .strip()
-                    )
-
-                    brand = clean_brand_name(tag)
-
-                    if brand:
-                        return brand
-
-                except Exception:
-                    pass
-
-            return ""
-
-        def get_discount(row: dict):
-            caption = str(
-                row.get("caption", "") or ""
-            )
-
-            match = re.search(
-                r"-\s*(\d{1,2})\s*%",
-                caption
-            )
-
-            if not match:
-                return None
-
-            try:
-                value = int(match.group(1))
-            except Exception:
-                return None
-
-            if 0 <= value <= 100:
-                return value
-
-            return None
-
         filtered = []
+        page_size = 1000
+        start = 0
 
-        for row in rows:
-            include = False
+        while True:
+            response = (
+                supabase.table(TABLE)
+                .select("*")
+                .eq("source", "Boutiques")
+                .order("ts", desc=True)
+                .range(start, start + page_size - 1)
+                .execute()
+            )
 
-            if card_value == "misc":
-                if not get_row_brand(row):
-                    include = True
+            chunk = response.data or []
 
-            else:
-                discount = get_discount(row)
+            for row in chunk:
+                brand = str(
+                    row.get("brand", "") or ""
+                ).strip()
 
-                if discount is None:
+                caption = str(
+                    row.get("caption", "") or ""
+                ).strip()
+
+                if not brand and "#" in caption:
+                    try:
+                        brand = (
+                            caption
+                            .split("#", 1)[1]
+                            .split()[0]
+                            .strip()
+                        )
+                    except Exception:
+                        brand = ""
+
+                if brand:
                     continue
 
-                if card_value == "30-40":
-                    include = 30 <= discount <= 40
-
-                elif card_value == "41-59":
-                    include = 41 <= discount <= 59
-
-                elif card_value == "60-80":
-                    include = 60 <= discount <= 80
-
-            if not include:
-                continue
-
-            if q_value:
-                haystack = " ".join([
-                    str(row.get("brand", "") or ""),
-                    str(row.get("caption", "") or ""),
-                ]).lower()
-
-                if q_value not in haystack:
+                if q_value and q_value not in caption.lower():
                     continue
 
-            filtered.append(row)
+                filtered.append(row)
+
+            if len(chunk) < page_size:
+                break
+
+            start += page_size
+
+            if start >= 500000:
+                break
 
         total = len(filtered)
         items = filtered[offset:offset + limit]
@@ -1992,7 +1685,7 @@ def get_boutique_card_products(
 
     except Exception as e:
         print(
-            "BOUTIQUE CARD PRODUCTS API ERROR",
+            "BOUTIQUE MISC PRODUCTS API ERROR",
             repr(e)
         )
         traceback.print_exc()
@@ -2004,7 +1697,7 @@ def get_boutique_card_products(
                 "limit": limit,
                 "total": 0,
                 "has_more": False,
-                "detail": "boutique_card_products_fetch_failed",
+                "detail": "boutique_misc_products_fetch_failed",
             },
             status_code=500,
         )
