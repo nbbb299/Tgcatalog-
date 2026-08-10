@@ -449,6 +449,7 @@ def get_products(
             query = query.eq("source", s)
 
         b = (brand or "").strip()
+
         if b:
             safe = b.replace("%", "").replace(",", " ")
             compact = safe.replace(" ", "")
@@ -465,16 +466,35 @@ def get_products(
                     "SaintLaurent",
                     "YSL",
                 ])
-           if safe.lower() in {
-              "van cleef & arpels",
-              "van cleef and arpels",
-              "vancleef&arpels",
-              "vancleefarpels",
-              "van cleef",
-              "vancleef",
-              "vca",
-           }:
-              aliases.extend([
+
+            if safe.lower() in {
+                "van cleef & arpels",
+                "van cleef and arpels",
+                "vancleef&arpels",
+                "vancleefarpels",
+                "van cleef",
+                "vancleef",
+                "vca",
+            }:
+                aliases.extend([
+                    "Van Cleef & Arpels",
+                    "Van Cleef and Arpels",
+                    "VanCleef&Arpels",
+                    "VanCleefArpels",
+                    "Van Cleef",
+                    "VanCleef",
+                    "VCA",
+                ])
+
+            aliases = list(dict.fromkeys(aliases))
+
+            conditions = []
+
+            for alias in aliases:
+                conditions.append(f"brand.ilike.%{alias}%")
+                conditions.append(f"caption.ilike.%{alias}%")
+
+            query = query.or_(",".join(conditions))
                   "Van Cleef & Arpels",
                   "Van Cleef and Arpels",
                   "VanCleef&Arpels",
