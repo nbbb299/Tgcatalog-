@@ -449,9 +449,16 @@ def get_products(
             query = query.eq("source", s)
 
         b = (brand or "").strip()
-        if b:
-            safe = b.replace("%", "").replace(",", " ")
-            query = query.or_(f"brand.ilike.%{safe}%,caption.ilike.%{safe}%")
+if b:
+    safe = b.replace("%", "").replace(",", " ")
+    compact = safe.replace(" ", "")
+
+    query = query.or_(
+        f"brand.ilike.%{safe}%,"
+        f"caption.ilike.%{safe}%,"
+        f"brand.ilike.%{compact}%,"
+        f"caption.ilike.%{compact}%"
+    )
 
         qq = (q or "").strip()
         if qq:
