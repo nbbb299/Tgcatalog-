@@ -465,7 +465,24 @@ def get_products(
                     "SaintLaurent",
                     "YSL",
                 ])
-
+           if safe.lower() in {
+              "van cleef & arpels",
+              "van cleef and arpels",
+              "vancleef&arpels",
+              "vancleefarpels",
+              "van cleef",
+              "vancleef",
+              "vca",
+           }:
+              aliases.extend([
+                  "Van Cleef & Arpels",
+                  "Van Cleef and Arpels",
+                  "VanCleef&Arpels",
+                  "VanCleefArpels",
+                  "Van Cleef",
+                  "VanCleef",
+                  "VCA",
+             ])
             aliases = list(dict.fromkeys(aliases))
 
             conditions = []
