@@ -495,23 +495,6 @@ def get_products(
                 conditions.append(f"caption.ilike.%{alias}%")
 
             query = query.or_(",".join(conditions))
-                  "Van Cleef & Arpels",
-                  "Van Cleef and Arpels",
-                  "VanCleef&Arpels",
-                  "VanCleefArpels",
-                  "Van Cleef",
-                  "VanCleef",
-                  "VCA",
-             ])
-            aliases = list(dict.fromkeys(aliases))
-
-            conditions = []
-
-            for alias in aliases:
-                conditions.append(f"brand.ilike.%{alias}%")
-                conditions.append(f"caption.ilike.%{alias}%")
-
-            query = query.or_(",".join(conditions))
 
         qq = (q or "").strip()
         if qq:
