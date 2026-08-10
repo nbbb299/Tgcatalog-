@@ -444,7 +444,7 @@ def get_products(
 
         query = supabase.table(TABLE).select("*", count="exact").order("ts", desc=True)
 
-                s = (source or "").strip()
+        s = (source or "").strip()
         if s:
             query = query.eq("source", s)
 
