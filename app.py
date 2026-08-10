@@ -453,12 +453,28 @@ def get_products(
             safe = b.replace("%", "").replace(",", " ")
             compact = safe.replace(" ", "")
 
-            query = query.or_(
-                f"brand.ilike.%{safe}%,"
-                f"caption.ilike.%{safe}%,"
-                f"brand.ilike.%{compact}%,"
-                f"caption.ilike.%{compact}%"
-            )
+            aliases = [safe, compact]
+
+            if safe.lower() in {
+                "saint laurent",
+                "saintlaurent",
+                "ysl",
+    }:
+           aliases.extend([
+               "Saint Laurent",
+               "SaintLaurent",
+               "YSL",
+        ])
+
+    aliases = list(dict.fromkeys(aliases))
+
+    conditions = []
+
+    for alias in aliases:
+        conditions.append(f"brand.ilike.%{alias}%")
+        conditions.append(f"caption.ilike.%{alias}%")
+
+    query = query.or_(",".join(conditions))
 
         qq = (q or "").strip()
         if qq:
