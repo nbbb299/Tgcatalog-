@@ -1559,16 +1559,7 @@ def get_boutique_cards():
             key=lambda item: item["title"].lower()
         )
 
-        special_cards = [
-            {
-                "title": "Разное",
-                "count": misc_count,
-                "type": "misc",
-                "value": "misc",
-            }
-        ]
-
-        cards = brand_cards + special_cards
+        cards = brand_cards
 
         boutique_cards_cache["ts"] = now
         boutique_cards_cache["data"] = cards
