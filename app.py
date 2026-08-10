@@ -448,7 +448,7 @@ def get_products(
         if s:
             query = query.eq("source", s)
 
-                b = (brand or "").strip()
+        b = (brand or "").strip()
         if b:
             safe = b.replace("%", "").replace(",", " ")
             compact = safe.replace(" ", "")
