@@ -1154,6 +1154,9 @@ def get_jewelry_brands():
                 no_brand_count += 1
                 continue
 
+            if brand.lower() in {"bvlgulari", "vancleef&arpels"}:
+                continue
+           
             key = brand.lower()
 
             if key not in grouped:
