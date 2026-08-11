@@ -459,7 +459,7 @@ def get_products(
                 "alaïa": ["alaia", "alaia_nug"],
                 "alevi": ["alevi", "alevi’_nug", "alevi'_nug"],
 
-                "alexandermcqueen": [
+                "alexandermcquen": [
                     "alexandermcquen",
                     "alexander",
                     "amcqueen",
@@ -1631,7 +1631,7 @@ def get_boutique_cards():
                 "cached": True,
             }
 
-                normalize_map = {
+         normalize_map = {
             "acnestudios": "Acne Studios",
             "acnestudio": "Acne Studios",
             "acne": "Acne Studios",
