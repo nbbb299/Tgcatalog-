@@ -504,7 +504,7 @@ def get_products(
                     "celine_tg",
                 ],
 
-                "chloe": ["chloe", "chloé"],
+                "chloe": ["chloe", "chloé", "chloè"],
 
                 "dior": [
                     "dior",
@@ -627,10 +627,12 @@ def get_products(
                     "prada_ffm",
                 ],
 
-                "renécaovilla": [
-                    "renècaovilla",
-                    "renecaovilla",
-                    "rené caovilla",
+               "renécaovilla": [
+                  "renècaovilla",
+                  "renécaovilla",
+                  "renecaovilla",
+                  "rene caovilla",
+                  "rené caovilla",
                 ],
 
                 "rogervivier": [
@@ -1682,6 +1684,7 @@ def get_boutique_cards():
 
             "chloe": "Chloe",
             "chloé": "Chloe",
+            "chloè": "Chloe",
 
             "dior": "Dior",
             "christiandior": "Dior",
@@ -1781,7 +1784,9 @@ def get_boutique_cards():
             "prada_ffm": "Prada",
 
             "renècaovilla": "René Caovilla",
+            "renécaovilla": "René Caovilla",
             "renecaovilla": "René Caovilla",
+            "rene caovilla": "René Caovilla",
             "rené caovilla": "René Caovilla",
 
             "rogervivier": "Roger Vivier",
