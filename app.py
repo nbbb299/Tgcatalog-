@@ -627,14 +627,14 @@ def get_products(
                     "prada_ffm",
                 ],
 
-               "renécaovilla": [
-                  "renècaovilla",
-                  "renécaovilla",
-                  "renecaovilla",
-                  "rene caovilla",
-                  "rené caovilla",
+               "rené caovilla": [
+                   "renècaovilla",
+                   "renécaovilla",
+                   "renecaovilla",
+                   "rene caovilla",
+                   "rené caovilla",
                 ],
-
+                
                 "rogervivier": [
                     "rogervivier",
                     "roger vivier",
