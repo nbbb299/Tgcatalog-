@@ -454,47 +454,264 @@ def get_products(
             safe = b.replace("%", "").replace(",", " ")
             compact = safe.replace(" ", "")
 
-            aliases = [safe, compact]
+            alias_map = {
+                "acnestudios": ["acnestudios", "acnestudio", "acne"],
+                "alaïa": ["alaia", "alaia_nug"],
+                "alevi": ["alevi", "alevi’_nug", "alevi'_nug"],
 
-            if safe.lower() in {
-                "saint laurent",
-                "saintlaurent",
-                "ysl",
-            }:
-                aliases.extend([
-                    "Saint Laurent",
-                    "SaintLaurent",
-                    "YSL",
-                ])
+                "alexandermcqueen": [
+                    "alexandermcquen",
+                    "alexander",
+                    "amcqueen",
+                    "mcqueen",
+                    "alexander mcqueen",
+                ],
 
-            if safe.lower() in {
-                "van cleef & arpels",
-                "van cleef and arpels",
-                "vancleef&arpels",
-                "vancleefarpels",
-                "van cleef",
-                "vancleef",
-                "vca",
-            }:
-                aliases.extend([
-                    "Van Cleef & Arpels",
-                    "Van Cleef and Arpels",
-                    "VanCleef&Arpels",
-                    "VanCleefArpels",
-                    "Van Cleef",
-                    "VanCleef",
-                    "VCA",
-                ])
+                "aquazzura": [
+                    "aquazzura",
+                    "aquazzura_er",
+                    "aquazzura_jul",
+                    "aquazzura_nug",
+                ],
+
+                "balenciaga": ["balenciaga", "balenciaga_ffm"],
+                "balmain": ["balmain", "balmain_jul"],
+
+                "bottega veneta": [
+                    "bottega veneta",
+                    "bottegaveneta",
+                    "bottega_ffm",
+                ],
+
+                "brunello cucinelli": [
+                    "brunello cucinelli",
+                    "brunellocucinelli",
+                    "brunellocucinelli_fk",
+                    "brunellocucinelli_jul",
+                    "brunellocucinelli_tb",
+                ],
+
+                "burberry": [
+                    "burberry",
+                    "burberry_ffm",
+                    "burberry_jul",
+                ],
+
+                "celine": [
+                    "celine",
+                    "celine_nug",
+                    "celine_tb",
+                    "celine_tg",
+                ],
+
+                "chloe": ["chloe", "chloé"],
+
+                "dior": [
+                    "dior",
+                    "christiandior",
+                    "christian dior",
+                    "dior_bb",
+                    "dior_nug",
+                    "dior_tg",
+                ],
+
+                "dolce & gabbana": [
+                    "dolce&gabbana",
+                    "dolce & gabbana",
+                    "dolcegabbana",
+                    "dg",
+                    "dolce_gabbana_er",
+                    "dolce_gabbana_jul",
+                ],
+
+                "etro": ["etro", "etro_jul"],
+
+                "fendi": [
+                    "fendi",
+                    "fendi_er",
+                    "fendi_ffm",
+                    "fendi_jul",
+                ],
+
+                "ferragamo": ["ferragamo", "feragamo"],
+                "givenchy": ["givenchy", "givenchy_ffm"],
+
+                "golden goose": [
+                    "golden goose",
+                    "goldengoose",
+                    "goldengoose_jul",
+                ],
+
+                "gucci": [
+                    "gucci",
+                    "gucci_er",
+                    "gucci_ffm",
+                    "gucci_jul",
+                    "gucci_nug",
+                ],
+
+                "jacquemus": ["jacquemus", "jacquemus_tb"],
+
+                "jilsander": [
+                    "jilsander",
+                    "jil sander",
+                    "jilsander_jul",
+                ],
+
+                "jimmychoo": [
+                    "jimmychoo",
+                    "jimmy choo",
+                    "jimmy",
+                ],
+
+                "lesilla": [
+                    "lesilla",
+                    "le silla",
+                    "lesilla_jul",
+                    "lesilla_nug",
+                ],
+
+                "loewe": [
+                    "loewe",
+                    "loewe_nug",
+                    "loewe_tb",
+                    "loewe_tg",
+                ],
+
+                "magdabutrym": [
+                    "magdabutrym",
+                    "magda butrym",
+                    "magda",
+                    "magdabuttym",
+                ],
+
+                "maisonmargiela": [
+                    "maisonmargiela",
+                    "maison margiela",
+                    "maisionmargiela",
+                    "mm6",
+                ],
+
+                "max mara": [
+                    "max mara",
+                    "maxmara",
+                    "maxmara_jul",
+                    "maxmara_tb",
+                    "maxmarastudio_er",
+                    "maxmarathecube_er",
+                    "maxmarathecube_tb",
+                ],
+
+                "miu miu": [
+                    "miumiu",
+                    "miu miu",
+                    "miu",
+                    "miumiu_er",
+                    "miumiu_nug",
+                ],
+
+                "moncler": ["moncler", "moncler_jul"],
+
+                "paristexas": [
+                    "paristexas",
+                    "paris texas",
+                    "paris",
+                    "paristexas_nug",
+                    "paristexas_tb",
+                ],
+
+                "prada": [
+                    "prada",
+                    "prada_er",
+                    "prada_jul",
+                    "prada_ffm",
+                ],
+
+                "renécaovilla": [
+                    "renècaovilla",
+                    "renecaovilla",
+                    "rené caovilla",
+                ],
+
+                "rogervivier": [
+                    "rogervivier",
+                    "roger vivier",
+                    "roger",
+                    "roger_ffm",
+                ],
+
+                "rotate": ["rotate", "rotate_jul"],
+
+                "saint laurent": [
+                    "saint laurent",
+                    "saintlaurent",
+                    "ysl",
+                    "saint",
+                    "saintlaurent_er",
+                    "saintlaurent_nug",
+                ],
+
+                "theattico": [
+                    "theattico",
+                    "the attico",
+                    "theattico_nug",
+                ],
+
+                "the row": [
+                    "the row",
+                    "therow",
+                    "therow_tb",
+                ],
+
+                "valentino": [
+                    "valentino",
+                    "valentino_ffm",
+                    "valentino_jul",
+                    "valentinogaravani",
+                    "valentinogaravani_er",
+                    "valentinogaravani_jul",
+                    "valentinogaravani_nug",
+                ],
+
+                "zimmermann": [
+                    "zimmermann",
+                    "zimmerman",
+                    "zimmermann_jul",
+                ],
+
+                "van cleef & arpels": [
+                    "van cleef & arpels",
+                    "van cleef and arpels",
+                    "vancleef&arpels",
+                    "vancleefarpels",
+                    "van cleef",
+                    "vancleef",
+                    "vca",
+                ],
+            }
+
+            normalized_key = safe.lower()
+
+            aliases = alias_map.get(
+                normalized_key,
+                [safe, compact]
+            )
 
             aliases = list(dict.fromkeys(aliases))
 
             conditions = []
 
             for alias in aliases:
-                conditions.append(f"brand.ilike.%{alias}%")
-                conditions.append(f"caption.ilike.%{alias}%")
+                conditions.append(
+                    f"brand.ilike.%{alias}%"
+                )
+                conditions.append(
+                    f"caption.ilike.%{alias}%"
+                )
 
-            query = query.or_(",".join(conditions))
+            query = query.or_(
+                ",".join(conditions)
+            )
 
         qq = (q or "").strip()
         if qq:
@@ -1414,48 +1631,193 @@ def get_boutique_cards():
                 "cached": True,
             }
 
-        normalize_map = {
+                normalize_map = {
+            "acnestudios": "Acne Studios",
+            "acnestudio": "Acne Studios",
+            "acne": "Acne Studios",
+
+            "alaia": "Alaïa",
+            "alaïa": "Alaïa",
+            "alaia_nug": "Alaïa",
+
+            "alevi": "Alevi",
+            "alevi’_nug": "Alevi",
+            "alevi'_nug": "Alevi",
+
+            "alexandermcquen": "Alexander McQueen",
+            "alexander": "Alexander McQueen",
+            "amcqueen": "Alexander McQueen",
+            "mcqueen": "Alexander McQueen",
+            "alexander mcqueen": "Alexander McQueen",
+
+            "aquazzura": "Aquazzura",
+            "aquazzura_er": "Aquazzura",
+            "aquazzura_jul": "Aquazzura",
+            "aquazzura_nug": "Aquazzura",
+
+            "balenciaga": "Balenciaga",
+            "balenciaga_ffm": "Balenciaga",
+
+            "balmain": "Balmain",
+            "balmain_jul": "Balmain",
+
+            "bottega veneta": "Bottega Veneta",
+            "bottegaveneta": "Bottega Veneta",
+            "bottega_ffm": "Bottega Veneta",
+
+            "brunello cucinelli": "Brunello Cucinelli",
+            "brunellocucinelli": "Brunello Cucinelli",
+            "brunellocucinelli_fk": "Brunello Cucinelli",
+            "brunellocucinelli_jul": "Brunello Cucinelli",
+            "brunellocucinelli_tb": "Brunello Cucinelli",
+
+            "burberry": "Burberry",
+            "burberry_ffm": "Burberry",
+            "burberry_jul": "Burberry",
+
+            "celine": "Celine",
+            "celine_nug": "Celine",
+            "celine_tb": "Celine",
+            "celine_tg": "Celine",
+
+            "chloe": "Chloe",
+            "chloé": "Chloe",
+
             "dior": "Dior",
             "christiandior": "Dior",
             "christian dior": "Dior",
-            "fendi": "Fendi",
+            "dior_bb": "Dior",
+            "dior_nug": "Dior",
+            "dior_tg": "Dior",
+
             "dolce&gabbana": "Dolce & Gabbana",
             "dolce & gabbana": "Dolce & Gabbana",
             "dolcegabbana": "Dolce & Gabbana",
             "dg": "Dolce & Gabbana",
-            "prada": "Prada",
+            "dolce_gabbana_er": "Dolce & Gabbana",
+            "dolce_gabbana_jul": "Dolce & Gabbana",
+
+            "etro": "Etro",
+            "etro_jul": "Etro",
+
+            "fendi": "Fendi",
+            "fendi_er": "Fendi",
+            "fendi_ffm": "Fendi",
+            "fendi_jul": "Fendi",
+
+            "ferragamo": "Ferragamo",
+            "feragamo": "Ferragamo",
+
+            "givenchy": "Givenchy",
+            "givenchy_ffm": "Givenchy",
+
+            "golden goose": "Golden Goose",
+            "goldengoose": "Golden Goose",
+            "goldengoose_jul": "Golden Goose",
+
             "gucci": "Gucci",
+            "gucci_er": "Gucci",
+            "gucci_ffm": "Gucci",
+            "gucci_jul": "Gucci",
+            "gucci_nug": "Gucci",
+
+            "jacquemus": "Jacquemus",
+            "jacquemus_tb": "Jacquemus",
+
+            "jilsander": "Jil Sander",
+            "jil sander": "Jil Sander",
+            "jilsander_jul": "Jil Sander",
+
+            "jimmychoo": "Jimmy Choo",
+            "jimmy choo": "Jimmy Choo",
+            "jimmy": "Jimmy Choo",
+
+            "lesilla": "Le Silla",
+            "le silla": "Le Silla",
+            "lesilla_jul": "Le Silla",
+            "lesilla_nug": "Le Silla",
+
+            "loewe": "Loewe",
+            "loewe_nug": "Loewe",
+            "loewe_tb": "Loewe",
+            "loewe_tg": "Loewe",
+
+            "magdabutrym": "Magda Butrym",
+            "magda butrym": "Magda Butrym",
+            "magda": "Magda Butrym",
+            "magdabuttym": "Magda Butrym",
+
+            "maisonmargiela": "Maison Margiela",
+            "maison margiela": "Maison Margiela",
+            "maisionmargiela": "Maison Margiela",
+            "mm6": "Maison Margiela",
+
+            "max mara": "Max Mara",
+            "maxmara": "Max Mara",
+            "maxmara_jul": "Max Mara",
+            "maxmara_tb": "Max Mara",
+            "maxmarastudio_er": "Max Mara",
+            "maxmarathecube_er": "Max Mara",
+            "maxmarathecube_tb": "Max Mara",
+
             "miumiu": "Miu Miu",
             "miu miu": "Miu Miu",
-            "celine": "Celine",
-            "loewe": "Loewe",
-            "valentino": "Valentino",
-            "bottega veneta": "Bottega Veneta",
-            "bottegaveneta": "Bottega Veneta",
+            "miu": "Miu Miu",
+            "miumiu_er": "Miu Miu",
+            "miumiu_nug": "Miu Miu",
+
+            "moncler": "Moncler",
+            "moncler_jul": "Moncler",
+
+            "paristexas": "Paris Texas",
+            "paris texas": "Paris Texas",
+            "paris": "Paris Texas",
+            "paristexas_nug": "Paris Texas",
+            "paristexas_tb": "Paris Texas",
+
+            "prada": "Prada",
+            "prada_er": "Prada",
+            "prada_jul": "Prada",
+            "prada_ffm": "Prada",
+
+            "renècaovilla": "René Caovilla",
+            "renecaovilla": "René Caovilla",
+            "rené caovilla": "René Caovilla",
+
+            "rogervivier": "Roger Vivier",
+            "roger vivier": "Roger Vivier",
+            "roger": "Roger Vivier",
+            "roger_ffm": "Roger Vivier",
+
+            "rotate": "Rotate",
+            "rotate_jul": "Rotate",
+
             "saintlaurent": "Saint Laurent",
             "saint laurent": "Saint Laurent",
             "ysl": "Saint Laurent",
-            "balenciaga": "Balenciaga",
-            "burberry": "Burberry",
-            "givenchy": "Givenchy",
-            "max mara": "Max Mara",
-            "maxmara": "Max Mara",
-            "brunello cucinelli": "Brunello Cucinelli",
-            "brunellocucinelli": "Brunello Cucinelli",
-            "loro piana": "Loro Piana",
-            "loropiana": "Loro Piana",
-            "zimmermann": "Zimmermann",
-            "tom ford": "Tom Ford",
-            "golden goose": "Golden Goose",
-            "goldengoose": "Golden Goose",
-            "moncler": "Moncler",
-            "etro": "Etro",
-            "versace": "Versace",
-            "jacquemus": "Jacquemus",
+            "saint": "Saint Laurent",
+            "saintlaurent_er": "Saint Laurent",
+            "saintlaurent_nug": "Saint Laurent",
+
+            "theattico": "The Attico",
+            "the attico": "The Attico",
+            "theattico_nug": "The Attico",
+
             "the row": "The Row",
             "therow": "The Row",
-            "alaia": "Alaïa",
-            "alaïa": "Alaïa",
+            "therow_tb": "The Row",
+
+            "valentino": "Valentino",
+            "valentino_ffm": "Valentino",
+            "valentino_jul": "Valentino",
+            "valentinogaravani": "Valentino",
+            "valentinogaravani_er": "Valentino",
+            "valentinogaravani_jul": "Valentino",
+            "valentinogaravani_nug": "Valentino",
+
+            "zimmermann": "Zimmermann",
+            "zimmerman": "Zimmermann",
+            "zimmermann_jul": "Zimmermann",
         }
 
         skip_exact = {
