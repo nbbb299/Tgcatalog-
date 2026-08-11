@@ -1631,7 +1631,7 @@ def get_boutique_cards():
                 "cached": True,
             }
 
-         normalize_map = {
+        normalize_map = {
             "acnestudios": "Acne Studios",
             "acnestudio": "Acne Studios",
             "acne": "Acne Studios",
