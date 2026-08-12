@@ -1958,6 +1958,12 @@ def get_boutique_cards():
                     if brand:
                         return brand
 
+                    # Новый неизвестный хештег тоже считаем брендом
+                    fallback = tag.strip().strip("#").strip()
+
+                    if fallback:
+                        return fallback
+
                 except Exception:
                     pass
 
