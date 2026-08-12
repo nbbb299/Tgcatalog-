@@ -1371,12 +1371,18 @@ def get_jewelry_brands():
 
         grouped = {}
         no_brand_count = 0
-
+        no_brand_latest_ts = 0
+        
         for row in rows:
             brand = get_row_brand(row)
 
             if not brand:
                 no_brand_count += 1
+                row_ts = int(row.get("ts") or 0)
+
+                if row_ts > no_brand_latest_ts:
+                    no_brand_latest_ts = row_ts
+
                 continue
 
             if brand.lower() in {"bvlgulari", "bvulgari", "vancleef&arpels"}:
@@ -1406,6 +1412,7 @@ def get_jewelry_brands():
             brands.insert(0, {
                 "brand": "Часы и украшения",
                 "count": no_brand_count,
+                "latest_ts": no_brand_latest_ts,
                 "special": "no_brand",
             })
 
