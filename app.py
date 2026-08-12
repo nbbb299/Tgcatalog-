@@ -1,6 +1,7 @@
 import os
 import asyncio
 import traceback
+import threading
 import re
 import time
 import requests
@@ -1618,20 +1619,41 @@ boutique_cards_cache = {
     "data": [],
 }
 
+boutique_cache_refreshing = False
 
+
+def refresh_boutique_cards_cache_background():
+    global boutique_cache_refreshing
+
+    if boutique_cache_refreshing:
+        return
+
+    boutique_cache_refreshing = True
+
+    try:
+        # Просто вызываем пересчёт через отдельный запрос позже.
+        # Сам пользователь при этом уже видит сохранённые карточки.
+        boutique_cards_cache["ts"] = 0.0
+
+    finally:
+        boutique_cache_refreshing = False
+        
 @app.get("/api/boutique-cards")
 def get_boutique_cards():
     try:
-        now = time.time()
-        cached_at = float(boutique_cards_cache.get("ts", 0.0))
-        cached_data = boutique_cards_cache.get("data", [])
+       now = time.time()
+       cached_at = float(boutique_cards_cache.get("ts", 0.0))
+       cached_data = boutique_cards_cache.get("data", [])
 
-        if cached_data and now - cached_at < 300:
-            return {
-                "cards": cached_data,
-                "total_cards": len(cached_data),
-                "cached": True,
-            }
+       # Если карточки уже когда-либо были рассчитаны —
+       # отдаём их МГНОВЕННО, не заставляя пользователя ждать Supabase.
+       if cached_data:
+           return {
+               "cards": cached_data,
+               "total_cards": len(cached_data),
+               "cached": True,
+               "cache_age": int(now - cached_at),
+    }
 
         normalize_map = {
             "acnestudios": "Acne Studios",
