@@ -1641,18 +1641,18 @@ def refresh_boutique_cards_cache_background():
 @app.get("/api/boutique-cards")
 def get_boutique_cards():
     try:
-       now = time.time()
-       cached_at = float(boutique_cards_cache.get("ts", 0.0))
-       cached_data = boutique_cards_cache.get("data", [])
+        now = time.time()
+        cached_at = float(boutique_cards_cache.get("ts", 0.0))
+        cached_data = boutique_cards_cache.get("data", [])
 
-       # Если карточки уже когда-либо были рассчитаны —
-       # отдаём их МГНОВЕННО, не заставляя пользователя ждать Supabase.
-       if cached_data:
-           return {
-               "cards": cached_data,
-               "total_cards": len(cached_data),
-               "cached": True,
-               "cache_age": int(now - cached_at),
+        # Если карточки уже когда-либо были рассчитаны —
+        # отдаём их МГНОВЕННО, не заставляя пользователя ждать Supabase.
+        if cached_data:
+            return {
+                "cards": cached_data,
+                "total_cards": len(cached_data),
+                "cached": True,
+                "cache_age": int(now - cached_at),
     }
 
         normalize_map = {
