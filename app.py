@@ -1955,7 +1955,7 @@ def get_boutique_cards():
         while True:
             response = (
                 supabase.table(TABLE)
-                .select("brand,caption")
+                .select("brand,caption,ts")
                 .eq("source", "Boutiques")
                 .range(start, start + page_size - 1)
                 .execute()
@@ -1975,15 +1975,21 @@ def get_boutique_cards():
                             "count": 0,
                             "type": "brand",
                             "value": brand,
-                        }
+                            "latest_ts": 0,
+                       }
 
                     grouped[key]["count"] += 1
+
+                    row_ts = int(row.get("ts") or 0)
+
+                    if row_ts > grouped[key]["latest_ts"]:
+                        grouped[key]["latest_ts"] = row_ts
                 else:
                     misc_count += 1
 
             if len(chunk) < page_size:
                 break
-
+                
             start += page_size
 
             if start >= 500000:
