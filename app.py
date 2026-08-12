@@ -456,7 +456,7 @@ def get_products(
 
             alias_map = {
                 "acnestudios": ["acnestudios", "acnestudio", "acne"],
-                "alaïa": ["alaia", "alaia_nug"],
+                "alaïa": ["alaia", "alaïa", "alaia_nug"],
                 "alevi": ["alevi", "alevi’_nug", "alevi'_nug"],
 
                 "alexandermcquen": [
