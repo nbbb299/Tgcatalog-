@@ -1201,7 +1201,19 @@ function renderOutletBrands(){
   outletBrands.forEach(item=>{
     const brandName = String(item.brand || "").trim();
     const count = Number(item.count || 0);
+    const latestTs = Number(item.latest_ts || 0);
 
+  let isNewToday = false;
+
+  if(latestTs){
+    const latestDate = new Date(latestTs * 1000);
+    const today = new Date();
+
+    isNewToday =
+      latestDate.getFullYear() === today.getFullYear() &&
+      latestDate.getMonth() === today.getMonth() &&
+      latestDate.getDate() === today.getDate();
+  }
     if(!brandName) return;
 
     const card = document.createElement("div");
@@ -1227,7 +1239,15 @@ function renderOutletBrands(){
     bottom.appendChild(arrow);
 
     card.appendChild(name);
-    card.appendChild(bottom);
+
+if(isNewToday){
+  const newBadge = document.createElement("div");
+  newBadge.className = "brandNewBadge";
+  newBadge.textContent = "NEW TODAY";
+  card.appendChild(newBadge);
+}
+
+card.appendChild(bottom);
 
     const open = ()=>{
       openOutletBrand(brandName);
