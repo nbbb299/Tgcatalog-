@@ -1051,7 +1051,7 @@ def get_outlet_brands():
         while True:
             response = (
                 supabase.table(TABLE)
-                .select("brand,caption")
+                .select("brand,caption,ts")
                 .eq("source", "Outlets")
                 .range(start, start + page_size - 1)
                 .execute()
@@ -1082,10 +1082,15 @@ def get_outlet_brands():
                 grouped[key] = {
                     "brand": brand,
                     "count": 0,
+                    "latest_ts": 0,
                 }
 
             grouped[key]["count"] += 1
+            row_ts = int(row.get("ts") or 0)
 
+            if row_ts > grouped[key]["latest_ts"]:
+                grouped[key]["latest_ts"] = row_ts
+                
         brands = sorted(
             grouped.values(),
             key=lambda item: item["brand"].lower(),
