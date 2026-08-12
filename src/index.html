@@ -24,6 +24,11 @@
       color:var(--text);
       background:var(--bg);
     }
+    
+    html, body{
+  max-width:100%;
+  overflow-x:hidden;
+}
 
     .top{
   position:sticky; top:0; z-index:1000;
@@ -61,25 +66,24 @@
     /* ✅ Source tabs */
     .tabsWrap{
   margin-top:10px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:flex-start;
-  overflow:visible;
+  display:block;
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
 }
     .tabs{
   display:flex;
   flex-wrap:nowrap;
-  overflow-x:scroll;
-  overflow-y:hidden;
-  -webkit-overflow-scrolling:touch;
-  touch-action:pan-x;
-  overscroll-behavior-x:contain;
-
   gap:6px;
+
   width:100%;
   max-width:100%;
   min-width:0;
+
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-x;
 
   background:#fff;
   border:1px solid var(--stroke);
