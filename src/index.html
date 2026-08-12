@@ -1296,7 +1296,19 @@ function renderJewelryBrands(){
     const isNoBrand = item.special === "no_brand";
     const brandName = String(item.brand || "").trim();
     const count = Number(item.count || 0);
+    const latestTs = Number(item.latest_ts || 0);
 
+  let isNewToday = false;
+
+  if(latestTs){
+    const latestDate = new Date(latestTs * 1000);
+    const today = new Date();
+
+    isNewToday =
+      latestDate.getFullYear() === today.getFullYear() &&
+      latestDate.getMonth() === today.getMonth() &&
+      latestDate.getDate() === today.getDate();
+  }
     if(!brandName && !isNoBrand) return;
 
     const card = document.createElement("div");
@@ -1323,7 +1335,12 @@ function renderJewelryBrands(){
     bottom.appendChild(amount);
     bottom.appendChild(arrow);
 
-    card.appendChild(name);
+    if(isNewToday){
+  const newBadge = document.createElement("div");
+  newBadge.className = "brandNewBadge";
+  newBadge.textContent = "NEW TODAY";
+  card.appendChild(newBadge);
+}
     card.appendChild(bottom);
 
     const open = ()=>{
