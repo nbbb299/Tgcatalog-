@@ -682,6 +682,13 @@ def get_products(
                     "zimmermann_jul",
                 ],
 
+                "tiffany & co": [
+                    "tiffany & co",
+                    "tiffany&co",
+                    "tiffany",
+                    "tiffanyandco",
+                ],
+                
                 "van cleef & arpels": [
                     "van cleef & arpels",
                     "van cleef and arpels",
