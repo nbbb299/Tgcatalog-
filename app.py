@@ -1662,9 +1662,8 @@ def get_boutique_cards():
         cached_at = float(boutique_cards_cache.get("ts", 0.0))
         cached_data = boutique_cards_cache.get("data", [])
 
-        # Если карточки уже когда-либо были рассчитаны —
-        # отдаём их МГНОВЕННО, не заставляя пользователя ждать Supabase.
-        if cached_data:
+        # кэш используем максимум 5 минут
+        if cached_data and now - cached_at < 300:
             return {
                 "cards": cached_data,
                 "total_cards": len(cached_data),
