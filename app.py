@@ -538,6 +538,7 @@ def get_products(
                     "dolce$gabbana_ffm",
                     "dolcegabbana_ffm",
                     "dolce&gabbana_ffm",
+                    "dolce$gabbana_ffm",
                 ],
 
                 "etro": ["etro", "etro_jul"],
@@ -1755,6 +1756,7 @@ def get_boutique_cards():
             
             "christian_louboutin_nug": "Christian Louboutin",
             "christianlouboutin_nug": "Christian Louboutin",
+            "christianlouboutin": "Christian Louboutin",
           
             "dior": "Dior",
             "christiandior": "Dior",
@@ -1772,7 +1774,8 @@ def get_boutique_cards():
             "dolce$gabbana_ffm": "Dolce & Gabbana",
             "dolcegabbana_ffm": "Dolce & Gabbana",
             "dolce&gabbana_ffm": "Dolce & Gabbana",
-           
+            "dolce$gabbana_ffm": "Dolce & Gabbana",
+          
             "etro": "Etro",
             "etro_jul": "Etro",
 
