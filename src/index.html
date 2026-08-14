@@ -1,4 +1,4 @@
-г<!doctype html>
+<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
@@ -708,8 +708,8 @@
   <div class="top">
     <div class="wrap">
       <div class="langSwitch">
-  <button id="langRu" class="langBtn active" type="button" onclick="setLanguage('ru')">RU</button>
-<button id="langEn" class="langBtn" type="button" onclick="setLanguage('en')">EN</button>
+  <button id="langRu" class="langBtn active" type="button">RU</button>
+<button id="langEn" class="langBtn" type="button">EN</button>
 </div>
       <div class="inputs">
         <div class="row1">
@@ -2679,6 +2679,20 @@ localStorage.setItem("siteLanguage", lang);
 if (typeof render === "function") {
   render();
 }
+}
+const langRuBtn = document.getElementById("langRu");
+const langEnBtn = document.getElementById("langEn");
+
+if (langRuBtn) {
+  langRuBtn.onclick = function () {
+    setLanguage("ru");
+  };
+}
+
+if (langEnBtn) {
+  langEnBtn.onclick = function () {
+    setLanguage("en");
+  };
 }
   window.setLanguage = setLanguage;
   setLanguage(localStorage.getItem("siteLanguage") || "ru");
