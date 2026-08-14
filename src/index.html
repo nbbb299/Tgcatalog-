@@ -708,8 +708,11 @@
   <div class="top">
     <div class="wrap">
       <div class="langSwitch">
-  <button id="langRu" class="langBtn active" type="button">RU</button>
-<button id="langEn" class="langBtn" type="button">EN</button>
+  <button id="langRu" class="langBtn active" type="button"
+  onclick="localStorage.setItem('siteLanguage','ru'); location.reload();">RU</button>
+
+<button id="langEn" class="langBtn" type="button"
+onclick="localStorage.setItem('siteLanguage','en'); location.reload();">EN</button>
 </div>
       <div class="inputs">
         <div class="row1">
