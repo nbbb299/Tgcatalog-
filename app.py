@@ -539,6 +539,7 @@ def get_products(
                     "dolcegabbana_ffm",
                     "dolce&gabbana_ffm",
                     "dolce$gabbana_ffm",
+                    "DOLCE$GABBANA_FFM",
                 ],
 
                 "etro": ["etro", "etro_jul"],
@@ -1775,6 +1776,7 @@ def get_boutique_cards():
             "dolcegabbana_ffm": "Dolce & Gabbana",
             "dolce&gabbana_ffm": "Dolce & Gabbana",
             "dolce$gabbana_ffm": "Dolce & Gabbana",
+            "DOLCE$GABBANA_FFM": "Dolce & Gabbana",
           
             "etro": "Etro",
             "etro_jul": "Etro",
