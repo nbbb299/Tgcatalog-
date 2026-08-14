@@ -2205,14 +2205,14 @@ function buildProductsUrl({
       tgBtn.href = tg;
       tgBtn.target = "_blank";
       tgBtn.rel = "noopener";
-      tgBtn.innerHTML = `<span class="btnText">${(localStorage.getItem("siteLanguage") || "ru") === "en" ? "Buy via<br>Telegram" : "Купить в<br>Telegram"}</span>`;
+      tgBtn.innerHTML = `<span class="btnText">${localStorage.getItem("siteLanguage") === "en" ? "Buy via<br>Telegram" : "Купить в<br>Telegram"}</span>`;
 
       const waBtn = document.createElement("a");
       waBtn.className = "aBtn wa";
       waBtn.href = wa;
       waBtn.target = "_blank";
       waBtn.rel = "noopener";
-      waBtn.innerHTML = `<span class="btnText">${(localStorage.getItem("siteLanguage") || "ru") === "en" ? "Buy via<br>WhatsApp" : "Купить в<br>WhatsApp"}</span>`;
+      waBtn.innerHTML = `<span class="btnText">${localStorage.getItem("siteLanguage") === "en" ? "Buy via<br>WhatsApp" : "Купить в<br>WhatsApp"}</span>`;
 
       actions.appendChild(tgBtn);
       actions.appendChild(waBtn);
@@ -2227,7 +2227,7 @@ function buildProductsUrl({
       shareBtn.style.borderColor = "rgba(17,17,17,.15)";
       shareBtn.style.background = "#fff";
       shareBtn.style.color = "#111";
-      shareBtn.textContent = (localStorage.getItem("siteLanguage") || "ru") === "en" ? "Copy link" : "Скопировать ссылку";
+      shareBtn.textContent = localStorage.getItem("siteLanguage") === "en" ? "Copy link" : "Скопировать ссылку";
 
       shareBtn.onclick = async (e)=>{
         e.preventDefault();
@@ -2604,7 +2604,7 @@ $("outletBack").onclick = ()=>{
     }); 
   </script>
 <script>
-(function () {
+
   const translations = window.translations = {
     ru: {
       searchPlaceholder: "Поиск (текст/описание)",
@@ -2686,7 +2686,7 @@ $("outletBack").onclick = ()=>{
   });
 
   setLanguage(localStorage.getItem("siteLanguage") || "ru");
-})();
+;
 </script>
 <div id="aboutPage" style="display:none; max-width:900px; margin:20px auto; padding:20px;">
   <div style="background:#fff; border-radius:20px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.06);">
