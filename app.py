@@ -476,6 +476,11 @@ def get_products(
                 ],
 
                 "balenciaga": ["balenciaga", "balenciaga_ffm"],
+                 "balenciaga": [
+                     "balenciaga",
+                     "balenciaga_nug",
+                ],
+                
                 "balmain": ["balmain", "balmain_jul"],
 
                 "bottega veneta": [
@@ -506,7 +511,14 @@ def get_products(
                 ],
 
                 "chloe": ["chloe", "chloé", "chloè"],
-
+                
+                "christian louboutin": [
+                    "christian louboutin",
+                    "christianlouboutin",
+                    "christian_louboutin_nug",
+                    "christianlouboutin_nug",
+                ],
+                
                 "dior": [
                     "dior",
                     "christiandior",
@@ -523,6 +535,9 @@ def get_products(
                     "dg",
                     "dolce_gabbana_er",
                     "dolce_gabbana_jul",
+                    "dolce$gabbana_ffm",
+                    "dolcegabbana_ffm",
+                    "dolce&gabbana_ffm",
                 ],
 
                 "etro": ["etro", "etro_jul"],
@@ -665,7 +680,12 @@ def get_products(
                     "therow",
                     "therow_tb",
                 ],
-
+                "the row": [
+                    "the row",
+                    "therow",
+                    "therow_nug",
+                ],
+                
                 "valentino": [
                     "valentino",
                     "valentino_ffm",
@@ -1705,6 +1725,7 @@ def get_boutique_cards():
 
             "balenciaga": "Balenciaga",
             "balenciaga_ffm": "Balenciaga",
+            "balenciaga_nug": "Balenciaga",
 
             "balmain": "Balmain",
             "balmain_jul": "Balmain",
@@ -1731,7 +1752,10 @@ def get_boutique_cards():
             "chloe": "Chloe",
             "chloé": "Chloe",
             "chloè": "Chloe",
-
+            
+            "christian_louboutin_nug": "Christian Louboutin",
+            "christianlouboutin_nug": "Christian Louboutin",
+          
             "dior": "Dior",
             "christiandior": "Dior",
             "christian dior": "Dior",
@@ -1745,7 +1769,10 @@ def get_boutique_cards():
             "dg": "Dolce & Gabbana",
             "dolce_gabbana_er": "Dolce & Gabbana",
             "dolce_gabbana_jul": "Dolce & Gabbana",
-
+            "dolce$gabbana_ffm": "Dolce & Gabbana",
+            "dolcegabbana_ffm": "Dolce & Gabbana",
+            "dolce&gabbana_ffm": "Dolce & Gabbana",
+           
             "etro": "Etro",
             "etro_jul": "Etro",
 
@@ -1857,7 +1884,9 @@ def get_boutique_cards():
             "the row": "The Row",
             "therow": "The Row",
             "therow_tb": "The Row",
-
+            "therow_nug": "The Row",
+            "the row_nug": "The Row",
+            
             "valentino": "Valentino",
             "valentino_ffm": "Valentino",
             "valentino_jul": "Valentino",
