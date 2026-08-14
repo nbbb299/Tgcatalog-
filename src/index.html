@@ -2613,7 +2613,8 @@ $("outletBack").onclick = ()=>{
       sales: "Скидки 30–70%",
       glasses: "Очки",
       men: "Мужское",
-      jewelry: "Украшения"
+      jewelry: "Украшения",
+      about: "О нас"
     },
     en: {
       searchPlaceholder: "Search (text/description)",
@@ -2622,7 +2623,8 @@ $("outletBack").onclick = ()=>{
       sales: "Sale 30–70%",
       glasses: "Eyewear",
       men: "Men",
-      jewelry: "Jewelry"
+      jewelry: "Jewelry",
+      about: "About"
     }
   };
 
@@ -2643,12 +2645,14 @@ $("outletBack").onclick = ()=>{
     const tabGlasses = document.getElementById("tabGlasses");
     const tabMen = document.getElementById("tabMen");
     const tabJewelry = document.getElementById("tabJewelry");
-
+    const tabAbout = document.getElementById("tabAbout");
+    
     if (tabSales) tabSales.textContent = t.sales;
     if (tabGlasses) tabGlasses.textContent = t.glasses;
     if (tabMen) tabMen.textContent = t.men;
     if (tabJewelry) tabJewelry.textContent = t.jewelry;
-
+    if (tabAbout) tabAbout.textContent = t.about;
+    
     document.getElementById("langRu")?.classList.toggle("active", lang === "ru");
     document.getElementById("langEn")?.classList.toggle("active", lang === "en");
 
