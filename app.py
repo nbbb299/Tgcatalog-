@@ -1686,6 +1686,7 @@ def get_boutique_cards():
             "alaia": "Alaïa",
             "alaïa": "Alaïa",
             "alaia_nug": "Alaïa",
+            "alaia_tg": "Alaïa",
 
             "alevi": "Alevi",
             "alevi’_nug": "Alevi",
