@@ -2205,14 +2205,14 @@ function buildProductsUrl({
       tgBtn.href = tg;
       tgBtn.target = "_blank";
       tgBtn.rel = "noopener";
-      tgBtn.innerHTML = `<span class="btnText">Купить в<br>Telegram</span>`;
+      tgBtn.innerHTML = `<span class="btnText">${translations[localStorage.getItem("siteLanguage") || "ru"].buyTelegram.replace(" в ", " в<br>")}</span>`;
 
       const waBtn = document.createElement("a");
       waBtn.className = "aBtn wa";
       waBtn.href = wa;
       waBtn.target = "_blank";
       waBtn.rel = "noopener";
-      waBtn.innerHTML = `<span class="btnText">Купить в<br>WhatsApp</span>`;
+      waBtn.innerHTML = `<span class="btnText">${translations[localStorage.getItem("siteLanguage") || "ru"].buyWhatsapp.replace(" в ", " в<br>").replace(" via ", " via<br>")}</span>`;
 
       actions.appendChild(tgBtn);
       actions.appendChild(waBtn);
@@ -2227,7 +2227,7 @@ function buildProductsUrl({
       shareBtn.style.borderColor = "rgba(17,17,17,.15)";
       shareBtn.style.background = "#fff";
       shareBtn.style.color = "#111";
-      shareBtn.textContent = "Скопировать ссылку";
+      shareBtn.textContent = translations[localStorage.getItem("siteLanguage") || "ru"].copyLink;
 
       shareBtn.onclick = async (e)=>{
         e.preventDefault();
@@ -2237,9 +2237,9 @@ function buildProductsUrl({
 
         try{
           await navigator.clipboard.writeText(url);
-          shareBtn.textContent = "Ссылка скопирована";
+          shareBtn.textContent = (localStorage.getItem("siteLanguage") || "ru") === "en" ? "Link copied" : "Ссылка скопирована";
           setTimeout(()=>{
-            shareBtn.textContent = "Скопировать ссылку";
+            shareBtn.textContent = translations[localStorage.getItem("siteLanguage") || "ru"].copyLink;
           }, 1500);
         }catch(_){
           prompt("Скопируй ссылку:", url);
@@ -2618,6 +2618,9 @@ $("outletBack").onclick = ()=>{
       brands: "Бренды ▼",
       filterHint: "Фильтр по источнику канала.",
       tip: "Совет: можно искать по бренду и по любому тексту из описания."
+      buyTelegram: "Купить в Telegram",
+      buyWhatsapp: "Купить в WhatsApp",
+      copyLink: "Скопировать ссылку"
     },
     en: {
       searchPlaceholder: "Search (text/description)",
@@ -2631,6 +2634,9 @@ $("outletBack").onclick = ()=>{
       brands: "Brands ▼",
       filterHint: "Filter by channel source.",
       tip: "Tip: you can search by brand or any text from the description."
+      buyTelegram: "Buy via Telegram",
+      buyWhatsapp: "Buy via WhatsApp",
+      copyLink: "Copy link"
     }
   };
 
