@@ -678,12 +678,39 @@
       box-shadow: 0 12px 26px rgba(0,0,0,.18);
     }
     .adminBadge.show{display:inline-flex;}
+    .langSwitch{
+  display:flex;
+  justify-content:flex-end;
+  gap:6px;
+  margin-bottom:10px;
+}
+
+.langBtn{
+  border:1px solid #ddd;
+  background:#fff;
+  color:#111;
+  border-radius:999px;
+  padding:7px 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.langBtn.active{
+  background:#111;
+  color:#fff;
+  border-color:#111;
+}
   </style>
 </head>
 
 <body>
   <div class="top">
     <div class="wrap">
+      <div class="langSwitch">
+  <button id="langRu" class="langBtn active" type="button">RU</button>
+  <button id="langEn" class="langBtn" type="button">EN</button>
+</div>
       <div class="inputs">
         <div class="row1">
           <input id="q" placeholder="Поиск (текст/описание)" autocomplete="off" />
