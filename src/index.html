@@ -2603,7 +2603,69 @@ $("outletBack").onclick = ()=>{
       }
     }); 
   </script>
+<script>
+(function () {
+  const translations = {
+    ru: {
+      searchPlaceholder: "Поиск (текст/описание)",
+      brandPlaceholder: "Бренд (например gucci)",
+      find: "Найти",
+      sales: "Скидки 30–70%",
+      glasses: "Очки",
+      men: "Мужское",
+      jewelry: "Украшения"
+    },
+    en: {
+      searchPlaceholder: "Search (text/description)",
+      brandPlaceholder: "Brand (for example gucci)",
+      find: "Search",
+      sales: "Sale 30–70%",
+      glasses: "Eyewear",
+      men: "Men",
+      jewelry: "Jewelry"
+    }
+  };
 
+  function setLanguage(lang) {
+    const t = translations[lang];
+
+    document.documentElement.lang = lang;
+
+    const q = document.getElementById("q");
+    const brand = document.getElementById("brand");
+    const find = document.getElementById("find");
+
+    if (q) q.placeholder = t.searchPlaceholder;
+    if (brand) brand.placeholder = t.brandPlaceholder;
+    if (find) find.textContent = t.find;
+
+    const tabSales = document.getElementById("tabSales");
+    const tabGlasses = document.getElementById("tabGlasses");
+    const tabMen = document.getElementById("tabMen");
+    const tabJewelry = document.getElementById("tabJewelry");
+
+    if (tabSales) tabSales.textContent = t.sales;
+    if (tabGlasses) tabGlasses.textContent = t.glasses;
+    if (tabMen) tabMen.textContent = t.men;
+    if (tabJewelry) tabJewelry.textContent = t.jewelry;
+
+    document.getElementById("langRu")?.classList.toggle("active", lang === "ru");
+    document.getElementById("langEn")?.classList.toggle("active", lang === "en");
+
+    localStorage.setItem("siteLanguage", lang);
+  }
+
+  document.getElementById("langRu")?.addEventListener("click", function () {
+    setLanguage("ru");
+  });
+
+  document.getElementById("langEn")?.addEventListener("click", function () {
+    setLanguage("en");
+  });
+
+  setLanguage(localStorage.getItem("siteLanguage") || "ru");
+})();
+</script>
 <div id="aboutPage" style="display:none; max-width:900px; margin:20px auto; padding:20px;">
   <div style="background:#fff; border-radius:20px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.06);">
 
