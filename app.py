@@ -1945,13 +1945,16 @@ def get_boutique_cards():
 
             if "размер" in low or "size" in low:
                 return ""
-
+         
             if value.startswith("@"):
                 return ""
 
+            if "dolce$gabbana" in low:
+                return "Dolce & Gabbana"
+
             if "€" in value or "$" in value:
                 return ""
-
+            
             for suffix in [
                 " outlet",
                 " new",
