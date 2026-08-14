@@ -2205,14 +2205,14 @@ function buildProductsUrl({
       tgBtn.href = tg;
       tgBtn.target = "_blank";
       tgBtn.rel = "noopener";
-      tgBtn.innerHTML = `<span class="btnText">${translations[localStorage.getItem("siteLanguage") || "ru"].buyTelegram.replace(" в ", " в<br>")}</span>`;
+      tgBtn.innerHTML = `<span class="btnText">${(localStorage.getItem("siteLanguage") || "ru") === "en" ? "Buy via<br>Telegram" : "Купить в<br>Telegram"}</span>`;
 
       const waBtn = document.createElement("a");
       waBtn.className = "aBtn wa";
       waBtn.href = wa;
       waBtn.target = "_blank";
       waBtn.rel = "noopener";
-      waBtn.innerHTML = `<span class="btnText">${translations[localStorage.getItem("siteLanguage") || "ru"].buyWhatsapp.replace(" в ", " в<br>").replace(" via ", " via<br>")}</span>`;
+      waBtn.innerHTML = `<span class="btnText">${(localStorage.getItem("siteLanguage") || "ru") === "en" ? "Buy via<br>WhatsApp" : "Купить в<br>WhatsApp"}</span>`;
 
       actions.appendChild(tgBtn);
       actions.appendChild(waBtn);
@@ -2227,7 +2227,7 @@ function buildProductsUrl({
       shareBtn.style.borderColor = "rgba(17,17,17,.15)";
       shareBtn.style.background = "#fff";
       shareBtn.style.color = "#111";
-      shareBtn.textContent = translations[localStorage.getItem("siteLanguage") || "ru"].copyLink;
+      shareBtn.textContent = (localStorage.getItem("siteLanguage") || "ru") === "en" ? "Copy link" : "Скопировать ссылку";
 
       shareBtn.onclick = async (e)=>{
         e.preventDefault();
@@ -2239,7 +2239,7 @@ function buildProductsUrl({
           await navigator.clipboard.writeText(url);
           shareBtn.textContent = (localStorage.getItem("siteLanguage") || "ru") === "en" ? "Link copied" : "Ссылка скопирована";
           setTimeout(()=>{
-            shareBtn.textContent = translations[localStorage.getItem("siteLanguage") || "ru"].copyLink;
+            shareBtn.textContent = (localStorage.getItem("siteLanguage") || "ru") === "en" ? "Copy link" : "Скопировать ссылку";
           }, 1500);
         }catch(_){
           prompt("Скопируй ссылку:", url);
