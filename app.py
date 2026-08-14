@@ -1923,6 +1923,7 @@ def get_boutique_cards():
                 " new",
                 " boutique",
                 " boutiques",
+                " _tg",
             ]:
                 if low.endswith(suffix):
                     value = value[:-len(suffix)].strip()
