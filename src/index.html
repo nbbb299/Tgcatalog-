@@ -2614,7 +2614,10 @@ $("outletBack").onclick = ()=>{
       glasses: "Очки",
       men: "Мужское",
       jewelry: "Украшения",
-      about: "О нас"
+      about: "О нас",
+      brands: "Бренды ▼",
+      filterHint: "Фильтр по источнику канала.",
+      tip: "Совет: можно искать по бренду и по любому тексту из описания."
     },
     en: {
       searchPlaceholder: "Search (text/description)",
@@ -2624,7 +2627,10 @@ $("outletBack").onclick = ()=>{
       glasses: "Eyewear",
       men: "Men",
       jewelry: "Jewelry",
-      about: "About"
+      about: "About",
+      brands: "Brands ▼",
+      filterHint: "Filter by channel source.",
+      tip: "Tip: you can search by brand or any text from the description."
     }
   };
 
@@ -2646,12 +2652,18 @@ $("outletBack").onclick = ()=>{
     const tabMen = document.getElementById("tabMen");
     const tabJewelry = document.getElementById("tabJewelry");
     const tabAbout = document.getElementById("tabAbout");
+    const brandToggle = document.getElementById("brandToggle");
+    const filterHint = document.querySelector(".tabHint");
+    const tip = document.querySelector(".hint");
     
     if (tabSales) tabSales.textContent = t.sales;
     if (tabGlasses) tabGlasses.textContent = t.glasses;
     if (tabMen) tabMen.textContent = t.men;
     if (tabJewelry) tabJewelry.textContent = t.jewelry;
     if (tabAbout) tabAbout.textContent = t.about;
+    if (brandToggle) brandToggle.textContent = t.brands;
+    if (filterHint) filterHint.textContent = t.filterHint;
+    if (tip) tip.textContent = t.tip;
     
     document.getElementById("langRu")?.classList.toggle("active", lang === "ru");
     document.getElementById("langEn")?.classList.toggle("active", lang === "en");
