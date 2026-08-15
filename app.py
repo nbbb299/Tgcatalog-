@@ -2000,7 +2000,10 @@ def get_boutique_cards():
             caption = str(
                 row.get("caption", "") or ""
             ).strip()
-
+            
+            if "mc2 saint barth" in caption.lower():
+                return "MC2 Saint Barth"
+                
             if "#" in caption:
                 try:
                     tag = (
