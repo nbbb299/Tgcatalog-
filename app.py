@@ -628,6 +628,13 @@ def get_products(
                     "miumiu_nug",
                 ],
 
+                "mc2 saint barth": [
+                    "mc2 saint barth",
+                    "mc2saintbarth",
+                    "mc2_saint_barth",
+                    "saint barth",
+                ],
+                
                 "moncler": ["moncler", "moncler_jul"],
 
                 "paristexas": [
@@ -1846,7 +1853,12 @@ def get_boutique_cards():
             "miu": "Miu Miu",
             "miumiu_er": "Miu Miu",
             "miumiu_nug": "Miu Miu",
-
+            
+            "mc2 saint barth": "MC2 Saint Barth",
+            "mc2saintbarth": "MC2 Saint Barth",
+            "mc2_saint_barth": "MC2 Saint Barth",
+            "saint barth": "MC2 Saint Barth",
+          
             "moncler": "Moncler",
             "moncler_jul": "Moncler",
 
