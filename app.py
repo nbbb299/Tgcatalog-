@@ -618,6 +618,7 @@ def get_products(
                     "maxmarastudio_er",
                     "maxmarathecube_er",
                     "maxmarathecube_tb",
+                    "maxmara_er",
                 ],
 
                 "miu miu": [
@@ -1847,7 +1848,8 @@ def get_boutique_cards():
             "maxmarastudio_er": "Max Mara",
             "maxmarathecube_er": "Max Mara",
             "maxmarathecube_tb": "Max Mara",
-
+            "maxmara_er": "Max Mara",
+            
             "miumiu": "Miu Miu",
             "miu miu": "Miu Miu",
             "miu": "Miu Miu",
