@@ -636,7 +636,11 @@ def get_products(
                     "saint barth",
                 ],
                 
-                "moncler": ["moncler", "moncler_jul"],
+               "moncler": [
+                   "moncler",
+                   "moncler_jul",
+                   "moncler_er",
+                ],
 
                 "paristexas": [
                     "paristexas",
@@ -1863,7 +1867,10 @@ def get_boutique_cards():
           
             "moncler": "Moncler",
             "moncler_jul": "Moncler",
-
+            "moncler": "Moncler",
+            "moncler_jul": "Moncler",
+            "moncler_er": "Moncler",
+            
             "paristexas": "Paris Texas",
             "paris texas": "Paris Texas",
             "paris": "Paris Texas",
