@@ -2163,32 +2163,22 @@ def get_boutique_card_products(
             chunk = response.data or []
 
             for row in chunk:
-                brand = str(
-                    row.get("brand", "") or ""
-                ).strip()
+    brand = get_row_brand(row)
 
-                caption = str(
-                    row.get("caption", "") or ""
-                ).strip()
+    if not brand:
+        continue
 
-                if not brand and "#" in caption:
-                    try:
-                        brand = (
-                            caption
-                            .split("#", 1)[1]
-                            .split()[0]
-                            .strip()
-                        )
-                    except Exception:
-                        brand = ""
+    if brand.lower() != card_value:
+        continue
 
-                if brand:
-                    continue
+    caption = str(
+        row.get("caption", "") or ""
+    ).strip()
 
-                if q_value and q_value not in caption.lower():
-                    continue
+    if q_value and q_value not in caption.lower():
+        continue
 
-                filtered.append(row)
+    filtered.append(row)
 
             if len(chunk) < page_size:
                 break
