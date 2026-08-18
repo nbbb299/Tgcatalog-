@@ -2163,22 +2163,22 @@ def get_boutique_card_products(
             chunk = response.data or []
 
             for row in chunk:
-    brand = get_row_brand(row)
+                brand = get_row_brand(row)
 
-    if not brand:
-        continue
+                if not brand:
+                    continue
 
-    if brand.lower() != card_value:
-        continue
+                if brand.lower() != card_value:
+                    continue
 
-    caption = str(
-        row.get("caption", "") or ""
-    ).strip()
+                caption = str(
+                    row.get("caption", "") or ""
+                ).strip()
 
-    if q_value and q_value not in caption.lower():
-        continue
+                if q_value and q_value not in caption.lower():
+                    continue
 
-    filtered.append(row)
+                filtered.append(row)
 
             if len(chunk) < page_size:
                 break
