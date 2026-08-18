@@ -608,6 +608,7 @@ def get_products(
                     "maison margiela",
                     "maisionmargiela",
                     "mm6",
+                    "maisionmargiela",
                 ],
 
                 "max mara": [
@@ -1844,7 +1845,8 @@ def get_boutique_cards():
             "maison margiela": "Maison Margiela",
             "maisionmargiela": "Maison Margiela",
             "mm6": "Maison Margiela",
-
+            "maisionmargiela": "Maison Margiela",
+            
             "max mara": "Max Mara",
             "maxmara": "Max Mara",
             "maxmara_jul": "Max Mara",
