@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Dict
 
 from fastapi import FastAPI, Request
-from fastapi.responses import Response, FileResponse, JSONResponse
+from fastapi.responses import Response, FileResponse, JSONResponse, StreamingResponse
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
@@ -2280,6 +2280,7 @@ def delete_product(row_id: int, request: Request):
 def tgfile(file_id: str, request: Request):
     etag = f'W/"{file_id}"'
     inm = request.headers.get("if-none-match")
+
     if inm and inm.strip() == etag:
         return Response(
             status_code=304,
@@ -2292,22 +2293,56 @@ def tgfile(file_id: str, request: Request):
     r = requests.get(
         f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
         params={"file_id": file_id},
-        timeout=20
+        timeout=20,
     )
+
     data = r.json()
+
     if not data.get("ok"):
-        return JSONResponse({"detail": "Telegram get_file failed"}, status_code=400)
+        return JSONResponse(
+            {"detail": "Telegram get_file failed"},
+            status_code=502,
+        )
 
     file_path = data["result"]["file_path"]
     file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
 
-    file_resp = requests.get(file_url, timeout=40)
-    if file_resp.status_code != 200:
-        return JSONResponse({"detail": "Telegram file fetch failed"}, status_code=404)
+    file_resp = requests.get(
+        file_url,
+        timeout=40,
+        stream=True,
+    )
 
-    content_type = file_resp.headers.get("content-type", "image/jpeg")
-    headers = {"Cache-Control": "public, max-age=604800, immutable", "ETag": etag}
-    return Response(content=file_resp.content, media_type=content_type, headers=headers)
+    if file_resp.status_code != 200:
+        file_resp.close()
+        return JSONResponse(
+            {"detail": "Telegram file fetch failed"},
+            status_code=502,
+        )
+
+    content_type = file_resp.headers.get(
+        "content-type",
+        "application/octet-stream",
+    )
+
+    headers = {
+        "Cache-Control": "public, max-age=604800, immutable",
+        "ETag": etag,
+    }
+
+    def stream_file():
+        try:
+            for chunk in file_resp.iter_content(chunk_size=64 * 1024):
+                if chunk:
+                    yield chunk
+        finally:
+            file_resp.close()
+
+    return StreamingResponse(
+        stream_file(),
+        media_type=content_type,
+        headers=headers,
+    )
 
 # ================= ROOT =================
 
