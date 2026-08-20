@@ -479,6 +479,7 @@ def get_products(
                  "balenciaga": [
                      "balenciaga",
                      "balenciaga_nug",
+                     "balenciaga_er",
                 ],
                 
                 "balmain": ["balmain", "balmain_jul"],
@@ -581,7 +582,12 @@ def get_products(
                     "jimmy choo",
                     "jimmy",
                 ],
-
+                
+                "lemaire": [
+                    "lemaire",
+                    "lemaire_tg",
+                ],
+                
                 "lesilla": [
                     "lesilla",
                     "le silla",
@@ -705,6 +711,7 @@ def get_products(
                     "valentino",
                     "valentino_ffm",
                     "valentino_jul",
+                    "valentino_er",
                     "valentinogaravani",
                     "valentinogaravani_er",
                     "valentinogaravani_jul",
@@ -970,8 +977,8 @@ def get_outlet_brands():
             "valentino": "Valentino",
             "balenciaga": "Balenciaga",
             "bottega veneta": "Bottega Veneta",
-            "brunellocucinelli": "BrunelloCucinelli",
-            "brunello cucinelli": "BrunelloCucinelli",
+            "brunellocucinelli": "Brunello Cucinelli",
+            "brunello cucinelli": "Brunello Cucinelli",
             "christiandior": "ChristianDior",
             "christian dior": "ChristianDior",
             "dolce&gabbana": "Dolce&Gabbana",
@@ -1741,7 +1748,8 @@ def get_boutique_cards():
             "balenciaga": "Balenciaga",
             "balenciaga_ffm": "Balenciaga",
             "balenciaga_nug": "Balenciaga",
-
+            "balenciaga_er": "Balenciaga",
+            
             "balmain": "Balmain",
             "balmain_jul": "Balmain",
 
@@ -1826,6 +1834,9 @@ def get_boutique_cards():
             "jimmy choo": "Jimmy Choo",
             "jimmy": "Jimmy Choo",
 
+            "lemaire": "Lemaire",
+            "lemaire_tg": "Lemaire",
+            
             "lesilla": "Le Silla",
             "le silla": "Le Silla",
             "lesilla_jul": "Le Silla",
@@ -1918,6 +1929,7 @@ def get_boutique_cards():
             "valentino": "Valentino",
             "valentino_ffm": "Valentino",
             "valentino_jul": "Valentino",
+            "valentino_er": "Valentino",
             "valentinogaravani": "Valentino",
             "valentinogaravani_er": "Valentino",
             "valentinogaravani_jul": "Valentino",
