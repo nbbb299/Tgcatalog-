@@ -591,6 +591,7 @@ def get_products(
                     "jimmychoo",
                     "jimmy choo",
                     "jimmy",
+                    "jimmychoo_nug",
                 ],
                 
                 "lemaire": [
@@ -1859,6 +1860,7 @@ def get_boutique_cards():
             "jimmychoo": "Jimmy Choo",
             "jimmy choo": "Jimmy Choo",
             "jimmy": "Jimmy Choo",
+            "jimmychoo_nug": "Jimmy Choo",
 
             "lemaire": "Lemaire",
             "lemaire_tg": "Lemaire",
