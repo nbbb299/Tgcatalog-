@@ -559,6 +559,7 @@ def get_products(
                     "fendi_er",
                     "fendi_ffm",
                     "fendi_jul",
+                    "fendi_nug",
                 ],
 
                 "ferragamo": ["ferragamo", "feragamo"],
@@ -1830,6 +1831,7 @@ def get_boutique_cards():
             "fendi_er": "Fendi",
             "fendi_ffm": "Fendi",
             "fendi_jul": "Fendi",
+            "fendi_nug": "Fendi",
 
             "ferragamo": "Ferragamo",
             "feragamo": "Ferragamo",
