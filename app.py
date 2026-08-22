@@ -468,6 +468,14 @@ def get_products(
                     "alexander mcqueen",
                 ],
 
+                "amina muaddi": [
+                    "amina muaddi",
+                    "aminamuaddi",
+                    "amina_muaddi", 
+                    "aminamuaddi_nug",
+                    "amina_muaddi_nug",
+                ],
+
                 "aquazzura": [
                     "aquazzura",
                     "aquazzura_er",
@@ -536,6 +544,7 @@ def get_products(
                     "dg",
                     "dolce_gabbana_er",
                     "dolce_gabbana_jul",
+                    "dolce_gabbana_nug",
                     "dolce$gabbana_ffm",
                     "dolcegabbana_ffm",
                     "dolce&gabbana_ffm",
@@ -600,6 +609,14 @@ def get_products(
                     "loewe_nug",
                     "loewe_tb",
                     "loewe_tg",
+                ],
+
+                "loro piana": [
+                    "loro piana",
+                    "loropiana",
+                    "loro_piana",
+                    "loropiana_nug",
+                    "loro_piana_nug",
                 ],
 
                 "magdabutrym": [
@@ -1740,6 +1757,12 @@ def get_boutique_cards():
             "mcqueen": "Alexander McQueen",
             "alexander mcqueen": "Alexander McQueen",
 
+            "aminamuaddi": "Amina Muaddi",
+            "amina muaddi": "Amina Muaddi",
+            "amina_muaddi": "Amina Muaddi",
+            "aminamuaddi_nug": "Amina Muaddi",
+            "amina_muaddi_nug": "Amina Muaddi",
+            
             "aquazzura": "Aquazzura",
             "aquazzura_er": "Aquazzura",
             "aquazzura_jul": "Aquazzura",
@@ -1798,6 +1821,7 @@ def get_boutique_cards():
             "dolce&gabbana_ffm": "Dolce & Gabbana",
             "dolce$gabbana_ffm": "Dolce & Gabbana",
             "DOLCE$GABBANA_FFM": "Dolce & Gabbana",
+            "dolce_gabbana_nug": "Dolce & Gabbana",
           
             "etro": "Etro",
             "etro_jul": "Etro",
@@ -1846,6 +1870,12 @@ def get_boutique_cards():
             "loewe_nug": "Loewe",
             "loewe_tb": "Loewe",
             "loewe_tg": "Loewe",
+
+            "loropiana": "Loro Piana",
+            "loro piana": "Loro Piana",
+            "loro_piana": "Loro Piana",
+            "loropiana_nug": "Loro Piana",
+            "loro_piana_nug": "Loro Piana",
 
             "magdabutrym": "Magda Butrym",
             "magda butrym": "Magda Butrym",
