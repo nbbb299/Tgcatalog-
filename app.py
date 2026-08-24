@@ -501,9 +501,11 @@ def get_products(
                 "brunello cucinelli": [
                     "brunello cucinelli",
                     "brunellocucinelli",
+                    "BRUNELLOCUCINELI",
                     "brunellocucinelli_fk",
                     "brunellocucinelli_jul",
                     "brunellocucinelli_tb",
+                
                 ],
 
                 "burberry": [
@@ -1787,6 +1789,7 @@ def get_boutique_cards():
             "brunellocucinelli_fk": "Brunello Cucinelli",
             "brunellocucinelli_jul": "Brunello Cucinelli",
             "brunellocucinelli_tb": "Brunello Cucinelli",
+            "BRUNELLOCUCINELI": "Brunello Cucinelli",
 
             "burberry": "Burberry",
             "burberry_ffm": "Burberry",
