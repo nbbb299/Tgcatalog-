@@ -1996,10 +1996,13 @@ def get_boutique_cards():
             if not value:
                 return ""
 
-            value = value.strip(
-                "👜👠👓🕶️✨💼🤍🖤🤎💛💙💚💜❤️🩷🩶🧸🌍"
-                "•-–—,.;:()[]{}|/\\\"' "
-            )
+            # убираем любые эмодзи/значки в начале и конце названия бренда
+            value = re.sub(
+                r"^[^\wÀ-ÖØ-öø-ÿ&$]+|[^\wÀ-ÖØ-öø-ÿ&$]+$",
+                "",
+                value,
+                flags=re.UNICODE,
+            ).strip()
 
             if not value:
                 return ""
