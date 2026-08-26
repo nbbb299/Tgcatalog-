@@ -594,6 +594,7 @@ def get_products(
                     "jimmy choo",
                     "jimmy",
                     "jimmychoo_nug",
+                    "jimmychoo_jul,
                 ],
                 
                 "lemaire": [
@@ -646,6 +647,7 @@ def get_products(
                     "maxmarastudio_er",
                     "maxmarathecube_er",
                     "maxmarathecube_tb",
+                    "maxmara_thecube_tb",
                     "maxmara_er",
                 ],
 
@@ -669,6 +671,11 @@ def get_products(
                    "moncler_jul",
                    "moncler_er",
                 ],
+
+                "moorer": [
+                    "moorer_er",
+                ],
+                    
 
                 "paristexas": [
                     "paristexas",
@@ -1864,6 +1871,7 @@ def get_boutique_cards():
             "jimmy choo": "Jimmy Choo",
             "jimmy": "Jimmy Choo",
             "jimmychoo_nug": "Jimmy Choo",
+            "jimmychoo_jul": "Jimmy Choo",
 
             "lemaire": "Lemaire",
             "lemaire_tg": "Lemaire",
@@ -1902,6 +1910,7 @@ def get_boutique_cards():
             "maxmarastudio_er": "Max Mara",
             "maxmarathecube_er": "Max Mara",
             "maxmarathecube_tb": "Max Mara",
+            "maxmara_thecube_tb": "Max Mara",
             "maxmara_er": "Max Mara",
             
             "miumiu": "Miu Miu",
@@ -1920,6 +1929,8 @@ def get_boutique_cards():
             "moncler": "Moncler",
             "moncler_jul": "Moncler",
             "moncler_er": "Moncler",
+
+            "moorer_er": "Moorer",
             
             "paristexas": "Paris Texas",
             "paris texas": "Paris Texas",
