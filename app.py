@@ -594,7 +594,7 @@ def get_products(
                     "jimmy choo",
                     "jimmy",
                     "jimmychoo_nug",
-                    "jimmychoo_jul,
+                    "jimmychoo_jul",
                 ],
                 
                 "lemaire": [
