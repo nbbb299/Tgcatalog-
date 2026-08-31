@@ -468,6 +468,18 @@ def get_products(
                     "alexander mcqueen",
                 ],
 
+                "alexander wang": [
+                    "alexander wang",
+                    "alexanderwang",
+                    "awang",
+                ],
+
+                "ami paris": [
+                    "ami",
+                    "amiparis",
+                    "ami paris",
+                ],
+                
                 "amina muaddi": [
                     "amina muaddi",
                     "aminamuaddi",
@@ -502,6 +514,8 @@ def get_products(
                     "brunello cucinelli",
                     "brunellocucinelli",
                     "brunellocucineli",
+                    "brunello_cucinelli",
+                    "brunello_cuccinelli",
                     "brunellocucinelli_fk",
                     "brunellocucinelli_jul",
                     "brunellocucinelli_tb",
@@ -654,6 +668,7 @@ def get_products(
                 "miu miu": [
                     "miumiu",
                     "miu miu",
+                    "miu_miu",
                     "miu",
                     "miumiu_er",
                     "miumiu_nug",
@@ -718,12 +733,24 @@ def get_products(
                     "saintlaurent_nug",
                 ],
 
+                "self-portrait": [
+                    "self-portrait",
+                    "self portrait",
+                    "selfportrait",
+                    "selfpartrait",
+                ],
+                
                 "theattico": [
                     "theattico",
                     "the attico",
                     "theattico_nug",
                 ],
 
+                "toteme": [
+                    "toteme",
+                    "toteme_nug",
+                ],
+                
                 "the row": [
                     "the row",
                     "therow",
@@ -1768,6 +1795,14 @@ def get_boutique_cards():
             "mcqueen": "Alexander McQueen",
             "alexander mcqueen": "Alexander McQueen",
 
+            "alexanderwang": "Alexander Wang",
+            "awang": "Alexander Wang",
+            "alexander wang": "Alexander Wang",
+
+            "ami": "AMI Paris",
+            "amiparis": "AMI Paris",
+            "ami paris": "AMI Paris",
+            
             "aminamuaddi": "Amina Muaddi",
             "amina muaddi": "Amina Muaddi",
             "amina_muaddi": "Amina Muaddi",
@@ -1794,6 +1829,8 @@ def get_boutique_cards():
             "brunello cucinelli": "Brunello Cucinelli",
             "brunellocucinelli": "Brunello Cucinelli",
             "brunellocucineli": "Brunello Cucinelli",
+            "brunello_cuccinelli": "Brunello Cucinelli",
+            "brunello cuccinelli": "Brunello Cucinelli",
             "brunellocucinelli_fk": "Brunello Cucinelli",
             "brunellocucinelli_jul": "Brunello Cucinelli",
             "brunellocucinelli_tb": "Brunello Cucinelli",
@@ -1916,6 +1953,7 @@ def get_boutique_cards():
             "miumiu": "Miu Miu",
             "miu miu": "Miu Miu",
             "miu": "Miu Miu",
+            "miu_miu": "Miu Miu",
             "miumiu_er": "Miu Miu",
             "miumiu_nug": "Miu Miu",
             
@@ -1964,6 +2002,14 @@ def get_boutique_cards():
             "saintlaurent_er": "Saint Laurent",
             "saintlaurent_nug": "Saint Laurent",
 
+            "selfpartrait": "Self-Portrait",
+            "selfportrait": "Self-Portrait",
+            "self-portrait": "Self-Portrait",
+            "self portrait": "Self-Portrait",
+
+            "toteme": "Toteme",
+            "toteme_nug": "Toteme",
+            
             "theattico": "The Attico",
             "the attico": "The Attico",
             "theattico_nug": "The Attico",
