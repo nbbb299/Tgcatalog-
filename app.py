@@ -500,6 +500,7 @@ def get_products(
                      "balenciaga",
                      "balenciaga_nug",
                      "balenciaga_er",
+                     "balenciaga_ffb",
                 ],
                 
                 "balmain": ["balmain", "balmain_jul"],
@@ -508,6 +509,7 @@ def get_products(
                     "bottega veneta",
                     "bottegaveneta",
                     "bottega_ffm",
+                    "bottega_ffb",
                 ],
 
                 "brunello cucinelli": [
@@ -533,6 +535,7 @@ def get_products(
                     "celine_nug",
                     "celine_tb",
                     "celine_tg",
+                    "celine_ffb",
                 ],
 
                 "chloe": ["chloe", "chloé", "chloè"],
@@ -551,6 +554,7 @@ def get_products(
                     "dior_bb",
                     "dior_nug",
                     "dior_tg",
+                    "dior_ffb",
                 ],
 
                 "dolce & gabbana": [
@@ -574,6 +578,7 @@ def get_products(
                     "fendi",
                     "fendi_er",
                     "fendi_ffm",
+                    "fendi_ffb",
                     "fendi_jul",
                     "fendi_nug",
                 ],
@@ -591,6 +596,7 @@ def get_products(
                     "gucci",
                     "gucci_er",
                     "gucci_ffm",
+                    "gucci_ffb",
                     "gucci_jul",
                     "gucci_nug",
                 ],
@@ -626,6 +632,7 @@ def get_products(
                 "loewe": [
                     "loewe",
                     "loewe_nug",
+                    "loewe_ffb",
                     "loewe_tb",
                     "loewe_tg",
                 ],
@@ -671,6 +678,7 @@ def get_products(
                     "miu_miu",
                     "miu",
                     "miumiu_er",
+                    "miu_miu_ffb",
                     "miumiu_nug",
                 ],
 
@@ -705,6 +713,7 @@ def get_products(
                     "prada_er",
                     "prada_jul",
                     "prada_ffm",
+                    "prada_ffb",
                 ],
 
                "rené caovilla": [
@@ -730,6 +739,8 @@ def get_products(
                     "ysl",
                     "saint",
                     "saintlaurent_er",
+                    "sl",
+                    "sl_ffb",
                     "saintlaurent_nug",
                 ],
 
@@ -794,6 +805,11 @@ def get_products(
                     "van cleef",
                     "vancleef",
                     "vca",
+                ],
+
+                "versace": [
+                    "versace",
+                    "versace_ffb",
                 ],
             }
 
@@ -1816,6 +1832,7 @@ def get_boutique_cards():
 
             "balenciaga": "Balenciaga",
             "balenciaga_ffm": "Balenciaga",
+            "balenciaga_ffb": "Balenciaga",
             "balenciaga_nug": "Balenciaga",
             "balenciaga_er": "Balenciaga",
             
@@ -1825,6 +1842,7 @@ def get_boutique_cards():
             "bottega veneta": "Bottega Veneta",
             "bottegaveneta": "Bottega Veneta",
             "bottega_ffm": "Bottega Veneta",
+            "bottega_ffb": "Bottega Veneta",
 
             "brunello cucinelli": "Brunello Cucinelli",
             "brunellocucinelli": "Brunello Cucinelli",
@@ -1843,6 +1861,7 @@ def get_boutique_cards():
             "celine_nug": "Celine",
             "celine_tb": "Celine",
             "celine_tg": "Celine",
+            "celine_ffb": "Celine",
 
             "chloe": "Chloe",
             "chloé": "Chloe",
@@ -1858,6 +1877,7 @@ def get_boutique_cards():
             "dior_bb": "Dior",
             "dior_nug": "Dior",
             "dior_tg": "Dior",
+            "dior_ffb": "Dior",
 
             "dolce&gabbana": "Dolce & Gabbana",
             "dolce & gabbana": "Dolce & Gabbana",
@@ -1878,6 +1898,7 @@ def get_boutique_cards():
             "fendi": "Fendi",
             "fendi_er": "Fendi",
             "fendi_ffm": "Fendi",
+            "fendi_ffb": "Fendi",
             "fendi_jul": "Fendi",
             "fendi_nug": "Fendi",
 
@@ -1894,6 +1915,7 @@ def get_boutique_cards():
             "gucci": "Gucci",
             "gucci_er": "Gucci",
             "gucci_ffm": "Gucci",
+            "gucci_ffb": "Gucci",
             "gucci_jul": "Gucci",
             "gucci_nug": "Gucci",
 
@@ -1922,6 +1944,7 @@ def get_boutique_cards():
             "loewe_nug": "Loewe",
             "loewe_tb": "Loewe",
             "loewe_tg": "Loewe",
+            "loewe_ffb": "Loewe",
 
             "loropiana": "Loro Piana",
             "loro piana": "Loro Piana",
@@ -1956,6 +1979,7 @@ def get_boutique_cards():
             "miu_miu": "Miu Miu",
             "miumiu_er": "Miu Miu",
             "miumiu_nug": "Miu Miu",
+            "miu_miu_ffb": "Miu Miu",
             
             "mc2 saint barth": "MC2 Saint Barth",
             "mc2saintbarth": "MC2 Saint Barth",
@@ -1980,6 +2004,7 @@ def get_boutique_cards():
             "prada_er": "Prada",
             "prada_jul": "Prada",
             "prada_ffm": "Prada",
+            "prada_ffb": "Prada",
 
             "renècaovilla": "René Caovilla",
             "renécaovilla": "René Caovilla",
@@ -2001,6 +2026,7 @@ def get_boutique_cards():
             "saint": "Saint Laurent",
             "saintlaurent_er": "Saint Laurent",
             "saintlaurent_nug": "Saint Laurent",
+            "sl_ffb": "Saint Laurent",
 
             "selfpartrait": "Self-Portrait",
             "selfportrait": "Self-Portrait",
@@ -2028,6 +2054,8 @@ def get_boutique_cards():
             "valentinogaravani_er": "Valentino",
             "valentinogaravani_jul": "Valentino",
             "valentinogaravani_nug": "Valentino",
+
+            "versace_ffb": "Versace",
 
             "zimmermann": "Zimmermann",
             "zimmerman": "Zimmermann",
