@@ -518,6 +518,7 @@ def get_products(
                     "brunellocucineli",
                     "brunello_cucinelli",
                     "brunello_cuccinelli",
+                    "brunellocucinelle",
                     "brunellocucinelli_fk",
                     "brunellocucinelli_jul",
                     "brunellocucinelli_tb",
@@ -601,6 +602,14 @@ def get_products(
                     "gucci_nug",
                 ],
 
+                "guest in residence": [
+                "guest in residence",
+                "guestintheresidence",
+                "guest of residence",
+                "guestofresidence",
+                    
+                ],
+                    
                 "jacquemus": ["jacquemus", "jacquemus_tb"],
 
                 "jilsander": [
@@ -670,6 +679,7 @@ def get_products(
                     "maxmarathecube_tb",
                     "maxmara_thecube_tb",
                     "maxmara_er",
+                    "maxmara_studio_jul",
                 ],
 
                 "miu miu": [
@@ -729,6 +739,13 @@ def get_products(
                     "roger vivier",
                     "roger",
                     "roger_ffm",
+                ],
+                
+                "rohé": [
+                "rohé",
+                "rohè",
+                "rohe",
+
                 ],
 
                 "rotate": ["rotate", "rotate_jul"],
@@ -1849,6 +1866,7 @@ def get_boutique_cards():
             "brunellocucineli": "Brunello Cucinelli",
             "brunello_cuccinelli": "Brunello Cucinelli",
             "brunello cuccinelli": "Brunello Cucinelli",
+            "brunellocucinelle": "Brunello Cucinelli",
             "brunellocucinelli_fk": "Brunello Cucinelli",
             "brunellocucinelli_jul": "Brunello Cucinelli",
             "brunellocucinelli_tb": "Brunello Cucinelli",
@@ -1919,6 +1937,11 @@ def get_boutique_cards():
             "gucci_jul": "Gucci",
             "gucci_nug": "Gucci",
 
+            "guestintheresidence": "Guest in Residence",
+            "guestofresidence": "Guest in Residence",
+            "guest in residence": "Guest in Residence",
+            "guest of residence": "Guest in Residence",
+
             "jacquemus": "Jacquemus",
             "jacquemus_tb": "Jacquemus",
 
@@ -1972,6 +1995,7 @@ def get_boutique_cards():
             "maxmarathecube_tb": "Max Mara",
             "maxmara_thecube_tb": "Max Mara",
             "maxmara_er": "Max Mara",
+            "maxmara_studio_jul": "Max Mara",
             
             "miumiu": "Miu Miu",
             "miu miu": "Miu Miu",
@@ -2011,6 +2035,10 @@ def get_boutique_cards():
             "renecaovilla": "René Caovilla",
             "rene caovilla": "René Caovilla",
             "rené caovilla": "René Caovilla",
+
+            "rohe": "Rohé",
+            "rohé": "Rohé",
+            "rohè": "Rohé",
 
             "rogervivier": "Roger Vivier",
             "roger vivier": "Roger Vivier",
