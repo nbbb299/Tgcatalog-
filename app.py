@@ -1846,6 +1846,7 @@ def get_boutique_cards():
             "aquazzura_er": "Aquazzura",
             "aquazzura_jul": "Aquazzura",
             "aquazzura_nug": "Aquazzura",
+            "aquazzurra": "Aquazzura",
 
             "balenciaga": "Balenciaga",
             "balenciaga_ffm": "Balenciaga",
@@ -1860,6 +1861,7 @@ def get_boutique_cards():
             "bottegaveneta": "Bottega Veneta",
             "bottega_ffm": "Bottega Veneta",
             "bottega_ffb": "Bottega Veneta",
+            "bottega": "Bottega Veneta",
 
             "brunello cucinelli": "Brunello Cucinelli",
             "brunellocucinelli": "Brunello Cucinelli",
@@ -1901,6 +1903,7 @@ def get_boutique_cards():
             "dolce & gabbana": "Dolce & Gabbana",
             "dolcegabbana": "Dolce & Gabbana",
             "dg": "Dolce & Gabbana",
+            "dolce_gabbana": "Dolce & Gabbana",
             "dolce_gabbana_er": "Dolce & Gabbana",
             "dolce_gabbana_jul": "Dolce & Gabbana",
             "dolce$gabbana_ffm": "Dolce & Gabbana",
@@ -1941,6 +1944,7 @@ def get_boutique_cards():
             "guestofresidence": "Guest in Residence",
             "guest in residence": "Guest in Residence",
             "guest of residence": "Guest in Residence",
+            "guestinresidence": "Guest In Residence",
 
             "jacquemus": "Jacquemus",
             "jacquemus_tb": "Jacquemus",
@@ -1996,6 +2000,7 @@ def get_boutique_cards():
             "maxmara_thecube_tb": "Max Mara",
             "maxmara_er": "Max Mara",
             "maxmara_studio_jul": "Max Mara",
+            "maxmara_studio": "Max Mara",
             
             "miumiu": "Miu Miu",
             "miu miu": "Miu Miu",
@@ -2015,6 +2020,7 @@ def get_boutique_cards():
             "moncler": "Moncler",
             "moncler_jul": "Moncler",
             "moncler_er": "Moncler",
+            "monclergrenoble": "Moncler",
 
             "moorer_er": "Moorer",
             
@@ -2055,6 +2061,7 @@ def get_boutique_cards():
             "saintlaurent_er": "Saint Laurent",
             "saintlaurent_nug": "Saint Laurent",
             "sl_ffb": "Saint Laurent",
+            "sl": "Saint Laurent",
 
             "selfpartrait": "Self-Portrait",
             "selfportrait": "Self-Portrait",
@@ -2082,6 +2089,7 @@ def get_boutique_cards():
             "valentinogaravani_er": "Valentino",
             "valentinogaravani_jul": "Valentino",
             "valentinogaravani_nug": "Valentino",
+            "valentini1972": "Valentino",
 
             "versace_ffb": "Versace",
 
