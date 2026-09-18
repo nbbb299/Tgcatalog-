@@ -2148,8 +2148,15 @@ def get_boutique_cards():
                 " new",
                 " boutique",
                 " boutiques",
-                " _tg",
-            ]:
+                "_tg",
+                "_nug",
+                "_er",
+                "_jul",
+                "_tb",
+                "_ffb",
+                "_ffm",
+                "_fk",
+           ]:
                 if low.endswith(suffix):
                     value = value[:-len(suffix)].strip()
                     low = value.lower()
