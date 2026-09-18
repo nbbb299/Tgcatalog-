@@ -2197,26 +2197,16 @@ def get_boutique_cards():
                 
             if "#" in caption:
                 try:
-                    tag = (
-                        caption
-                        .split("#", 1)[1]
-                        .split()[0]
-                        .strip()
-                    )
+                    tags = re.findall(r"#([^\s#]+)", caption)
 
-                    brand = clean_brand_name(tag)
+                    for tag in tags:
+                        brand = clean_brand_name(tag)
 
-                    if brand:
-                        return brand
+                        if brand:
+                            return brand
 
-                    # Новый неизвестный хештег тоже считаем брендом
-                    fallback = tag.strip().strip("#").strip()
-
-                    if fallback:
-                        return fallback
-
-                except Exception:
-                    pass
+               except Exception:
+                   pass
 
             return ""
 
