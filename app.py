@@ -2205,7 +2205,7 @@ def get_boutique_cards():
                         if brand:
                             return brand
 
-               except Exception:
+                except Exception:
                    pass
 
             return ""
