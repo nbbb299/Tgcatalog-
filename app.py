@@ -1589,7 +1589,7 @@ def get_jewelry_no_brand(
         q_value = str(q or "").strip().lower()
 
         rows = []
-        page_size = 1000
+        page_size = 500
         start = 0
 
         while True:
