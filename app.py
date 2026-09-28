@@ -443,7 +443,7 @@ def get_products(
         offset = max(0, int(offset))
         limit = max(1, min(200, int(limit)))
 
-        query = supabase.table(TABLE).select("*", count="exact").order("ts", desc=True)
+        query = supabase.table(TABLE).select("*").order("ts", desc=True)
 
         s = (source or "").strip()
         if s:
