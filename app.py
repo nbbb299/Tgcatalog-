@@ -754,6 +754,7 @@ def get_products(
                     "roger_ffm",
                     "roger_vivier",
                     "roger_vivier_bb",
+                    "roger viver",
                 ],
                 
                 "rohé": [
@@ -2077,8 +2078,9 @@ def get_boutique_cards():
             "roger vivier": "Roger Vivier",
             "roger": "Roger Vivier",
             "roger_ffm": "Roger Vivier",
-            "roger_vivier": "Roger Viver",
-            "roger_vivier_bb": "Roger Viver",
+            "roger_vivier": "Roger Vivier",
+            "roger_vivier_bb": "Roger Vivier",
+            "roger viver": "Roger Vivier",
 
             "rotate": "Rotate",
             "rotate_jul": "Rotate",
