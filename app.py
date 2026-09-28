@@ -486,6 +486,9 @@ def get_products(
                     "amina_muaddi", 
                     "aminamuaddi_nug",
                     "amina_muaddi_nug",
+                    "aminamuaddi",
+                    "amina_muaddi_bb",
+                    "amina_muaddi_gb",
                 ],
 
                 "aquazzura": [
@@ -556,6 +559,7 @@ def get_products(
                     "dior_nug",
                     "dior_tg",
                     "dior_ffb",
+                    "dior_gb",
                 ],
 
                 "dolce & gabbana": [
@@ -582,6 +586,7 @@ def get_products(
                     "fendi_ffb",
                     "fendi_jul",
                     "fendi_nug",
+                    "fendi_gb",
                 ],
 
                 "ferragamo": ["ferragamo", "feragamo"],
@@ -600,6 +605,7 @@ def get_products(
                     "gucci_ffb",
                     "gucci_jul",
                     "gucci_nug",
+                    "gucci_gb",
                 ],
 
                 "guest in residence": [
@@ -644,6 +650,7 @@ def get_products(
                     "loewe_ffb",
                     "loewe_tb",
                     "loewe_tg",
+                    "loewe_gb",
                 ],
 
                 "loro piana": [
@@ -690,6 +697,10 @@ def get_products(
                     "miumiu_er",
                     "miu_miu_ffb",
                     "miumiu_nug",
+                    "miu_miu",
+                    "miu_miu_bb",
+                    "miu_miu_gb",
+                    "miumiunewbalance",
                 ],
 
                 "mc2 saint barth": [
@@ -724,6 +735,8 @@ def get_products(
                     "prada_jul",
                     "prada_ffm",
                     "prada_ffb",
+                    "prada_bb",
+                    "prada_gb",
                 ],
 
                "rené caovilla": [
@@ -739,6 +752,8 @@ def get_products(
                     "roger vivier",
                     "roger",
                     "roger_ffm",
+                    "roger_vivier",
+                    "roger_vivier_bb",
                 ],
                 
                 "rohé": [
@@ -1841,6 +1856,8 @@ def get_boutique_cards():
             "amina_muaddi": "Amina Muaddi",
             "aminamuaddi_nug": "Amina Muaddi",
             "amina_muaddi_nug": "Amina Muaddi",
+            "amina_muaddi_bb": "Amina Muaddi",
+            "amina_muaddi_gb": "Amina Muaddi",
             
             "aquazzura": "Aquazzura",
             "aquazzura_er": "Aquazzura",
@@ -1898,6 +1915,7 @@ def get_boutique_cards():
             "dior_nug": "Dior",
             "dior_tg": "Dior",
             "dior_ffb": "Dior",
+            "dior_gb": "Dior",
 
             "dolce&gabbana": "Dolce & Gabbana",
             "dolce & gabbana": "Dolce & Gabbana",
@@ -1922,6 +1940,7 @@ def get_boutique_cards():
             "fendi_ffb": "Fendi",
             "fendi_jul": "Fendi",
             "fendi_nug": "Fendi",
+            "fendi_gb": "Fendi",
 
             "ferragamo": "Ferragamo",
             "feragamo": "Ferragamo",
@@ -1939,6 +1958,7 @@ def get_boutique_cards():
             "gucci_ffb": "Gucci",
             "gucci_jul": "Gucci",
             "gucci_nug": "Gucci",
+            "gucci_gb": "Gucci",
 
             "guestintheresidence": "Guest in Residence",
             "guestofresidence": "Guest in Residence",
@@ -1972,6 +1992,7 @@ def get_boutique_cards():
             "loewe_tb": "Loewe",
             "loewe_tg": "Loewe",
             "loewe_ffb": "Loewe",
+            "loewe_gb": "Loewe",
 
             "loropiana": "Loro Piana",
             "loro piana": "Loro Piana",
@@ -2009,6 +2030,10 @@ def get_boutique_cards():
             "miumiu_er": "Miu Miu",
             "miumiu_nug": "Miu Miu",
             "miu_miu_ffb": "Miu Miu",
+            "miu_miu": "Miu Miu",
+            "miu_miu_bb": "Miu Miu",
+            "miu_miu_gb": "Miu Miu",
+            "miumiunewbalance": "Miu Miu",
             
             "mc2 saint barth": "MC2 Saint Barth",
             "mc2saintbarth": "MC2 Saint Barth",
@@ -2035,6 +2060,8 @@ def get_boutique_cards():
             "prada_jul": "Prada",
             "prada_ffm": "Prada",
             "prada_ffb": "Prada",
+            "prada_bb": "Prada",
+            "prada_gb": "Prada",
 
             "renècaovilla": "René Caovilla",
             "renécaovilla": "René Caovilla",
@@ -2050,6 +2077,8 @@ def get_boutique_cards():
             "roger vivier": "Roger Vivier",
             "roger": "Roger Vivier",
             "roger_ffm": "Roger Vivier",
+            "roger_vivier": "Roger Viver",
+            "roger_vivier_bb": "Roger Viver",
 
             "rotate": "Rotate",
             "rotate_jul": "Rotate",
