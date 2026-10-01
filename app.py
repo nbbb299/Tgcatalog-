@@ -2239,6 +2239,7 @@ def get_boutique_cards():
                 "_fk",
                 "_ffv",
                 "_geb",
+                "_am",
            ]:
                 if low.endswith(suffix):
                     value = value[:-len(suffix)].strip()
