@@ -549,6 +549,8 @@ def get_products(
                     "christianlouboutin",
                     "christian_louboutin_nug",
                     "christianlouboutin_nug",
+                    "Christian Louboutin",
+                    "christian_louboutin",
                 ],
                 
                 "dior": [
@@ -575,9 +577,15 @@ def get_products(
                     "dolce&gabbana_ffm",
                     "dolce$gabbana_ffm",
                     "DOLCE$GABBANA_FFM",
+                    "dg_ffv",
                 ],
 
                 "etro": ["etro", "etro_jul"],
+
+                "Ermanno Scervino": [
+                    "ermanoscrevino",
+
+                ],
 
                 "fendi": [
                     "fendi",
@@ -591,6 +599,11 @@ def get_products(
 
                 "ferragamo": ["ferragamo", "feragamo"],
                 "givenchy": ["givenchy", "givenchy_ffm"],
+
+                "GodsTrueCashmere": [
+                    "god'struecashmere",
+
+                ],
 
                 "golden goose": [
                     "golden goose",
@@ -701,6 +714,7 @@ def get_products(
                     "miu_miu_bb",
                     "miu_miu_gb",
                     "miumiunewbalance",
+                    "miu_miu_ffv",
                 ],
 
                 "mc2 saint barth": [
@@ -739,6 +753,13 @@ def get_products(
                     "prada_gb",
                 ],
 
+                "Phoebe Philo": [
+                    "phoebe_philo",
+                    "phoebe_philo_ffv",
+                    "phoebephilo",
+
+                ],
+                
                "rené caovilla": [
                    "renècaovilla",
                    "renécaovilla",
@@ -1908,6 +1929,7 @@ def get_boutique_cards():
             "christian_louboutin_nug": "Christian Louboutin",
             "christianlouboutin_nug": "Christian Louboutin",
             "christianlouboutin": "Christian Louboutin",
+            "christian_louboutin": "Christian Louboutin",
           
             "dior": "Dior",
             "christiandior": "Dior",
@@ -1931,9 +1953,12 @@ def get_boutique_cards():
             "dolce$gabbana_ffm": "Dolce & Gabbana",
             "DOLCE$GABBANA_FFM": "Dolce & Gabbana",
             "dolce_gabbana_nug": "Dolce & Gabbana",
+            "dg": "Dolce & Gabbana",
           
             "etro": "Etro",
             "etro_jul": "Etro",
+
+            "ermanoscrevino": "Ermanno Scervino",
 
             "fendi": "Fendi",
             "fendi_er": "Fendi",
@@ -1948,6 +1973,8 @@ def get_boutique_cards():
 
             "givenchy": "Givenchy",
             "givenchy_ffm": "Givenchy",
+
+            "god'struecashmere": "Godstruecashmere",
 
             "golden goose": "Golden Goose",
             "goldengoose": "Golden Goose",
@@ -2055,6 +2082,9 @@ def get_boutique_cards():
             "paris": "Paris Texas",
             "paristexas_nug": "Paris Texas",
             "paristexas_tb": "Paris Texas",
+
+            "phoebe_philo": "Phoebe Philo",
+            "phoebephilo": "Phoebe Philo",
 
             "prada": "Prada",
             "prada_er": "Prada",
@@ -2195,6 +2225,8 @@ def get_boutique_cards():
                 "_ffb",
                 "_ffm",
                 "_fk",
+                "_ffv",
+                "_geb",
            ]:
                 if low.endswith(suffix):
                     value = value[:-len(suffix)].strip()
