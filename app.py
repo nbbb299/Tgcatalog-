@@ -584,6 +584,7 @@ def get_products(
 
                 "Ermanno Scervino": [
                     "ermanoscrevino",
+                    "ERMANNOSCERVINO",
 
                 ],
 
@@ -600,8 +601,9 @@ def get_products(
                 "ferragamo": ["ferragamo", "feragamo"],
                 "givenchy": ["givenchy", "givenchy_ffm"],
 
-                "GodsTrueCashmere": [
+                "GODSTRUECASHMERE": [
                     "god'struecashmere",
+                    "GOD’STRUECASHMERE",
 
                 ],
 
@@ -643,6 +645,7 @@ def get_products(
                     "jimmy",
                     "jimmychoo_nug",
                     "jimmychoo_jul",
+                    "JIMMY_CHOO",
                 ],
                 
                 "lemaire": [
@@ -687,6 +690,7 @@ def get_products(
                     "maisionmargiela",
                     "mm6",
                     "maisionmargiela",
+                    "MARGIELA",
                 ],
 
                 "max mara": [
@@ -741,6 +745,7 @@ def get_products(
                     "paris",
                     "paristexas_nug",
                     "paristexas_tb",
+                    "PARIS_TEXAS",
                 ],
 
                 "prada": [
@@ -820,6 +825,7 @@ def get_products(
                     "the row",
                     "therow",
                     "therow_tb",
+                    "THE_ROW",
                 ],
                 "the row": [
                     "the row",
@@ -1959,6 +1965,7 @@ def get_boutique_cards():
             "etro_jul": "Etro",
 
             "ermanoscrevino": "Ermanno Scervino",
+            "ERMANNOSCERVINO": "Ermanno Scervino",
 
             "fendi": "Fendi",
             "fendi_er": "Fendi",
@@ -1974,7 +1981,8 @@ def get_boutique_cards():
             "givenchy": "Givenchy",
             "givenchy_ffm": "Givenchy",
 
-            "god'struecashmere": "Godstruecashmere",
+            "god'struecashmere": "GODSTRUECASHMERE",
+            "GOD’STRUECASHMERE": "GODSTRUECASHMERE",
 
             "golden goose": "Golden Goose",
             "goldengoose": "Golden Goose",
@@ -2006,6 +2014,7 @@ def get_boutique_cards():
             "jimmy": "Jimmy Choo",
             "jimmychoo_nug": "Jimmy Choo",
             "jimmychoo_jul": "Jimmy Choo",
+            "JIMMY_CHOO": "Jimmy Choo",
 
             "lemaire": "Lemaire",
             "lemaire_tg": "Lemaire",
@@ -2038,6 +2047,7 @@ def get_boutique_cards():
             "maisionmargiela": "Maison Margiela",
             "mm6": "Maison Margiela",
             "maisionmargiela": "Maison Margiela",
+            "MARGIELA": "Maison Margiela",
             
             "max mara": "Max Mara",
             "maxmara": "Max Mara",
@@ -2082,6 +2092,7 @@ def get_boutique_cards():
             "paris": "Paris Texas",
             "paristexas_nug": "Paris Texas",
             "paristexas_tb": "Paris Texas",
+            "PARIS_TEXAS": "Paris Texas",
 
             "phoebe_philo": "Phoebe Philo",
             "phoebephilo": "Phoebe Philo",
@@ -2141,6 +2152,7 @@ def get_boutique_cards():
             "therow_tb": "The Row",
             "therow_nug": "The Row",
             "the row_nug": "The Row",
+            "THE_ROW": "The Row",
             
             "valentino": "Valentino",
             "valentino_ffm": "Valentino",
