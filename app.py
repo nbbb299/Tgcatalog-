@@ -457,7 +457,7 @@ def get_products(
 
             alias_map = {
                 "acnestudios": ["acnestudios", "acnestudio", "acne"],
-                "alaïa": ["alaia", "alaïa", "alaia_nug"],
+                "alaïa": ["alaia", "alaïa", "alaia_nug", "ALAIA_R"],
                 "alevi": ["alevi", "alevi’_nug", "alevi'_nug"],
 
                 "alexandermcquen": [
@@ -504,6 +504,7 @@ def get_products(
                      "balenciaga_nug",
                      "balenciaga_er",
                      "balenciaga_ffb",
+                     "BALENCIAGA_R",
                 ],
                 
                 "balmain": ["balmain", "balmain_jul"],
@@ -542,7 +543,7 @@ def get_products(
                     "celine_ffb",
                 ],
 
-                "chloe": ["chloe", "chloé", "chloè"],
+                "chloe": ["chloe", "chloé", "chloè", "CHLOE_R"],
                 
                 "christian louboutin": [
                     "christian louboutin",
@@ -562,6 +563,7 @@ def get_products(
                     "dior_tg",
                     "dior_ffb",
                     "dior_gb",
+                    "DIOR_FFPE",
                 ],
 
                 "dolce & gabbana": [
@@ -578,6 +580,7 @@ def get_products(
                     "dolce$gabbana_ffm",
                     "DOLCE$GABBANA_FFM",
                     "dg_ffv",
+                    "DOLCEGABBANA_R",
                 ],
 
                 "etro": ["etro", "etro_jul"],
@@ -596,6 +599,7 @@ def get_products(
                     "fendi_jul",
                     "fendi_nug",
                     "fendi_gb",
+                    "FENDI_R",
                 ],
 
                 "ferragamo": ["ferragamo", "feragamo"],
@@ -621,6 +625,7 @@ def get_products(
                     "gucci_jul",
                     "gucci_nug",
                     "gucci_gb",
+                    "GUCCI_R",
                 ],
 
                 "guest in residence": [
@@ -631,7 +636,7 @@ def get_products(
                     
                 ],
                     
-                "jacquemus": ["jacquemus", "jacquemus_tb"],
+                "jacquemus": ["jacquemus", "jacquemus_tb", "JACQUEMUS_R"],
 
                 "jilsander": [
                     "jilsander",
@@ -667,6 +672,7 @@ def get_products(
                     "loewe_tb",
                     "loewe_tg",
                     "loewe_gb",
+                    "LOEWE_FFPE",
                 ],
 
                 "loro piana": [
@@ -719,6 +725,7 @@ def get_products(
                     "miu_miu_gb",
                     "miumiunewbalance",
                     "miu_miu_ffv",
+                    "MIUMIU_R",
                 ],
 
                 "mc2 saint barth": [
@@ -756,6 +763,7 @@ def get_products(
                     "prada_ffb",
                     "prada_bb",
                     "prada_gb",
+                    "PRADA_R",
                 ],
 
                 "Phoebe Philo": [
@@ -801,6 +809,8 @@ def get_products(
                     "sl",
                     "sl_ffb",
                     "saintlaurent_nug",
+                    "SAINTLAURENT_R",
+                    "YSL_R",
                 ],
 
                 "self-portrait": [
@@ -1860,6 +1870,7 @@ def get_boutique_cards():
             "alaïa": "Alaïa",
             "alaia_nug": "Alaïa",
             "alaia_tg": "Alaïa",
+            "ALAIA_R": "Alaïa",
 
             "alevi": "Alevi",
             "alevi’_nug": "Alevi",
@@ -1898,6 +1909,7 @@ def get_boutique_cards():
             "balenciaga_ffb": "Balenciaga",
             "balenciaga_nug": "Balenciaga",
             "balenciaga_er": "Balenciaga",
+            "BALENCIAGA_R": "Balenciaga",
             
             "balmain": "Balmain",
             "balmain_jul": "Balmain",
@@ -1931,6 +1943,7 @@ def get_boutique_cards():
             "chloe": "Chloe",
             "chloé": "Chloe",
             "chloè": "Chloe",
+            "CHLOE_R": "Chloe",
             
             "christian_louboutin_nug": "Christian Louboutin",
             "christianlouboutin_nug": "Christian Louboutin",
@@ -1945,6 +1958,7 @@ def get_boutique_cards():
             "dior_tg": "Dior",
             "dior_ffb": "Dior",
             "dior_gb": "Dior",
+            "DIOR_FFPE": "Dior",
 
             "dolce&gabbana": "Dolce & Gabbana",
             "dolce & gabbana": "Dolce & Gabbana",
@@ -1960,6 +1974,7 @@ def get_boutique_cards():
             "DOLCE$GABBANA_FFM": "Dolce & Gabbana",
             "dolce_gabbana_nug": "Dolce & Gabbana",
             "dg": "Dolce & Gabbana",
+            "DOLCEGABBANA_R": "Dolce & Gabbana",
           
             "etro": "Etro",
             "etro_jul": "Etro",
@@ -1974,6 +1989,7 @@ def get_boutique_cards():
             "fendi_jul": "Fendi",
             "fendi_nug": "Fendi",
             "fendi_gb": "Fendi",
+            "FENDI_R": "Fendi",
 
             "ferragamo": "Ferragamo",
             "feragamo": "Ferragamo",
@@ -1995,6 +2011,7 @@ def get_boutique_cards():
             "gucci_jul": "Gucci",
             "gucci_nug": "Gucci",
             "gucci_gb": "Gucci",
+            "GUCCI_R": "Gucci",
 
             "guestintheresidence": "Guest in Residence",
             "guestofresidence": "Guest in Residence",
@@ -2004,6 +2021,7 @@ def get_boutique_cards():
 
             "jacquemus": "Jacquemus",
             "jacquemus_tb": "Jacquemus",
+            "JACQUEMUS_R": "Jacquemus",
 
             "jilsander": "Jil Sander",
             "jil sander": "Jil Sander",
@@ -2030,6 +2048,7 @@ def get_boutique_cards():
             "loewe_tg": "Loewe",
             "loewe_ffb": "Loewe",
             "loewe_gb": "Loewe",
+            "LOEWE_FFPE": "Loewe",
 
             "loropiana": "Loro Piana",
             "loro piana": "Loro Piana",
@@ -2072,6 +2091,7 @@ def get_boutique_cards():
             "miu_miu_bb": "Miu Miu",
             "miu_miu_gb": "Miu Miu",
             "miumiunewbalance": "Miu Miu",
+            "MIUMIU_R": "Miu Miu",
             
             "mc2 saint barth": "MC2 Saint Barth",
             "mc2saintbarth": "MC2 Saint Barth",
@@ -2104,6 +2124,7 @@ def get_boutique_cards():
             "prada_ffb": "Prada",
             "prada_bb": "Prada",
             "prada_gb": "Prada",
+            "PRADA_R": "Prada",
 
             "renècaovilla": "René Caovilla",
             "renécaovilla": "René Caovilla",
@@ -2134,6 +2155,8 @@ def get_boutique_cards():
             "saintlaurent_nug": "Saint Laurent",
             "sl_ffb": "Saint Laurent",
             "sl": "Saint Laurent",
+            "SAINTLAURENT_R": "Saint Laurent",
+            "YSL_R": "Saint Laurent",
 
             "selfpartrait": "Self-Portrait",
             "selfportrait": "Self-Portrait",
