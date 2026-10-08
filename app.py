@@ -615,6 +615,7 @@ def get_products(
                     "golden goose",
                     "goldengoose",
                     "goldengoose_jul",
+                    "golden_goose",
                 ],
 
                 "gucci": [
@@ -710,6 +711,8 @@ def get_products(
                     "maxmara_thecube_tb",
                     "maxmara_er",
                     "maxmara_studio_jul",
+                    "maxmara_thecube",
+                    "sportmax",
                 ],
 
                 "miu miu": [
@@ -2001,6 +2004,7 @@ def get_boutique_cards():
             "golden goose": "Golden Goose",
             "goldengoose": "Golden Goose",
             "goldengoose_jul": "Golden Goose",
+            "golden_goose": "Golden Goose",
 
             "gucci": "Gucci",
             "gucci_er": "Gucci",
@@ -2077,6 +2081,8 @@ def get_boutique_cards():
             "maxmara_er": "Max Mara",
             "maxmara_studio_jul": "Max Mara",
             "maxmara_studio": "Max Mara",
+            "maxmara_thecube": "Max Mara",
+            "sportmax": "Max Mara",
             
             "miumiu": "Miu Miu",
             "miu miu": "Miu Miu",
