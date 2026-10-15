@@ -552,6 +552,7 @@ def get_products(
                     "christianlouboutin_nug",
                     "Christian Louboutin",
                     "christian_louboutin",
+                    "louboutin",
                 ],
                 
                 "dior": [
@@ -713,6 +714,7 @@ def get_products(
                     "maxmara_studio_jul",
                     "maxmara_thecube",
                     "sportmax",
+                    "maxmara_the_cube",
                 ],
 
                 "miu miu": [
@@ -1950,6 +1952,7 @@ def get_boutique_cards():
             "christianlouboutin_nug": "Christian Louboutin",
             "christianlouboutin": "Christian Louboutin",
             "christian_louboutin": "Christian Louboutin",
+            "louboutin": "Christian Louboutin",
           
             "dior": "Dior",
             "christiandior": "Dior",
@@ -2083,6 +2086,7 @@ def get_boutique_cards():
             "maxmara_studio": "Max Mara",
             "maxmara_thecube": "Max Mara",
             "sportmax": "Max Mara",
+            "maxmara_the_cube": "Max Mara",
             
             "miumiu": "Miu Miu",
             "miu miu": "Miu Miu",
@@ -2271,6 +2275,8 @@ def get_boutique_cards():
                 "_ffpe",
                 "_ju",
                 "_br",
+                "_ffbo",
+                "_s",
                 
            ]:
                 if low.endswith(suffix):
