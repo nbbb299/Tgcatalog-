@@ -2231,6 +2231,10 @@ def get_boutique_cards():
 
             if not value:
                 return ""
+            
+            # не создаём карточки брендов из одних цифр
+            if re.fullmatch(r"\d+", value):
+                return ""
 
             low = value.lower()
 
