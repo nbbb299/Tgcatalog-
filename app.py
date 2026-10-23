@@ -514,6 +514,7 @@ def get_products(
                     "bottegaveneta",
                     "bottega_ffm",
                     "bottega_ffb",
+                    "bottega_veneta",
                 ],
 
                 "brunello cucinelli": [
@@ -715,6 +716,7 @@ def get_products(
                     "maxmara_thecube",
                     "sportmax",
                     "maxmara_the_cube",
+                    "max_mara",
                 ],
 
                 "miu miu": [
@@ -744,6 +746,7 @@ def get_products(
                    "moncler",
                    "moncler_jul",
                    "moncler_er",
+                   "moncler_grenoble",
                 ],
 
                 "moorer": [
@@ -816,6 +819,7 @@ def get_products(
                     "saintlaurent_nug",
                     "saintlaurent_r",
                     "ysl_r",
+                    "saint_laurent",
                 ],
 
                 "self-portrait": [
@@ -1922,6 +1926,7 @@ def get_boutique_cards():
             "bottega_ffm": "Bottega Veneta",
             "bottega_ffb": "Bottega Veneta",
             "bottega": "Bottega Veneta",
+            "bottega_veneta": "Bottega Veneta",
 
             "brunello cucinelli": "Brunello Cucinelli",
             "brunellocucinelli": "Brunello Cucinelli",
@@ -2087,6 +2092,7 @@ def get_boutique_cards():
             "maxmara_thecube": "Max Mara",
             "sportmax": "Max Mara",
             "maxmara_the_cube": "Max Mara",
+            "max_mara": "Max Mara",
             
             "miumiu": "Miu Miu",
             "miu miu": "Miu Miu",
@@ -2112,6 +2118,7 @@ def get_boutique_cards():
             "moncler_jul": "Moncler",
             "moncler_er": "Moncler",
             "monclergrenoble": "Moncler",
+            "moncler_grenoble": "Moncler",
 
             "moorer_er": "Moorer",
             
@@ -2165,6 +2172,7 @@ def get_boutique_cards():
             "sl": "Saint Laurent",
             "saintlaurent_r": "Saint Laurent",
             "ysl_r": "Saint Laurent",
+            "saint_laurent": "Saint Laurent",
 
             "selfpartrait": "Self-Portrait",
             "selfportrait": "Self-Portrait",
@@ -2281,6 +2289,7 @@ def get_boutique_cards():
                 "_br",
                 "_ffbo",
                 "_s",
+                "_p",
                 
            ]:
                 if low.endswith(suffix):
