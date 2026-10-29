@@ -2290,6 +2290,7 @@ def get_boutique_cards():
                 "_ffbo",
                 "_s",
                 "_p",
+                "_pes",
                 
            ]:
                 if low.endswith(suffix):
