@@ -654,6 +654,7 @@ def get_products(
                     "jimmychoo_nug",
                     "jimmychoo_jul",
                     "jimmy_choo",
+                    "jimmycho",
                 ],
                 
                 "lemaire": [
@@ -887,6 +888,10 @@ def get_products(
                 "versace": [
                     "versace",
                     "versace_ffb",
+                ],
+
+                "yvessalomon": [
+                    "salomon",
                 ],
             }
 
@@ -2043,6 +2048,7 @@ def get_boutique_cards():
             "jimmychoo_nug": "Jimmy Choo",
             "jimmychoo_jul": "Jimmy Choo",
             "jimmy_choo": "Jimmy Choo",
+            "jimmycho": "Jimmy Choo,
 
             "lemaire": "Lemaire",
             "lemaire_tg": "Lemaire",
@@ -2208,6 +2214,8 @@ def get_boutique_cards():
             "zimmermann": "Zimmermann",
             "zimmerman": "Zimmermann",
             "zimmermann_jul": "Zimmermann",
+
+            "salomon": "Yvessalomon",
         }
 
         skip_exact = {
