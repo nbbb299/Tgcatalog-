@@ -2048,7 +2048,7 @@ def get_boutique_cards():
             "jimmychoo_nug": "Jimmy Choo",
             "jimmychoo_jul": "Jimmy Choo",
             "jimmy_choo": "Jimmy Choo",
-            "jimmycho": "Jimmy Choo,
+            "jimmycho": "Jimmy Choo",
 
             "lemaire": "Lemaire",
             "lemaire_tg": "Lemaire",
