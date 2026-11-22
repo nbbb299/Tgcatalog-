@@ -928,9 +928,9 @@ def get_products(
             )
 
             qq = (q or "").strip()
-        if qq:
-            safeq = qq.replace("%", "").replace(",", " ")
-            query = query.or_(f"brand.ilike.%{safeq}%,caption.ilike.%{safeq}%")
+            if qq:
+               safeq = qq.replace("%", "").replace(",", " ")
+               query = query.or_(f"brand.ilike.%{safeq}%,caption.ilike.%{safeq}%")
 
         query = query.range(offset, offset + limit - 1)
         res = query.execute()
