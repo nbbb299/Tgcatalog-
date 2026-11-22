@@ -1223,7 +1223,8 @@ def get_outlet_brands():
 
         def get_row_brand(row: dict) -> str:
             raw_caption = str(row.get("caption", "") or "").strip()
-
+            
+        # Отдельная карточка для платков и шарфов
         if "платки, шарфы" in raw_caption.lower():
             return "Платки, шарфы"
             brand = clean_name(
