@@ -897,26 +897,35 @@ def get_products(
 
             normalized_key = safe.lower()
 
-            aliases = alias_map.get(
-                normalized_key,
-                [safe, compact]
-            )
+# OUTLETS:
+# здесь НЕ используем бутиковые alias.
+# Название карточки соответствует названию outlet-папки/бренда.
+if s.lower() == "outlets":
+    aliases = [safe, compact]
 
-            aliases = list(dict.fromkeys(aliases))
+# BOUTIQUES:
+# оставляем существующую систему alias без изменений.
+else:
+    aliases = alias_map.get(
+        normalized_key,
+        [safe, compact]
+    )
 
-            conditions = []
+aliases = list(dict.fromkeys(aliases))
 
-            for alias in aliases:
-                conditions.append(
-                    f"brand.ilike.%{alias}%"
-                )
-                conditions.append(
-                    f"caption.ilike.%{alias}%"
-                )
+conditions = []
 
-            query = query.or_(
-                ",".join(conditions)
-            )
+for alias in aliases:
+    conditions.append(
+        f"brand.ilike.%{alias}%"
+    )
+    conditions.append(
+        f"caption.ilike.%{alias}%"
+    )
+
+query = query.or_(
+    ",".join(conditions)
+)
 
         qq = (q or "").strip()
         if qq:
