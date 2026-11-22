@@ -1220,8 +1220,8 @@ def get_outlet_brands():
                 word.capitalize()
                 for word in value.split()
             )
-
-                def get_row_brand(row: dict) -> str:
+            
+        def get_row_brand(row: dict) -> str:
             brand = clean_name(
                 str(row.get("brand", "") or "")
             )
