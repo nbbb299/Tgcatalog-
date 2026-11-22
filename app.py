@@ -897,37 +897,37 @@ def get_products(
 
             normalized_key = safe.lower()
 
-# OUTLETS:
-# здесь НЕ используем бутиковые alias.
-# Название карточки соответствует названию outlet-папки/бренда.
-if s.lower() == "outlets":
-    aliases = [safe, compact]
+            # OUTLETS:
+            # здесь НЕ используем бутиковые alias.
+            # Название карточки соответствует названию outlet-папки/бренда.
+            if s.lower() == "outlets":
+                aliases = [safe, compact]
 
-# BOUTIQUES:
-# оставляем существующую систему alias без изменений.
-else:
-    aliases = alias_map.get(
-        normalized_key,
-        [safe, compact]
-    )
+            # BOUTIQUES:
+            # оставляем существующую систему alias без изменений.
+            else:
+                aliases = alias_map.get(
+                    normalized_key,
+                    [safe, compact]
+                )
 
-aliases = list(dict.fromkeys(aliases))
+            aliases = list(dict.fromkeys(aliases))
 
-conditions = []
+            conditions = []
 
-for alias in aliases:
-    conditions.append(
-        f"brand.ilike.%{alias}%"
-    )
-    conditions.append(
-        f"caption.ilike.%{alias}%"
-    )
+            for alias in aliases:
+                conditions.append(
+                    f"brand.ilike.%{alias}%"
+                )
+                conditions.append(
+                      f"caption.ilike.%{alias}%"
+                )
 
-query = query.or_(
-    ",".join(conditions)
-)
+            query = query.or_(
+                ",".join(conditions)
+            )
 
-        qq = (q or "").strip()
+            qq = (q or "").strip()
         if qq:
             safeq = qq.replace("%", "").replace(",", " ")
             query = query.or_(f"brand.ilike.%{safeq}%,caption.ilike.%{safeq}%")
