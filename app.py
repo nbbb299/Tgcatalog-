@@ -1224,41 +1224,30 @@ def get_outlet_brands():
         def get_row_brand(row: dict) -> str:
             raw_caption = str(row.get("caption", "") or "").strip()
             
-        # Отдельная карточка для платков и шарфов
         if "платки, шарфы" in raw_caption.lower():
             return "Платки, шарфы"
-            brand = clean_name(
+        brand = clean_name(
                 str(row.get("brand", "") or "")
             )
 
-            if brand:
-                return brand
+        if brand:
+            return brand
 
-            caption = str(
-                row.get("caption", "") or ""
-            ).strip()
-
-            if not caption:
-                return ""
-
-            if "#" in caption:
-                try:
-                    tag = (
-                        caption
-                        .split("#", 1)[1]
-                        .split()[0]
-                        .strip()
-                    )
-
-                    brand = clean_name(tag)
-
-                    if brand:
-                        return brand
-
-                except Exception:
-                    pass
-
+        if not caption:
             return ""
+
+        if "#" in caption:
+            try:
+                tag = (caption.split("#", 1)[1].split()[0].strip()
+                    )
+                brand = clean_name(tag)
+                if brand:
+                    return brand
+
+            except Exception:
+                pass
+
+        return ""
 
         rows = []
         page_size = 1000
