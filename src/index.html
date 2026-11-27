@@ -730,6 +730,7 @@ onclick="localStorage.setItem('siteLanguage','en'); location.reload();">EN</butt
             <button class="tabBtn" id="tabGlasses" data-source="Очки" role="tab">Очки</button>
             <button class="tabBtn" id="tabMen" data-source="Мужское">Мужское</button>
             <button class="tabBtn" id="tabJewelry" data-source="Украшения">Украшения</button>
+            <button class="tabBtn" id="tabNews" data-source="News" role="tab">Новости</button>
             <button class="tabBtn" id="tabAbout" data-source="about">О нас</button>
           </div>
 
@@ -2347,6 +2348,7 @@ function setActiveTab(source){
     $("tabGlasses"),
     $("tabMen"),
     $("tabJewelry"),
+    $("tabNews"),
     $("tabAbout")
   ].filter(Boolean);
 
@@ -2434,6 +2436,12 @@ if(source === "Boutiques"){
   /*
     Обычные разделы.
   */
+  if(source === "News"){
+    $("q").value = "";
+    $("brand").value = "";
+    currentBrandMenu = "";
+    syncBrandMenuActive();
+}
   if(source === "sales"){
     outletBrandsView = false;
     jewelryBrandsView = false;
@@ -2449,6 +2457,7 @@ $("tabOutlets").onclick = ()=>setActiveTab("Outlets");
 $("tabGlasses").onclick = ()=>setActiveTab("Очки");
 $("tabMen").onclick = ()=>setActiveTab("Мужское");
 $("tabJewelry").onclick = ()=>setActiveTab("Украшения"); 
+$("tabNews").onclick = ()=>setActiveTab("News");
 $("tabAbout").onclick = ()=>setActiveTab("about");
 $("outletBack").onclick = ()=>{
   if(currentSource === "Boutiques"){
