@@ -701,6 +701,44 @@
   color:#fff;
   border-color:#111;
 }
+    /* NEWS */
+.grid.newsGrid{
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.newsCard{
+  min-height: 0;
+}
+
+.newsCard .media{
+  aspect-ratio: auto;
+  background: #fff;
+}
+
+.newsCard .media img{
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.newsCard .caption{
+  display: block;
+  min-height: 0;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+.newsCard .caption:empty{
+  display: none;
+}
+
+.newsCard .sourcePill,
+.newsCard .actions,
+.newsCard .more{
+  display: none;
+}
   </style>
 </head>
 
@@ -1938,8 +1976,9 @@ function buildProductsUrl({
   // дальше обычный render товаров
 
     const grid = $("grid");
-  grid.classList.remove("outletBrandsGrid");
-  grid.innerHTML = "";
+    grid.classList.remove("outletBrandsGrid");
+    grid.classList.toggle("newsGrid", currentSource === "News");
+    grid.innerHTML = "";
 
       if(!loaded.length){
         $("pager").style.display = "none";
@@ -2126,7 +2165,7 @@ function buildProductsUrl({
       const {tg, wa} = buyLinks(source);
 
       const card = document.createElement("div");
-      card.className = "card";
+      card.className = source === "News" ? "card newsCard" : "card";
 
       if(IS_ADMIN){
         const ab = document.createElement("div");
@@ -2297,6 +2336,7 @@ body.appendChild(cap);
     }
 function setActiveTab(source){
   currentSource = source;
+  $("grid").classList.remove("newsGrid");
 
   const aboutPage = document.getElementById("aboutPage");
   const gridWrap = document.querySelector(".gridWrap");
