@@ -48,6 +48,7 @@ CHAT_SOURCE = {
     -1003791619052: "Очки",       # New glasses channel -> Очки
     -1001659927695: "Мужское",
     -1001486422757: "Украшения",
+    -1005802867102: "News",
 }
 
 ALLOWED_CHATS = set(CHAT_SOURCE.keys())
@@ -191,10 +192,18 @@ def is_media_message(msg) -> bool:
 # ================= SAVE PRODUCT =================
 
 def save_product(msg):
-    caption = (msg.caption or "").strip()
     chat_id = int(msg.chat.id)
     source = detect_source(chat_id)
-    brand = pick_brand(msg, caption)
+
+    if not source:
+        return
+
+    if source == "News":
+        caption = (msg.caption or msg.text or "").strip()
+        brand = ""
+    else:
+        caption = (msg.caption or "").strip()
+        brand = pick_brand(msg, caption)
 
     media_group_id = msg.media_group_id  # album id or None
     message_id = msg.message_id
@@ -397,7 +406,10 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if msg.text:
         try:
-            attach_text_caption_to_recent_item(msg, window_seconds=120)
+            if detect_source(int(msg.chat.id)) == "News":
+                save_product(msg)
+            else:
+                attach_text_caption_to_recent_item(msg, window_seconds=120)
         except Exception as e:
             print("CAPTION FIX ERROR ❌", repr(e))
             traceback.print_exc()
@@ -964,6 +976,7 @@ def get_brands():
         res = (
             supabase.table(TABLE)
             .select("brand,caption")
+            .neq("source", "News")
             .execute()
         )
 
