@@ -2182,8 +2182,31 @@ function buildProductsUrl({
 
       const cap = document.createElement("div");
       cap.className = "caption";
-      cap.textContent = caption;
-      body.appendChild(cap);
+
+      const lines = caption.split("\n");
+      const pricePattern = /^\s*(?:€\s*\d[\d., ]*|\d[\d., ]*\s*€)\s*$/;
+
+      lines.forEach((line, i) => {
+        const nextLine = lines[i + 1] || "";
+
+        if (
+          source !== "Украшения" &&
+          pricePattern.test(line) &&
+          pricePattern.test(nextLine)
+        ) {
+          const oldPrice = document.createElement("s");
+          oldPrice.textContent = line;
+          cap.appendChild(oldPrice);
+        } else {
+          cap.appendChild(document.createTextNode(line));
+  }
+
+       if (i < lines.length - 1) {
+         cap.appendChild(document.createTextNode("\n"));
+       }
+ });
+
+body.appendChild(cap);
 
       if(caption.length > 160){
         const more = document.createElement("div");
